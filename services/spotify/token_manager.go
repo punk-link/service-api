@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"main/models/spotify/accessToken"
+	"main/utils"
 	"net/http"
 	"net/url"
 	"strings"
@@ -28,6 +29,8 @@ func getAccessToken() (string, error) {
 
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
+	clientId := utils.GetEnvironmentVariable("SPOTIFY_CLIENT_ID")
+	clientSecret := utils.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET")
 	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
 	request.Header.Add("Authorization", credentials)
 
@@ -57,8 +60,5 @@ func getAccessToken() (string, error) {
 }
 
 var tokenContainer accessToken.SpotifyAccessTokenContainer
-
-var clientId = ""
-var clientSecret = ""
 
 const safetyThreshold time.Duration = time.Second * 5
