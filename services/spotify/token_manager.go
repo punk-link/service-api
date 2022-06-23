@@ -13,8 +13,6 @@ import (
 )
 
 func getAccessToken() (string, error) {
-	const baseUrl string = "https://accounts.spotify.com/api/token"
-
 	if len(tokenContainer.Token) != 0 || time.Now().Before(tokenContainer.ExpiresAt) {
 		return tokenContainer.Token, nil
 	}
@@ -22,7 +20,7 @@ func getAccessToken() (string, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
-	request, err := http.NewRequest("POST", baseUrl, strings.NewReader(payload.Encode()))
+	request, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(payload.Encode()))
 	if err != nil {
 		return "", err
 	}

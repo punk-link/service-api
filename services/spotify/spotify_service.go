@@ -1,48 +1,46 @@
 package spotify
 
 import (
-	"errors"
-	"main/models/spotify"
+	"fmt"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
 	"main/responses"
+	spotifyConverters "main/utils/converters/spotify"
 	"net/url"
-	"strconv"
 )
 
-func GetArtistRelease(spotifyId string) (responses.ArtistRelease, error) {
+func GetArtistRelease(spotifyId string) responses.ArtistRelease {
 	var result responses.ArtistRelease
 
-	urlPattern := "albums/" + spotifyId
 	var spotifyRelease releases.ArtistRelease
-	if err := MakeRequest("GET", urlPattern, &spotifyRelease); err != nil {
-		return result, err
+	if err := MakeRequest("GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
+		fmt.Println(err)
+		return result
 	}
 
-	return toRelease(spotifyRelease), nil
+	return spotifyConverters.ToRelease(spotifyRelease)
 }
 
-func GetArtistReleases(spotifyId string) ([]responses.ArtistRelease, error) {
+func GetArtistReleases(spotifyId string) []responses.ArtistRelease {
 	spotifyReleases := getReleases(spotifyId)
-	return toReleases(spotifyReleases), nil
+	return spotifyConverters.ToReleases(spotifyReleases)
 }
 
-func SearchArtist(query string) ([]responses.ArtistSearchResult, error) {
-	const minimalQueryLength int = 3
-	const urlPattern string = "search?type=artist&limit=10&q="
+func SearchArtist(query string) []responses.ArtistSearchResult {
 	var result []responses.ArtistSearchResult
 
+	const minimalQueryLength int = 3
 	if len(query) < minimalQueryLength {
-		return result, errors.New("the query contains less than 3 characters")
+		return result
 	}
 
-	var spotifyResponse search.ArtistSearchResult
-	if err := MakeRequest("GET", urlPattern+url.QueryEscape(query), &spotifyResponse); err != nil {
-		return result, err
+	var spotifyArtistSearchResults search.ArtistSearchResult
+	if err := MakeRequest("GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults); err != nil {
+		fmt.Println(err)
+		return result
 	}
 
-	result = toArtistSearchResults(spotifyResponse.Artists.Items)
-	return result, nil
+	return spotifyConverters.ToArtistSearchResults(spotifyArtistSearchResults.Artists.Items)
 }
 
 func getReleases(spotifyId string) []releases.ArtistRelease {
@@ -51,12 +49,12 @@ func getReleases(spotifyId string) []releases.ArtistRelease {
 	var spotifyResponse releases.ArtistReleaseResult
 	offset := 0
 	for {
-		urlPattern := "artists/" + spotifyId + "/albums?limit=" + strconv.Itoa(queryLimit) + "&offset=" + strconv.Itoa(offset)
+		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, queryLimit, offset)
 		offset = offset + queryLimit
 
 		var tmpResponse releases.ArtistReleaseResult
 		if err := MakeRequest("GET", urlPattern, &tmpResponse); err != nil {
-			// TODO: log an error
+			fmt.Println(err)
 			continue
 		}
 
@@ -67,69 +65,4 @@ func getReleases(spotifyId string) []releases.ArtistRelease {
 	}
 
 	return spotifyResponse.Items
-}
-
-func toArtistSearchResults(spotifyArtists []search.Artist) []responses.ArtistSearchResult {
-	artists := make([]responses.ArtistSearchResult, len(spotifyArtists))
-	for i, artist := range spotifyArtists {
-		artists[i] = responses.ArtistSearchResult{
-			ImageMetadata: toImageMetadataResponse(artist.ImageMetadata),
-			Name:          artist.Name,
-			SpotifyId:     artist.Id,
-		}
-	}
-
-	return artists
-}
-
-func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []responses.ImageMetadata {
-	results := make([]responses.ImageMetadata, len(metadatas))
-	for i, metadata := range metadatas {
-		results[i] = responses.ImageMetadata{
-			Height: metadata.Height,
-			Url:    metadata.Url,
-		}
-	}
-
-	return results
-}
-
-func toRelease(spotifyRelease releases.ArtistRelease) responses.ArtistRelease {
-	return responses.ArtistRelease{
-		SpotifyId:     spotifyRelease.Id,
-		Artists:       toArtistSearchResults(spotifyRelease.Artists),
-		ImageMetadata: toImageMetadataResponse(spotifyRelease.ImageMetadata),
-		Lable:         spotifyRelease.Label,
-		Name:          spotifyRelease.Name,
-		ReleaseDate:   spotifyRelease.ReleaseDate,
-		TrackNumber:   spotifyRelease.TrackNumber,
-		Tracks:        toTracks(spotifyRelease.Tracks.Items),
-		Type:          spotifyRelease.Type,
-	}
-}
-
-func toTracks(spotifyTracks []releases.Track) []responses.Track {
-	tracks := make([]responses.Track, len(spotifyTracks))
-	for i, track := range spotifyTracks {
-		tracks[i] = responses.Track{
-			SpotifyId:       track.Id,
-			Artists:         toArtistSearchResults(track.Artists),
-			DiscNumber:      track.DiscNumber,
-			DurationSeconds: track.DurationMilliseconds / 1000,
-			IsExplicit:      track.IsExplicit,
-			Name:            track.Name,
-			TrackNumber:     track.TrackNumber,
-		}
-	}
-
-	return tracks
-}
-
-func toReleases(spotifyReleases []releases.ArtistRelease) []responses.ArtistRelease {
-	releases := make([]responses.ArtistRelease, len(spotifyReleases))
-	for i, release := range spotifyReleases {
-		releases[i] = toRelease(release)
-	}
-
-	return releases
 }

@@ -7,9 +7,7 @@ import (
 )
 
 func MakeRequest[T any](method string, url string, result *T) error {
-	const baseUrl string = "https://api.spotify.com/v1/"
-
-	request, err := http.NewRequest(method, baseUrl+url, nil)
+	request, err := http.NewRequest(method, "https://api.spotify.com/v1/"+url, nil)
 	if err != nil {
 		return err
 	}
