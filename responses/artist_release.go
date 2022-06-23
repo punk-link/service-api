@@ -1,10 +1,13 @@
 package responses
 
 type ArtistRelease struct {
-	SpotifyId     string          `json:"spotifyId"`
-	ImageMetadata []ImageMetadata `json:"images"`
-	Name          string          `json:"name"`
-	ReleaseDate   string          `json:"releaseDate"`
-	TrackNumber   int             `json:"trackNumber"`
-	Type          string          `json:"type"`
+	SpotifyId     string               `json:"spotifyId"`
+	Artists       []ArtistSearchResult `json:"artists"`
+	ImageMetadata []ImageMetadata      `json:"images"`
+	Lable         string               `json:"label"`
+	Name          string               `json:"name"`
+	ReleaseDate   string               `json:"releaseDate"`
+	TrackNumber   int                  `json:"trackNumber"`
+	Tracks        []Track              `json:"tracks"`
+	Type          string               `json:"type"`
 }

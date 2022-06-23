@@ -1,12 +1,18 @@
 package releases
 
-import "main/models/spotify"
+import (
+	"main/models/spotify"
+	"main/models/spotify/search"
+)
 
 type ArtistRelease struct {
 	Id            string                  `json:"id"`
+	Artists       []search.Artist         `json:"artists"`
 	ImageMetadata []spotify.ImageMetadata `json:"images"`
-	Name          string
-	ReleaseDate   string `json:"release_date"`
-	TrackNumber   int    `json:"total_tracks"`
-	Type          string
+	Label         string                  `json:"label"`
+	Name          string                  `json:"name"`
+	ReleaseDate   string                  `json:"release_date"`
+	TrackNumber   int                     `json:"total_tracks"`
+	Tracks        TrackContainer          `json:"tracks"`
+	Type          string                  `json:"album_type"`
 }

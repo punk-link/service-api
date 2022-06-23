@@ -6,7 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetArtistReleases(ctx *gin.Context) {
+func GetRelease(ctx *gin.Context) {
+	spotifyId := ctx.Param("spotify-id")
+	spotifyArtistId := ctx.Param("spotify-artist-id")
+
+	result, err := spotify.GetArtistRelease(spotifyId)
+
+	spotifyId = spotifyArtistId
+	OkOrBadRequest(ctx, result, err)
+}
+
+func GetReleases(ctx *gin.Context) {
 	spotifyId := ctx.Param("spotify-id")
 
 	result, err := spotify.GetArtistReleases(spotifyId)
