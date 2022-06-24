@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"main/startup"
 	"main/utils"
+	"net/http"
 )
 
 func main() {
@@ -11,5 +12,8 @@ func main() {
 	fmt.Println("Artist Updater API is running as " + environmentName)
 
 	app := startup.Configure()
-	app.Run()
+
+	hostAddress := utils.GetEnvironmentVariable("GIN_ADDR")
+	hostPort := utils.GetEnvironmentVariable("GIN_PORT")
+	http.ListenAndServe(fmt.Sprintf("%s:%s", hostAddress, hostPort), app)
 }
