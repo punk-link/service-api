@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 func MakeRequest[T any](method string, url string, result *T) error {
@@ -14,6 +16,7 @@ func MakeRequest[T any](method string, url string, result *T) error {
 
 	accessToken, err := getAccessToken()
 	if err != nil {
+		log.Warn().Msg(err.Error())
 		return err
 	}
 
@@ -30,10 +33,12 @@ func MakeRequest[T any](method string, url string, result *T) error {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return err
 	}
 
 	if err := json.Unmarshal(body, &result); err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return err
 	}
 

@@ -16,28 +16,19 @@ func OkOrBadRequest[T any](ctx *gin.Context, result T, err error) {
 }
 
 func BadRequest(ctx *gin.Context, reason string) {
-	status := http.StatusBadRequest
-
-	ctx.JSON(status, gin.H{
+	ctx.JSON(http.StatusBadRequest, gin.H{
 		"message": reason,
-		"status":  status,
 	})
 }
 
 func Ok[T any](ctx *gin.Context, result T) {
-	status := http.StatusOK
-
-	ctx.JSON(status, gin.H{
-		"data":   result,
-		"status": status,
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": result,
 	})
 }
 
 func UnprocessableEntity(ctx *gin.Context, binder error) {
-	status := http.StatusUnprocessableEntity
-
-	ctx.JSON(status, gin.H{
+	ctx.JSON(http.StatusUnprocessableEntity, gin.H{
 		"message": binder.Error(),
-		"status":  status,
 	})
 }

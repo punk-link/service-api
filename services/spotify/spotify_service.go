@@ -7,6 +7,8 @@ import (
 	"main/responses"
 	spotifyConverters "main/utils/converters/spotify"
 	"net/url"
+
+	"github.com/rs/zerolog/log"
 )
 
 func GetArtistRelease(spotifyId string) responses.ArtistRelease {
@@ -35,8 +37,9 @@ func SearchArtist(query string) []responses.ArtistSearchResult {
 	}
 
 	var spotifyArtistSearchResults search.ArtistSearchResult
-	if err := MakeRequest("GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults); err != nil {
-		fmt.Println(err)
+	err := MakeRequest("GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
+	if err != nil {
+		log.Warn().Msg(err.Error())
 		return result
 	}
 
@@ -54,7 +57,7 @@ func getReleases(spotifyId string) []releases.ArtistRelease {
 
 		var tmpResponse releases.ArtistReleaseResult
 		if err := MakeRequest("GET", urlPattern, &tmpResponse); err != nil {
-			fmt.Println(err)
+			log.Warn().Msg(err.Error())
 			continue
 		}
 

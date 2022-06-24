@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func getAccessToken() (string, error) {
@@ -22,6 +24,7 @@ func getAccessToken() (string, error) {
 
 	request, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(payload.Encode()))
 	if err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return "", err
 	}
 
@@ -35,17 +38,20 @@ func getAccessToken() (string, error) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return "", err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return "", err
 	}
 
 	var newToken accessToken.SpotifyAccessToken
 	if err := json.Unmarshal(body, &newToken); err != nil {
+		log.Error().Err(err).Msg(err.Error())
 		return "", err
 	}
 
