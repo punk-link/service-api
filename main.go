@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"main/data"
 	"main/startup"
 	"main/utils"
 	"net/http"
@@ -23,6 +24,7 @@ func main() {
 	hostPort := utils.GetEnvironmentVariable("GIN_PORT")
 
 	app := startup.Configure()
+	data.ConfigureDatabase()
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", hostAddress, hostPort),
