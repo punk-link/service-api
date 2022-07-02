@@ -1,4 +1,4 @@
-package managers
+package organizations
 
 type Manager struct {
 	Id   int    `json:"id"`

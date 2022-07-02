@@ -2,7 +2,7 @@ package data
 
 import (
 	"fmt"
-	"main/data/managers"
+	"main/data/organizations"
 	"main/utils"
 	"time"
 
@@ -34,8 +34,10 @@ func ConfigureDatabase() {
 	sqlDb.SetConnMaxLifetime(time.Minute * 10)
 
 	DB = db
+}
 
-	DB.AutoMigrate(&managers.Manager{})
+func AutoMigrate() {
+	DB.AutoMigrate(&organizations.Manager{})
 }
 
 var DB *gorm.DB
