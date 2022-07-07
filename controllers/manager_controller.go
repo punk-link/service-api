@@ -17,7 +17,10 @@ func AddManager(ctx *gin.Context) {
 	}
 
 	// TODO: add the current manager
-	result, err := service.AddManager(organizations.Manager{}, manager)
+	result, err := service.AddManager(organizations.Manager{
+		Id:             1,
+		OrganizationId: 1,
+	}, manager)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -41,6 +44,12 @@ func GetManager(ctx *gin.Context) {
 
 	result, err := service.GetManager(id)
 	OkOrBadRequest(ctx, result, err)
+}
+
+func GetManagers(ctx *gin.Context) {
+	// TODO: put an actual manager here
+	result := service.GetOrganizationManagers(1)
+	Ok(ctx, result)
 }
 
 func ModifyManager(ctx *gin.Context) {

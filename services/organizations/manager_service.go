@@ -54,11 +54,19 @@ func GetManager(id int) (organizations.Manager, error) {
 		return organizations.Manager{}, err
 	}
 
-	return organizations.Manager{
-		Id:             dbManager.Id,
-		Name:           dbManager.Name,
-		OrganizationId: dbManager.OrganizationId,
-	}, nil
+	return toManager(dbManager), nil
+}
+
+func GetOrganizationManagers(organizationId int) []organizations.Manager {
+	var dbManagers []organizationData.Manager
+	data.DB.Where("organization_id = ?", organizationId).Find(&dbManagers)
+
+	managers := make([]organizations.Manager, len(dbManagers))
+	for i, manager := range dbManagers {
+		managers[i] = toManager(manager)
+	}
+
+	return managers
 }
 
 func ModifyManager(manager organizations.Manager, id int) (organizations.Manager, error) {
@@ -81,4 +89,12 @@ func ModifyManager(manager organizations.Manager, id int) (organizations.Manager
 	data.DB.Save(&dbManager)
 
 	return GetManager(id)
+}
+
+func toManager(source organizationData.Manager) organizations.Manager {
+	return organizations.Manager{
+		Id:             source.Id,
+		Name:           source.Name,
+		OrganizationId: source.OrganizationId,
+	}
 }

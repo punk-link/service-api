@@ -15,6 +15,7 @@ func SetupRouters(app *gin.Engine) {
 
 		v1.POST("/managers", controllers.AddManager)
 		v1.POST("/managers/master", controllers.AddMasterManager)
+		v1.GET("/managers", controllers.GetManagers)
 		v1.GET("/managers/:id", controllers.GetManager)
 		v1.POST("/managers/:id", controllers.ModifyManager)
 
