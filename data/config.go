@@ -34,10 +34,16 @@ func ConfigureDatabase() {
 	sqlDb.SetConnMaxLifetime(time.Minute * 10)
 
 	DB = db
+
+	AutoMigrate()
 }
 
 func AutoMigrate() {
-	DB.AutoMigrate(&organizations.Manager{})
+	err := DB.AutoMigrate(&organizations.Organization{}, &organizations.Manager{})
+
+	if err != nil {
+		log.Fatal().AnErr(err.Error(), err)
+	}
 }
 
 var DB *gorm.DB

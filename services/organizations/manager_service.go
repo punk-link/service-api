@@ -1,22 +1,28 @@
 package organizations
 
 import (
-	"errors"
 	"main/data"
-	dataOrganizations "main/data/organizations"
+	organizationData "main/data/organizations"
 	"main/models/organizations"
-	"strings"
+	requests "main/requests/organizations"
+	"main/services/helpers"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
-func AddManager(manager organizations.Manager) (organizations.Manager, error) {
-	if len(manager.Name) == 0 {
-		return organizations.Manager{}, errors.New("manager's name must be provided")
+func AddManager(currentManager organizations.Manager, manager organizations.Manager) (organizations.Manager, error) {
+	trimmedName, err := validateAndTrimName(manager.Name)
+	if err != nil {
+		return organizations.Manager{}, err
 	}
 
-	dbManager := dataOrganizations.Manager{
-		Name: strings.TrimSpace(manager.Name),
+	now := time.Now().UTC()
+	dbManager := organizationData.Manager{
+		Created:        now,
+		Name:           trimmedName,
+		OrganizationId: currentManager.OrganizationId,
+		Updated:        now,
 	}
 
 	result := data.DB.Create(&dbManager)
@@ -25,47 +31,54 @@ func AddManager(manager organizations.Manager) (organizations.Manager, error) {
 		return organizations.Manager{}, result.Error
 	}
 
-	return organizations.Manager{
-		Id:   dbManager.Id,
-		Name: dbManager.Name,
-	}, nil
+	return GetManager(dbManager.Id)
 }
 
-func GetManager(managerId int) (organizations.Manager, error) {
-	var dbManager dataOrganizations.Manager
-	result := data.DB.First(&dbManager, managerId)
+func AddMasterManager(request requests.AddMasterManagerRequest) (organizations.Manager, error) {
+	organization, err := AddOrganization(request.OrganizationName)
+	if err != nil {
+		return organizations.Manager{}, err
+	}
 
-	if result.RowsAffected != 1 {
-		if result.Error != nil {
-			return organizations.Manager{}, result.Error
-		}
+	manager, err := AddManager(organizations.Manager{OrganizationId: organization.Id}, organizations.Manager{Name: request.Name})
+	if err != nil {
+		return organizations.Manager{}, err
+	}
 
-		return organizations.Manager{}, errors.New("no managers found")
+	return GetManager(manager.Id)
+}
+
+func GetManager(id int) (organizations.Manager, error) {
+	dbManager, err := helpers.GetData[organizationData.Manager](id)
+	if err != nil {
+		return organizations.Manager{}, err
 	}
 
 	return organizations.Manager{
-		Id:   dbManager.Id,
-		Name: dbManager.Name,
+		Id:             dbManager.Id,
+		Name:           dbManager.Name,
+		OrganizationId: dbManager.OrganizationId,
 	}, nil
 }
 
-func ModifyManager(manager organizations.Manager, managerId int) (organizations.Manager, error) {
-	var dbManager dataOrganizations.Manager
-	result := data.DB.First(&dbManager, managerId)
-
-	if result.RowsAffected != 1 {
-		if result.Error != nil {
-			return organizations.Manager{}, result.Error
-		}
-
-		return organizations.Manager{}, errors.New("no managers found")
+func ModifyManager(manager organizations.Manager, id int) (organizations.Manager, error) {
+	if err := validateId(manager.Id, id); err != nil {
+		return organizations.Manager{}, err
 	}
 
-	dbManager.Name = manager.Name
+	trimmedName, err := validateAndTrimName(manager.Name)
+	if err != nil {
+		return organizations.Manager{}, err
+	}
+
+	dbManager, err := helpers.GetData[organizationData.Manager](id)
+	if err != nil {
+		return organizations.Manager{}, err
+	}
+
+	dbManager.Name = trimmedName
+	dbManager.Updated = time.Now().UTC()
 	data.DB.Save(&dbManager)
 
-	return organizations.Manager{
-		Id:   dbManager.Id,
-		Name: dbManager.Name,
-	}, nil
+	return GetManager(id)
 }

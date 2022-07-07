@@ -2,11 +2,11 @@ package organizations
 
 import "time"
 
-type Manager struct {
+type Organization struct {
 	Id      int       `gorm:"primaryKey,autoIncrement"`
 	Created time.Time `gorm:"not null"`
 	Name    string    `gorm:"not null"`
 	Updated time.Time `gorm:"not null"`
 
-	OrganizationId int
+	Managers []Manager
 }
