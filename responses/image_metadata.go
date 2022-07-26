@@ -1,6 +1,6 @@
 package responses
 
 type ImageMetadata struct {
-	Height int
-	Url    string
+	Height int    `json:"height"`
+	Url    string `json:"url"`
 }
