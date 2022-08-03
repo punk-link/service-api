@@ -17,7 +17,13 @@ import (
 )
 
 func main() {
-	environmentName := utils.GetEnvironmentVariable("GO_ENVIRONMENT")
+	environmentName := "Development"
+
+	envName := utils.GetEnvironmentVariable("GO_ENVIRONMENT")
+	if envName != "" {
+		environmentName = envName
+	}
+
 	log.Info().Msgf("Artist Updater API is running as '%s'", environmentName)
 
 	hostAddress := utils.GetEnvironmentVariable("GIN_ADDR")

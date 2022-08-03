@@ -1,27 +1,72 @@
 package utils
 
 import (
+	"bufio"
+	"os"
+	"strings"
+
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 func init() {
-	viper.AddConfigPath(".")
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
+	localVariables := getLocalVariables()
+	systemVariables := getSystemVariables()
 
-	viper.AutomaticEnv()
+	totalLength := len(localVariables) + len(systemVariables)
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Error().Msgf("Server forced to shutdown: %s", err)
-		panic(err)
+	variables = make(map[string]string, totalLength)
+	for key, value := range localVariables {
+		variables[key] = value
+	}
+
+	for key, value := range systemVariables {
+		variables[key] = value
 	}
 }
 
 func GetEnvironmentVariable(name string) string {
-	if !viper.IsSet(name) {
-		return ""
+	if result, ok := variables[name]; ok {
+		return result
 	}
 
-	return viper.GetString(name)
+	log.Warn().Msgf("No configuration value has been found for `%s`", name)
+	return ""
 }
+
+func getLocalVariables() map[string]string {
+	file, err := os.Open(".env")
+	if err != nil {
+		log.Warn().Msgf("Can't read configuration file: %s", err)
+		return make(map[string]string, 0)
+	}
+
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	slice := make([]string, 0)
+	for fileScanner.Scan() {
+		slice = append(slice, fileScanner.Text())
+	}
+
+	file.Close()
+
+	return splitKeysAndValues(slice)
+}
+
+func getSystemVariables() map[string]string {
+	variables := os.Environ()
+	return splitKeysAndValues(variables)
+}
+
+func splitKeysAndValues(source []string) map[string]string {
+	result := make(map[string]string, len(source))
+
+	for _, value := range source {
+		split := strings.SplitN(value, "=", 2)
+		result[split[0]] = split[1]
+	}
+
+	return result
+}
+
+var variables map[string]string

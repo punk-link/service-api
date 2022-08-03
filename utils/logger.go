@@ -9,9 +9,14 @@ import (
 )
 
 func init() {
-	logLevel := strings.ToLower(GetEnvironmentVariable("LOG_LEVEL"))
+	var logLevel = "Debug"
 
-	switch logLevel {
+	level := GetEnvironmentVariable("LOG_LEVEL")
+	if level != "" {
+		logLevel = level
+	}
+
+	switch strings.ToLower(logLevel) {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	case "trace":
