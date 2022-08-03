@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -12,6 +13,7 @@ func init() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
+		log.Error().Msgf("Server forced to shutdown: %s", err)
 		panic(err)
 	}
 }
