@@ -18,5 +18,8 @@
 go.work
 
 # Config files
-app.env
 bin/
+
+app.env
+.env
+*.env

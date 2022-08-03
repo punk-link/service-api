@@ -1,0 +1,6 @@
+.git
+.vscode
+
+app.env
+Dockerfile
+.gitignore
