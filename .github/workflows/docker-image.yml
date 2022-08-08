@@ -1,4 +1,4 @@
-name: Server CI workflow
+name: regestry push
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 jobs:
   
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       -
         name: Checkout 
