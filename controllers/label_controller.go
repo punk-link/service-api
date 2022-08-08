@@ -1,37 +1,37 @@
 package controllers
 
 import (
-	"main/models/organizations"
-	service "main/services/organizations"
+	"main/models/labels"
+	service "main/services/labels"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetOrganization(ctx *gin.Context) {
+func GetLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
 		return
 	}
 
-	result, err := service.GetOrganization(id)
+	result, err := service.GetLabel(id)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func ModifyOrganization(ctx *gin.Context) {
+func ModifyLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
 		return
 	}
 
-	var organization organizations.Organization
-	if err := ctx.ShouldBindJSON(&organization); err != nil {
+	var label labels.Label
+	if err := ctx.ShouldBindJSON(&label); err != nil {
 		UnprocessableEntity(ctx, err)
 		return
 	}
 
-	result, err := service.ModifyOrganization(organization, id)
+	result, err := service.ModifyLabel(label, id)
 	OkOrBadRequest(ctx, result, err)
 }

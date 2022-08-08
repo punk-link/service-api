@@ -1,8 +1,8 @@
-package organizations
+package labels
 
 import "time"
 
-type Organization struct {
+type Label struct {
 	Id      int       `gorm:"primaryKey,autoIncrement"`
 	Created time.Time `gorm:"not null"`
 	Name    string    `gorm:"not null"`

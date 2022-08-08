@@ -2,7 +2,7 @@ package data
 
 import (
 	"fmt"
-	"main/data/organizations"
+	"main/data/labels"
 	"main/utils"
 	"time"
 
@@ -39,7 +39,7 @@ func ConfigureDatabase() {
 }
 
 func AutoMigrate() {
-	err := DB.AutoMigrate(&organizations.Organization{}, &organizations.Manager{})
+	err := DB.AutoMigrate(&labels.Label{}, &labels.Manager{})
 
 	if err != nil {
 		log.Fatal().AnErr(err.Error(), err)

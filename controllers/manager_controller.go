@@ -1,25 +1,25 @@
 package controllers
 
 import (
-	"main/models/organizations"
-	requests "main/requests/organizations"
-	service "main/services/organizations"
+	"main/models/labels"
+	requests "main/requests/labels"
+	service "main/services/labels"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AddManager(ctx *gin.Context) {
-	var manager organizations.Manager
+	var manager labels.Manager
 	if err := ctx.ShouldBindJSON(&manager); err != nil {
 		UnprocessableEntity(ctx, err)
 		return
 	}
 
 	// TODO: add the current manager
-	result, err := service.AddManager(organizations.Manager{
-		Id:             1,
-		OrganizationId: 1,
+	result, err := service.AddManager(labels.Manager{
+		Id:      1,
+		LabelId: 1,
 	}, manager)
 	OkOrBadRequest(ctx, result, err)
 }
@@ -48,7 +48,7 @@ func GetManager(ctx *gin.Context) {
 
 func GetManagers(ctx *gin.Context) {
 	// TODO: put an actual manager here
-	result := service.GetOrganizationManagers(1)
+	result := service.GetLabelManagers(1)
 	Ok(ctx, result)
 }
 
@@ -59,7 +59,7 @@ func ModifyManager(ctx *gin.Context) {
 		return
 	}
 
-	var manager organizations.Manager
+	var manager labels.Manager
 	if err := ctx.ShouldBindJSON(&manager); err != nil {
 		UnprocessableEntity(ctx, err)
 		return

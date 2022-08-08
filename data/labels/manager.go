@@ -1,4 +1,4 @@
-package organizations
+package labels
 
 import "time"
 
@@ -8,5 +8,5 @@ type Manager struct {
 	Name    string    `gorm:"not null"`
 	Updated time.Time `gorm:"not null"`
 
-	OrganizationId int
+	LabelId int
 }

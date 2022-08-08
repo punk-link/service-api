@@ -19,8 +19,8 @@ func SetupRouters(app *gin.Engine) {
 		v1.GET("/managers/:id", controllers.GetManager)
 		v1.POST("/managers/:id", controllers.ModifyManager)
 
-		v1.GET("/organizations/:id", controllers.GetOrganization)
-		v1.POST("/organizations/:id", controllers.ModifyOrganization)
+		v1.GET("/labels/:id", controllers.GetLabel)
+		v1.POST("/labels/:id", controllers.ModifyLabel)
 
 		v1.GET("/status", controllers.CheckStatus)
 	}

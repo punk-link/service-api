@@ -1,6 +1,6 @@
-package organizations
+package labels
 
-type Organization struct {
+type Label struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
