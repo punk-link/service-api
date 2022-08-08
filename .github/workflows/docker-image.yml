@@ -29,5 +29,5 @@ jobs:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.REGISTRY_URL }}/service-api:latest
+          tags: '${{ secrets.REGISTRY_URL }}/service-api:latest'
 
