@@ -30,6 +30,6 @@ jobs:
           file: ./server/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: '${{ secrets.REGISTRY_URL }}/my-project/server:latest'
-          cache-from: 'type=registry,ref=${{ secrets.REGISTRY_URL }}/my-project/server:buildcache'
-          cache-to: 'type=registry,ref=${{ secrets.REGISTRY_URL }}/my-project/server:buildcache,mode=max'
+          tags: '${{ secrets.REGISTRY_URL }}:latest'
+          cache-from: 'type=registry,ref=${{ secrets.REGISTRY_URL }}:buildcache'
+          cache-to: 'type=registry,ref=${{ secrets.REGISTRY_URL }}:buildcache,mode=max'
