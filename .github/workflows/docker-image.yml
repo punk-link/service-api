@@ -26,10 +26,8 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ./server/
-          file: ./server/Dockerfile
+          context: .
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: '${{ secrets.REGISTRY_URL }}:latest'
-          cache-from: 'type=registry,ref=${{ secrets.REGISTRY_URL }}:buildcache'
-          cache-to: 'type=registry,ref=${{ secrets.REGISTRY_URL }}:buildcache,mode=max'
+          tags: service-api:latest
+
