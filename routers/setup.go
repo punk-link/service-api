@@ -7,6 +7,8 @@ import (
 )
 
 func SetupRouters(app *gin.Engine) {
+	app.GET("/health", controllers.CheckHealth)
+
 	v1 := app.Group("/v1")
 	{
 		v1.GET("/artists/search", controllers.SearchArtist)
@@ -21,7 +23,5 @@ func SetupRouters(app *gin.Engine) {
 
 		v1.GET("/labels/:id", controllers.GetLabel)
 		v1.POST("/labels/:id", controllers.ModifyLabel)
-
-		v1.GET("/status", controllers.CheckStatus)
 	}
 }
