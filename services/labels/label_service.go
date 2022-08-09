@@ -4,18 +4,21 @@ import (
 	"main/data"
 	labelData "main/data/labels"
 	"main/models/labels"
+	"main/services/common"
 	"main/services/helpers"
 	validator "main/services/labels/validators"
 	"strings"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
-type LabelService struct{}
+type LabelService struct {
+	logger *common.Logger
+}
 
-func NewLabelService() *LabelService {
-	return &LabelService{}
+func BuildLabelService(logger *common.Logger) *LabelService {
+	return &LabelService{
+		logger: logger,
+	}
 }
 
 func (service *LabelService) AddLabel(labelName string) (labels.Label, error) {
@@ -33,7 +36,7 @@ func (service *LabelService) AddLabel(labelName string) (labels.Label, error) {
 
 	result := data.DB.Create(&dbLabel)
 	if result.Error != nil {
-		log.Logger.Error().Err(result.Error).Msg(result.Error.Error())
+		service.logger.LogError(result.Error, result.Error.Error())
 		return labels.Label{}, result.Error
 	}
 

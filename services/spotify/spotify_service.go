@@ -5,17 +5,26 @@ import (
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
 	"main/responses"
+	"main/services/common"
 	spotifyConverters "main/utils/converters/spotify"
 	"net/url"
-
-	"github.com/rs/zerolog/log"
 )
 
-func GetArtistRelease(spotifyId string) responses.ArtistRelease {
+type SpotifyService struct {
+	logger *common.Logger
+}
+
+func BuildSpotifyService(logger *common.Logger) *SpotifyService {
+	return &SpotifyService{
+		logger: logger,
+	}
+}
+
+func (service *SpotifyService) GetArtistRelease(spotifyId string) responses.ArtistRelease {
 	var result responses.ArtistRelease
 
 	var spotifyRelease releases.ArtistRelease
-	if err := MakeRequest("GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
+	if err := MakeRequest(service.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
 		fmt.Println(err)
 		return result
 	}
@@ -23,12 +32,12 @@ func GetArtistRelease(spotifyId string) responses.ArtistRelease {
 	return spotifyConverters.ToRelease(spotifyRelease)
 }
 
-func GetArtistReleases(spotifyId string) []responses.ArtistRelease {
-	spotifyReleases := getReleases(spotifyId)
+func (service *SpotifyService) GetArtistReleases(spotifyId string) []responses.ArtistRelease {
+	spotifyReleases := service.getReleases(spotifyId)
 	return spotifyConverters.ToReleases(spotifyReleases)
 }
 
-func SearchArtist(query string) []responses.ArtistSearchResult {
+func (service *SpotifyService) SearchArtist(query string) []responses.ArtistSearchResult {
 	var result []responses.ArtistSearchResult
 
 	const minimalQueryLength int = 3
@@ -37,16 +46,16 @@ func SearchArtist(query string) []responses.ArtistSearchResult {
 	}
 
 	var spotifyArtistSearchResults search.ArtistSearchResult
-	err := MakeRequest("GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
+	err := MakeRequest(service.logger, "GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
 	if err != nil {
-		log.Warn().Msg(err.Error())
+		service.logger.LogWarn(err.Error())
 		return result
 	}
 
 	return spotifyConverters.ToArtistSearchResults(spotifyArtistSearchResults.Artists.Items)
 }
 
-func getReleases(spotifyId string) []releases.ArtistRelease {
+func (service *SpotifyService) getReleases(spotifyId string) []releases.ArtistRelease {
 	const queryLimit int = 20
 
 	var spotifyResponse releases.ArtistReleaseResult
@@ -56,8 +65,8 @@ func getReleases(spotifyId string) []releases.ArtistRelease {
 		offset = offset + queryLimit
 
 		var tmpResponse releases.ArtistReleaseResult
-		if err := MakeRequest("GET", urlPattern, &tmpResponse); err != nil {
-			log.Warn().Msg(err.Error())
+		if err := MakeRequest(service.logger, "GET", urlPattern, &tmpResponse); err != nil {
+			service.logger.LogWarn(err.Error())
 			continue
 		}
 

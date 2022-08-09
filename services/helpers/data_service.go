@@ -3,7 +3,6 @@ package helpers
 import (
 	"fmt"
 	"main/data"
-	"reflect"
 )
 
 func GetEntity[T any](id int) (T, error) {
@@ -15,7 +14,7 @@ func GetEntity[T any](id int) (T, error) {
 			return target, result.Error
 		}
 
-		return target, fmt.Errorf("no items of type '%s' found", reflect.TypeOf(target))
+		return target, fmt.Errorf("no items of type '%s' found", GetStructNameAsString(target))
 	}
 
 	return target, nil

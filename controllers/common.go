@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"main/models/labels"
+	"main/services/common"
 	service "main/services/labels"
 	"strconv"
 
@@ -16,6 +17,6 @@ func getCurrentManagerContext(ctx *gin.Context) (labels.ManagerContext, error) {
 	}
 
 	// TODO: add an injection maybe
-	managerService := service.NewManagerService(&service.LabelService{})
+	managerService := service.BuildManagerService(&service.LabelService{}, &common.Logger{})
 	return managerService.GetManagerContext(managerId)
 }

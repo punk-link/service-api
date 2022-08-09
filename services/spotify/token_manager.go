@@ -3,29 +3,52 @@ package spotify
 import (
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"main/models/spotify/accessToken"
+	"main/services/common"
 	"main/utils"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
-func getAccessToken() (string, error) {
+func getAccessToken(logger *common.Logger) (string, error) {
 	if len(tokenContainer.Token) != 0 || time.Now().Before(tokenContainer.ExpiresAt) {
 		return tokenContainer.Token, nil
 	}
 
+	request, err := getAccessTokenRequest(logger)
+	if err != nil {
+		logger.LogError(err, err.Error())
+		return "", err
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		logger.LogError(err, err.Error())
+		return "", err
+	}
+	defer response.Body.Close()
+
+	tokenContainer, err = parseToken(logger, response)
+	if err != nil {
+		logger.LogError(err, err.Error())
+		return "", err
+	}
+
+	return tokenContainer.Token, nil
+}
+
+func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
 	request, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(payload.Encode()))
 	if err != nil {
-		log.Error().Err(err).Msg(err.Error())
-		return "", err
+		logger.LogError(err, err.Error())
+		return nil, err
 	}
 
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -35,32 +58,26 @@ func getAccessToken() (string, error) {
 	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
 	request.Header.Add("Authorization", credentials)
 
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Error().Err(err).Msg(err.Error())
-		return "", err
-	}
-	defer response.Body.Close()
+	return request, nil
+}
 
-	body, err := ioutil.ReadAll(response.Body)
+func parseToken(logger *common.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Error().Err(err).Msg(err.Error())
-		return "", err
+		logger.LogError(err, err.Error())
+		return accessToken.SpotifyAccessTokenContainer{}, err
 	}
 
 	var newToken accessToken.SpotifyAccessToken
 	if err := json.Unmarshal(body, &newToken); err != nil {
-		log.Error().Err(err).Msg(err.Error())
-		return "", err
+		logger.LogError(err, err.Error())
+		return accessToken.SpotifyAccessTokenContainer{}, err
 	}
 
-	tokenContainer = accessToken.SpotifyAccessTokenContainer{
+	return accessToken.SpotifyAccessTokenContainer{
 		ExpiresAt: time.Now().Add(time.Second*time.Duration(newToken.ExpiresIn) - safetyThreshold),
 		Token:     newToken.Token,
-	}
-
-	return tokenContainer.Token, nil
+	}, nil
 }
 
 var tokenContainer accessToken.SpotifyAccessTokenContainer

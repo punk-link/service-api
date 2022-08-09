@@ -2,21 +2,31 @@ package controllers
 
 import (
 	"main/data"
+	"main/services/common"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 )
 
-func CheckHealth(ctx *gin.Context) {
+type StatusController struct {
+	logger *common.Logger
+}
+
+func BuildStatusController(logger *common.Logger) *StatusController {
+	return &StatusController{
+		logger: logger,
+	}
+}
+
+func (controller *StatusController) CheckHealth(ctx *gin.Context) {
 	sqlDb, err := data.DB.DB()
 	if err != nil {
-		log.Error().Err(err).Msgf("Postgres initialization failed: %v", err.Error())
+		controller.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
 	}
 
 	err = sqlDb.Ping()
 	if err != nil {
-		log.Error().Err(err).Msgf("Can't reach any database instances: %v", err.Error())
+		controller.logger.LogError(err, "Can't reach any database instances: %v", err.Error())
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}

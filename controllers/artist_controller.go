@@ -6,23 +6,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetRelease(ctx *gin.Context) {
+type ArtistController struct {
+	spotifyService *spotify.SpotifyService
+}
+
+func BuildArtistController(spotifyService *spotify.SpotifyService) *ArtistController {
+	return &ArtistController{
+		spotifyService: spotifyService,
+	}
+}
+
+func (controller *ArtistController) GetRelease(ctx *gin.Context) {
 	spotifyId := ctx.Param("spotify-id")
 
-	result := spotify.GetArtistRelease(spotifyId)
+	result := controller.spotifyService.GetArtistRelease(spotifyId)
 	Ok(ctx, result)
 }
 
-func GetReleases(ctx *gin.Context) {
+func (controller *ArtistController) GetReleases(ctx *gin.Context) {
 	spotifyId := ctx.Param("spotify-id")
 
-	result := spotify.GetArtistReleases(spotifyId)
+	result := controller.spotifyService.GetArtistReleases(spotifyId)
 	Ok(ctx, result)
 }
 
-func SearchArtist(ctx *gin.Context) {
+func (controller *ArtistController) SearchArtist(ctx *gin.Context) {
 	query := ctx.Query("query")
 
-	result := spotify.SearchArtist(query)
+	result := controller.spotifyService.SearchArtist(query)
 	Ok(ctx, result)
 }

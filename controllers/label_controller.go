@@ -12,7 +12,7 @@ type LabelController struct {
 	labelService *service.LabelService
 }
 
-func NewLabelController(labelService *service.LabelService) *LabelController {
+func BuildLabelController(labelService *service.LabelService) *LabelController {
 	return &LabelController{
 		labelService: labelService,
 	}

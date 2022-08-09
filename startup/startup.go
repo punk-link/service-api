@@ -2,11 +2,10 @@ package startup
 
 import (
 	"main/controllers"
-	"main/routers"
+	"main/services/common"
 	labelServices "main/services/labels"
-	"main/utils"
+	spotifyServices "main/services/spotify"
 
-	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -14,26 +13,30 @@ import (
 )
 
 func Configure() *gin.Engine {
-	err := sentry.Init(sentry.ClientOptions{
-		AttachStacktrace: true,
-		Dsn:              utils.GetEnvironmentVariable("SENTRY_DSN"),
-		TracesSampleRate: 1.0,
-	})
-	if err != nil {
-		log.Error().Err(err).Msgf("Sentry initialization failed: %v", err.Error())
-	}
-
 	diContainer := dig.New()
-	diContainer.Provide(labelServices.NewLabelService)
-	diContainer.Provide(labelServices.NewManagerService)
-	diContainer.Provide(controllers.NewManagerController)
-	diContainer.Provide(controllers.NewLabelController)
+
+	diContainer.Provide(common.BuildLogger)
+	diContainer.Provide(labelServices.BuildLabelService)
+	diContainer.Provide(labelServices.BuildManagerService)
+	diContainer.Provide(spotifyServices.BuildSpotifyService)
+
+	diContainer.Provide(controllers.BuildArtistController)
+	diContainer.Provide(controllers.BuildLabelController)
+	diContainer.Provide(controllers.BuildManagerController)
+	diContainer.Provide(controllers.BuildStatusController)
 
 	app := gin.Default()
 	app.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))
-	routers.SetupRouters(app, diContainer)
+
+	err := diContainer.Invoke(func(logger *common.Logger) {
+		initSentry(logger)
+		setupRouts(app, diContainer, logger)
+	})
+	if err != nil {
+		log.Error().Err(err).Msgf("Can't resolve a logger: %v", err.Error())
+	}
 
 	return app
 }

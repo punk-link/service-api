@@ -5,21 +5,22 @@ import (
 	labelData "main/data/labels"
 	"main/models/labels"
 	requests "main/requests/labels"
+	"main/services/common"
 	"main/services/helpers"
 	validator "main/services/labels/validators"
 	"strings"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 type ManagerService struct {
 	labelService *LabelService
+	logger       *common.Logger
 }
 
-func NewManagerService(labelService *LabelService) *ManagerService {
+func BuildManagerService(labelService *LabelService, logger *common.Logger) *ManagerService {
 	return &ManagerService{
 		labelService: labelService,
+		logger:       logger,
 	}
 }
 
@@ -39,7 +40,7 @@ func (service *ManagerService) AddManager(currentManager labels.ManagerContext, 
 
 	result := data.DB.Create(&dbManager)
 	if result.Error != nil {
-		log.Logger.Error().Err(result.Error).Msg(result.Error.Error())
+		service.logger.LogError(result.Error, result.Error.Error())
 		return labels.Manager{}, result.Error
 	}
 
