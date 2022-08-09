@@ -16,11 +16,13 @@ func AddManager(ctx *gin.Context) {
 		return
 	}
 
-	// TODO: add the current manager
-	result, err := service.AddManager(labels.Manager{
-		Id:      1,
-		LabelId: 1,
-	}, manager)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := service.AddManager(manager, currentManager)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -42,13 +44,24 @@ func GetManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.GetManager(id)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := service.GetManager(id, currentManager)
 	OkOrBadRequest(ctx, result, err)
 }
 
 func GetManagers(ctx *gin.Context) {
-	// TODO: put an actual manager here
-	result := service.GetLabelManagers(1)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result := service.GetLabelManagers(currentManager)
 	Ok(ctx, result)
 }
 
@@ -65,6 +78,12 @@ func ModifyManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.ModifyManager(manager, id)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := service.ModifyManager(manager, id, currentManager)
 	OkOrBadRequest(ctx, result, err)
 }

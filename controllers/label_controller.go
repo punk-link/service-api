@@ -15,7 +15,13 @@ func GetLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.GetLabel(id)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := service.GetLabel(id, currentManager)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -32,6 +38,12 @@ func ModifyLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.ModifyLabel(label, id)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := service.ModifyLabel(label, id, currentManager)
 	OkOrBadRequest(ctx, result, err)
 }
