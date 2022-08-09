@@ -12,7 +12,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func AddLabel(labelName string) (labels.Label, error) {
+type LabelService struct{}
+
+func NewLabelService() *LabelService {
+	return &LabelService{}
+}
+
+func (service *LabelService) AddLabel(labelName string) (labels.Label, error) {
 	trimmedName := strings.TrimSpace(labelName)
 	if err := validator.NameNotEmpty(trimmedName); err != nil {
 		return labels.Label{}, err
@@ -34,7 +40,7 @@ func AddLabel(labelName string) (labels.Label, error) {
 	return getLabelWithoutContextCheck(dbLabel.Id)
 }
 
-func GetLabel(id int, currentManager labels.ManagerContext) (labels.Label, error) {
+func (service *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
 	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
 		return labels.Label{}, err
 	}
@@ -42,7 +48,7 @@ func GetLabel(id int, currentManager labels.ManagerContext) (labels.Label, error
 	return getLabelWithoutContextCheck(id)
 }
 
-func ModifyLabel(label labels.Label, id int, currentManager labels.ManagerContext) (labels.Label, error) {
+func (service *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
 	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
 		return labels.Label{}, err
 	}
@@ -56,7 +62,7 @@ func ModifyLabel(label labels.Label, id int, currentManager labels.ManagerContex
 		return labels.Label{}, err
 	}
 
-	dbLabel, err := helpers.GetData[labelData.Label](label.Id)
+	dbLabel, err := helpers.GetEntity[labelData.Label](label.Id)
 	if err != nil {
 		return labels.Label{}, err
 	}
@@ -65,11 +71,11 @@ func ModifyLabel(label labels.Label, id int, currentManager labels.ManagerContex
 	dbLabel.Updated = time.Now().UTC()
 	data.DB.Save(&dbLabel)
 
-	return GetLabel(label.Id, currentManager)
+	return service.GetLabel(currentManager, label.Id)
 }
 
 func getLabelWithoutContextCheck(id int) (labels.Label, error) {
-	dbLabel, err := helpers.GetData[labelData.Label](id)
+	dbLabel, err := helpers.GetEntity[labelData.Label](id)
 	if err != nil {
 		return labels.Label{}, err
 	}

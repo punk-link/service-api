@@ -13,7 +13,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func AddManager(manager labels.Manager, currentManager labels.ManagerContext) (labels.Manager, error) {
+type ManagerService struct {
+	labelService *LabelService
+}
+
+func NewManagerService(labelService *LabelService) *ManagerService {
+	return &ManagerService{
+		labelService: labelService,
+	}
+}
+
+func (service *ManagerService) AddManager(currentManager labels.ManagerContext, manager labels.Manager) (labels.Manager, error) {
 	trimmedName := strings.TrimSpace(manager.Name)
 	if err := validator.NameNotEmpty(trimmedName); err != nil {
 		return labels.Manager{}, err
@@ -33,26 +43,26 @@ func AddManager(manager labels.Manager, currentManager labels.ManagerContext) (l
 		return labels.Manager{}, result.Error
 	}
 
-	return GetManager(dbManager.Id, currentManager)
+	return service.GetManager(currentManager, dbManager.Id)
 }
 
-func AddMasterManager(request requests.AddMasterManagerRequest) (labels.Manager, error) {
-	label, err := AddLabel(request.LabelName)
+func (service *ManagerService) AddMasterManager(request requests.AddMasterManagerRequest) (labels.Manager, error) {
+	label, err := service.labelService.AddLabel(request.LabelName)
 	if err != nil {
 		return labels.Manager{}, err
 	}
 
-	manager, err := AddManager(labels.Manager{Name: request.Name}, labels.ManagerContext{LabelId: label.Id})
+	manager, err := service.AddManager(labels.ManagerContext{LabelId: label.Id}, labels.Manager{Name: request.Name})
 	if err != nil {
 		return labels.Manager{}, err
 	}
 
-	currentManager, _ := GetManagerContext(manager.Id) // Assuming there is no error here
-	return GetManager(manager.Id, currentManager)
+	currentManager, _ := service.GetManagerContext(manager.Id) // Assuming there is no error here
+	return service.GetManager(currentManager, manager.Id)
 }
 
-func GetManager(id int, currentManager labels.ManagerContext) (labels.Manager, error) {
-	dbManager, err := helpers.GetData[labelData.Manager](id)
+func (service *ManagerService) GetManager(currentManager labels.ManagerContext, id int) (labels.Manager, error) {
+	dbManager, err := helpers.GetEntity[labelData.Manager](id)
 	if err != nil {
 		return labels.Manager{}, err
 	}
@@ -64,8 +74,8 @@ func GetManager(id int, currentManager labels.ManagerContext) (labels.Manager, e
 	return toManager(dbManager), nil
 }
 
-func GetManagerContext(id int) (labels.ManagerContext, error) {
-	dbManager, err := helpers.GetData[labelData.Manager](id)
+func (service *ManagerService) GetManagerContext(id int) (labels.ManagerContext, error) {
+	dbManager, err := helpers.GetEntity[labelData.Manager](id)
 	if err != nil {
 		return labels.ManagerContext{}, err
 	}
@@ -76,7 +86,7 @@ func GetManagerContext(id int) (labels.ManagerContext, error) {
 	}, nil
 }
 
-func GetLabelManagers(currentManager labels.ManagerContext) []labels.Manager {
+func (service *ManagerService) GetLabelManagers(currentManager labels.ManagerContext) []labels.Manager {
 	var dbManagers []labelData.Manager
 	data.DB.Where("label_id = ?", currentManager.LabelId).Find(&dbManagers)
 
@@ -88,7 +98,7 @@ func GetLabelManagers(currentManager labels.ManagerContext) []labels.Manager {
 	return managers
 }
 
-func ModifyManager(manager labels.Manager, id int, currentManager labels.ManagerContext) (labels.Manager, error) {
+func (service *ManagerService) ModifyManager(currentManager labels.ManagerContext, manager labels.Manager, id int) (labels.Manager, error) {
 	if err := validator.IdConsistsOverRequest(manager.Id, id); err != nil {
 		return labels.Manager{}, err
 	}
@@ -98,7 +108,7 @@ func ModifyManager(manager labels.Manager, id int, currentManager labels.Manager
 		return labels.Manager{}, err
 	}
 
-	dbManager, err := helpers.GetData[labelData.Manager](id)
+	dbManager, err := helpers.GetEntity[labelData.Manager](id)
 	if err != nil {
 		return labels.Manager{}, err
 	}
@@ -111,7 +121,7 @@ func ModifyManager(manager labels.Manager, id int, currentManager labels.Manager
 	dbManager.Updated = time.Now().UTC()
 	data.DB.Save(&dbManager)
 
-	return GetManager(id, currentManager)
+	return service.GetManager(currentManager, id)
 }
 
 func toManager(source labelData.Manager) labels.Manager {

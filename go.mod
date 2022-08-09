@@ -7,6 +7,7 @@ require github.com/gin-gonic/gin v1.8.1 // direct
 require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/rs/zerolog v1.27.0
+	go.uber.org/dig v1.15.0
 	gorm.io/driver/postgres v1.3.7
 	gorm.io/gorm v1.23.6
 )
@@ -42,5 +43,4 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0 // indirect
 )

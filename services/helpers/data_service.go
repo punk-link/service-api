@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-func GetData[T any](id int) (T, error) {
+func GetEntity[T any](id int) (T, error) {
 	var target T
 	result := data.DB.First(&target, id)
 

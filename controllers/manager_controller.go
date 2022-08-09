@@ -9,7 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AddManager(ctx *gin.Context) {
+type ManagerController struct {
+	managerService *service.ManagerService
+}
+
+func NewManagerController(managerService *service.ManagerService) *ManagerController {
+	return &ManagerController{
+		managerService: managerService,
+	}
+}
+
+func (controller *ManagerController) AddManager(ctx *gin.Context) {
 	var manager labels.Manager
 	if err := ctx.ShouldBindJSON(&manager); err != nil {
 		UnprocessableEntity(ctx, err)
@@ -22,22 +32,22 @@ func AddManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.AddManager(manager, currentManager)
+	result, err := controller.managerService.AddManager(currentManager, manager)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func AddMasterManager(ctx *gin.Context) {
+func (controller *ManagerController) AddMasterManager(ctx *gin.Context) {
 	var request requests.AddMasterManagerRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		UnprocessableEntity(ctx, err)
 		return
 	}
 
-	result, err := service.AddMasterManager(request)
+	result, err := controller.managerService.AddMasterManager(request)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func GetManager(ctx *gin.Context) {
+func (controller *ManagerController) GetManager(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -50,22 +60,22 @@ func GetManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.GetManager(id, currentManager)
+	result, err := controller.managerService.GetManager(currentManager, id)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func GetManagers(ctx *gin.Context) {
+func (controller *ManagerController) GetManagers(ctx *gin.Context) {
 	currentManager, err := getCurrentManagerContext(ctx)
 	if err != nil {
 		NotFound(ctx, err.Error())
 		return
 	}
 
-	result := service.GetLabelManagers(currentManager)
+	result := controller.managerService.GetLabelManagers(currentManager)
 	Ok(ctx, result)
 }
 
-func ModifyManager(ctx *gin.Context) {
+func (controller *ManagerController) ModifyManager(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -84,6 +94,6 @@ func ModifyManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.ModifyManager(manager, id, currentManager)
+	result, err := controller.managerService.ModifyManager(currentManager, manager, id)
 	OkOrBadRequest(ctx, result, err)
 }

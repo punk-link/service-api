@@ -8,7 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetLabel(ctx *gin.Context) {
+type LabelController struct {
+	labelService *service.LabelService
+}
+
+func NewLabelController(labelService *service.LabelService) *LabelController {
+	return &LabelController{
+		labelService: labelService,
+	}
+}
+
+func (controller *LabelController) GetLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -21,11 +31,11 @@ func GetLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.GetLabel(id, currentManager)
+	result, err := controller.labelService.GetLabel(currentManager, id)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func ModifyLabel(ctx *gin.Context) {
+func (controller *LabelController) ModifyLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -44,6 +54,6 @@ func ModifyLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := service.ModifyLabel(label, id, currentManager)
+	result, err := controller.labelService.ModifyLabel(currentManager, label, id)
 	OkOrBadRequest(ctx, result, err)
 }
