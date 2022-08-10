@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"main/infrastructure"
 	"main/models/spotify/accessToken"
 	"main/services/common"
-	"main/utils"
 	"net/http"
 	"net/url"
 	"strings"
@@ -53,8 +53,8 @@ func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	clientId := utils.GetEnvironmentVariable("SPOTIFY_CLIENT_ID")
-	clientSecret := utils.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET")
+	clientId := infrastructure.GetEnvironmentVariable("SPOTIFY_CLIENT_ID")
+	clientSecret := infrastructure.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET")
 	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
 	request.Header.Add("Authorization", credentials)
 

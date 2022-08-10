@@ -3,7 +3,7 @@ package data
 import (
 	"fmt"
 	"main/data/labels"
-	"main/utils"
+	"main/infrastructure"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -12,10 +12,10 @@ import (
 )
 
 func ConfigureDatabase() {
-	host := utils.GetEnvironmentVariable("DB_HOST")
-	port := utils.GetEnvironmentVariable("DB_PORT")
-	userName := utils.GetEnvironmentVariable("DB_USERNAME")
-	password := utils.GetEnvironmentVariable("DB_PASSWORD")
+	host := infrastructure.GetEnvironmentVariable("DB_HOST")
+	port := infrastructure.GetEnvironmentVariable("DB_PORT")
+	userName := infrastructure.GetEnvironmentVariable("DB_USERNAME")
+	password := infrastructure.GetEnvironmentVariable("DB_PASSWORD")
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password),
 		PreferSimpleProtocol: true,

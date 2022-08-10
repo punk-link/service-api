@@ -1,0 +1,5 @@
+package consul
+
+func init() {
+
+}

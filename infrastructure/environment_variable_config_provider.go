@@ -1,4 +1,4 @@
-package utils
+package infrastructure
 
 import (
 	"bufio"
@@ -29,7 +29,7 @@ func GetEnvironmentVariable(name string) string {
 		return result
 	}
 
-	log.Warn().Msgf("No configuration value has been found for `%s`", name)
+	log.Warn().Msgf("No configuration value has been found for '%s'", name)
 	return ""
 }
 
