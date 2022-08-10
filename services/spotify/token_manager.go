@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"main/infrastructure"
+	"main/infrastructure/consul"
 	"main/models/spotify/accessToken"
 	"main/services/common"
 	"net/http"
@@ -51,12 +51,15 @@ func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 		return nil, err
 	}
 
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	consul := consul.BuildConsulClient(logger, "service-api")
+	spotifySettings := consul.Get("SpotifySettings").(map[string]interface{})
 
-	clientId := infrastructure.GetEnvironmentVariable("SPOTIFY_CLIENT_ID")
-	clientSecret := infrastructure.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET")
+	clientId := spotifySettings["ClientId"].(string)
+	clientSecret := spotifySettings["ClientSecret"].(string)
 	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
+
 	request.Header.Add("Authorization", credentials)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	return request, nil
 }

@@ -24,6 +24,15 @@ func init() {
 	}
 }
 
+func GetEnvironmentName() string {
+	name := GetEnvironmentVariable("GO_ENVIRONMENT")
+	if name != "" {
+		return name
+	}
+
+	return "Development"
+}
+
 func GetEnvironmentVariable(name string) string {
 	if result, ok := variables[name]; ok {
 		return result
@@ -31,6 +40,15 @@ func GetEnvironmentVariable(name string) string {
 
 	log.Warn().Msgf("No configuration value has been found for '%s'", name)
 	return ""
+}
+
+func GetLogLevel() string {
+	level := GetEnvironmentVariable("LOG_LEVEL")
+	if level != "" {
+		return level
+	}
+
+	return "Error"
 }
 
 func getLocalVariables() map[string]string {

@@ -2,15 +2,23 @@ package startup
 
 import (
 	"main/infrastructure"
+	"main/infrastructure/consul"
 	"main/services/common"
 
 	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
+	"github.com/gin-gonic/gin"
 )
 
-func initSentry(logger *common.Logger) {
+func initSentry(app *gin.Engine, logger *common.Logger, consul *consul.ConsulClient) {
+	app.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
+
+	dsn := consul.Get("SentryDsn").(string)
 	err := sentry.Init(sentry.ClientOptions{
 		AttachStacktrace: true,
-		Dsn:              infrastructure.GetEnvironmentVariable("SENTRY_DSN"),
+		Dsn:              infrastructure.GetEnvironmentVariable(dsn),
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {

@@ -3,30 +3,33 @@ package data
 import (
 	"fmt"
 	"main/data/labels"
-	"main/infrastructure"
+	"main/infrastructure/consul"
+	"main/services/common"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func ConfigureDatabase() {
-	host := infrastructure.GetEnvironmentVariable("DB_HOST")
-	port := infrastructure.GetEnvironmentVariable("DB_PORT")
-	userName := infrastructure.GetEnvironmentVariable("DB_USERNAME")
-	password := infrastructure.GetEnvironmentVariable("DB_PASSWORD")
+func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
+	dbSettings := consul.Get("DatabaseSettings").(map[string]interface{})
+
+	host := dbSettings["Host"].(string)
+	port := dbSettings["Port"].(string)
+	userName := dbSettings["Username"].(string)
+	password := dbSettings["Password"].(string)
+
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password),
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{})
 	if err != nil {
-		log.Error().Err(err).Msgf("Postgres initialization failed: %v", err.Error())
+		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
 	}
 
 	sqlDb, err := db.DB()
 	if err != nil {
-		log.Error().Err(err).Msgf("Postgres initialization failed: %v", err.Error())
+		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
 	}
 
 	sqlDb.SetConnMaxIdleTime(10)
@@ -35,14 +38,14 @@ func ConfigureDatabase() {
 
 	DB = db
 
-	AutoMigrate()
+	AutoMigrate(logger)
 }
 
-func AutoMigrate() {
+func AutoMigrate(logger *common.Logger) {
 	err := DB.AutoMigrate(&labels.Label{}, &labels.Manager{})
 
 	if err != nil {
-		log.Fatal().AnErr(err.Error(), err)
+		logger.LogFatal(err, err.Error())
 	}
 }
 
