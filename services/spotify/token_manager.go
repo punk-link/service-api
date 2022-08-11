@@ -14,7 +14,7 @@ import (
 )
 
 func getAccessToken(logger *common.Logger) (string, error) {
-	if len(tokenContainer.Token) != 0 || time.Now().Before(tokenContainer.ExpiresAt) {
+	if len(tokenContainer.Token) != 0 && time.Now().UTC().Before(tokenContainer.Expired) {
 		return tokenContainer.Token, nil
 	}
 
@@ -52,7 +52,7 @@ func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 	}
 
 	consul := consul.BuildConsulClient(logger, "service-api")
-	spotifySettings := consul.Get("SpotifySettings").(map[string]interface{})
+	spotifySettings := consul.GetOrSet("SpotifySettings", 0).(map[string]interface{})
 
 	clientId := spotifySettings["ClientId"].(string)
 	clientSecret := spotifySettings["ClientSecret"].(string)
@@ -78,8 +78,8 @@ func parseToken(logger *common.Logger, response *http.Response) (accessToken.Spo
 	}
 
 	return accessToken.SpotifyAccessTokenContainer{
-		ExpiresAt: time.Now().Add(time.Second*time.Duration(newToken.ExpiresIn) - safetyThreshold),
-		Token:     newToken.Token,
+		Expired: time.Now().Add(time.Second*time.Duration(newToken.ExpiresIn) - safetyThreshold).UTC(),
+		Token:   newToken.Token,
 	}, nil
 }
 
