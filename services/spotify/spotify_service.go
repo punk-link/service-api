@@ -6,7 +6,6 @@ import (
 	"main/models/spotify/search"
 	"main/responses"
 	"main/services/common"
-	spotifyConverters "main/utils/converters/spotify"
 	"net/url"
 )
 
@@ -29,12 +28,12 @@ func (service *SpotifyService) GetArtistRelease(spotifyId string) responses.Arti
 		return result
 	}
 
-	return spotifyConverters.ToRelease(spotifyRelease)
+	return toRelease(spotifyRelease)
 }
 
 func (service *SpotifyService) GetArtistReleases(spotifyId string) []responses.ArtistRelease {
 	spotifyReleases := service.getReleases(spotifyId)
-	return spotifyConverters.ToReleases(spotifyReleases)
+	return toReleases(spotifyReleases)
 }
 
 func (service *SpotifyService) SearchArtist(query string) []responses.ArtistSearchResult {
@@ -52,7 +51,7 @@ func (service *SpotifyService) SearchArtist(query string) []responses.ArtistSear
 		return result
 	}
 
-	return spotifyConverters.ToArtistSearchResults(spotifyArtistSearchResults.Artists.Items)
+	return toArtistSearchResults(spotifyArtistSearchResults.Artists.Items)
 }
 
 func (service *SpotifyService) getReleases(spotifyId string) []releases.ArtistRelease {
