@@ -6,6 +6,7 @@ import (
 	"main/infrastructure"
 	"main/services/common"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 )
@@ -38,6 +39,27 @@ func (service *ConsulClient) Get(key string) interface{} {
 	return results[key]
 }
 
+func (service *ConsulClient) GetOrSet(key string, period time.Duration) interface{} {
+	now := time.Now().UTC()
+	if container, ok := localStorage[key]; ok {
+		if now.Before(container.Expired) {
+			return container.Value
+		}
+	}
+
+	if period == 0 {
+		period = time.Duration(time.Minute * 2)
+	}
+
+	value := service.Get(key)
+	localStorage[key] = LocalCacheContainer{
+		Expired: now.Add(period),
+		Value:   value,
+	}
+
+	return value
+}
+
 func getFullStorageName(storageName string) string {
 	name := infrastructure.GetEnvironmentName()
 	lowerCasedName := strings.ToLower(name)
@@ -65,5 +87,6 @@ func (service *ConsulClient) init(storageName string) {
 	kvClient = client.KV()
 }
 
-var kvClient *api.KV
 var fullStorageName string
+var kvClient *api.KV
+var localStorage map[string]LocalCacheContainer = make(map[string]LocalCacheContainer)
