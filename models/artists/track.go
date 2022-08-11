@@ -1,5 +1,6 @@
-package responses
+package artists
 
+// TODO: replace ArtistSearchResult with Artist
 type Track struct {
 	SpotifyId       string               `json:"id"`
 	Artists         []ArtistSearchResult `json:"artists"`

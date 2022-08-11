@@ -2,6 +2,7 @@ package startup
 
 import (
 	"main/controllers"
+	artistServices "main/services/artists"
 	"main/services/common"
 	labelServices "main/services/labels"
 	spotifyServices "main/services/spotify"
@@ -16,6 +17,7 @@ func buildDependencies() *dig.Container {
 	container.Provide(labelServices.BuildLabelService)
 	container.Provide(labelServices.BuildManagerService)
 	container.Provide(spotifyServices.BuildSpotifyService)
+	container.Provide(artistServices.BuildArtistService)
 
 	container.Provide(controllers.BuildArtistController)
 	container.Provide(controllers.BuildLabelController)

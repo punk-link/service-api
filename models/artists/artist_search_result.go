@@ -1,4 +1,4 @@
-package responses
+package artists
 
 type ArtistSearchResult struct {
 	SpotifyId     string          `json:"spotifyId"`

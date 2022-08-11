@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func MakeRequest[T any](logger *common.Logger, method string, url string, result *T) error {
+func makeRequest[T any](logger *common.Logger, method string, url string, result *T) error {
 	request, err := getRequest(logger, method, url)
 	if err != nil {
 		return err

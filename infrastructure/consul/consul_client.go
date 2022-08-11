@@ -48,7 +48,7 @@ func (service *ConsulClient) GetOrSet(key string, period time.Duration) interfac
 	}
 
 	if period == 0 {
-		period = time.Duration(time.Minute * 2)
+		period = time.Duration(time.Minute * 5)
 	}
 
 	value := service.Get(key)

@@ -1,6 +1,6 @@
-package responses
+package artists
 
-type ArtistRelease struct {
+type Release struct {
 	SpotifyId     string               `json:"spotifyId"`
 	Artists       []ArtistSearchResult `json:"artists"`
 	ImageMetadata []ImageMetadata      `json:"images"`

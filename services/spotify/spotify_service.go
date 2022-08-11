@@ -2,9 +2,9 @@ package spotify
 
 import (
 	"fmt"
+	"main/models/artists"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
-	"main/responses"
 	"main/services/common"
 	"net/url"
 )
@@ -19,11 +19,11 @@ func BuildSpotifyService(logger *common.Logger) *SpotifyService {
 	}
 }
 
-func (service *SpotifyService) GetArtistRelease(spotifyId string) responses.ArtistRelease {
-	var result responses.ArtistRelease
+func (t *SpotifyService) GetArtistRelease(spotifyId string) artists.Release {
+	var result artists.Release
 
 	var spotifyRelease releases.ArtistRelease
-	if err := MakeRequest(service.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
+	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
 		fmt.Println(err)
 		return result
 	}
@@ -31,30 +31,23 @@ func (service *SpotifyService) GetArtistRelease(spotifyId string) responses.Arti
 	return toRelease(spotifyRelease)
 }
 
-func (service *SpotifyService) GetArtistReleases(spotifyId string) []responses.ArtistRelease {
-	spotifyReleases := service.getReleases(spotifyId)
+func (t *SpotifyService) GetArtistReleases(spotifyId string) []artists.Release {
+	spotifyReleases := t.getReleases(spotifyId)
 	return toReleases(spotifyReleases)
 }
 
-func (service *SpotifyService) SearchArtist(query string) []responses.ArtistSearchResult {
-	var result []responses.ArtistSearchResult
-
-	const minimalQueryLength int = 3
-	if len(query) < minimalQueryLength {
-		return result
-	}
-
+func (t *SpotifyService) SearchArtist(query string) []search.Artist {
 	var spotifyArtistSearchResults search.ArtistSearchResult
-	err := MakeRequest(service.logger, "GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
+	err := makeRequest(t.logger, "GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
 	if err != nil {
-		service.logger.LogWarn(err.Error())
-		return result
+		t.logger.LogWarn(err.Error())
+		return make([]search.Artist, 0)
 	}
 
-	return toArtistSearchResults(spotifyArtistSearchResults.Artists.Items)
+	return spotifyArtistSearchResults.Artists.Items
 }
 
-func (service *SpotifyService) getReleases(spotifyId string) []releases.ArtistRelease {
+func (t *SpotifyService) getReleases(spotifyId string) []releases.ArtistRelease {
 	const queryLimit int = 20
 
 	var spotifyResponse releases.ArtistReleaseResult
@@ -64,8 +57,8 @@ func (service *SpotifyService) getReleases(spotifyId string) []releases.ArtistRe
 		offset = offset + queryLimit
 
 		var tmpResponse releases.ArtistReleaseResult
-		if err := MakeRequest(service.logger, "GET", urlPattern, &tmpResponse); err != nil {
-			service.logger.LogWarn(err.Error())
+		if err := makeRequest(t.logger, "GET", urlPattern, &tmpResponse); err != nil {
+			t.logger.LogWarn(err.Error())
 			continue
 		}
 

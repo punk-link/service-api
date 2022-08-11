@@ -39,8 +39,8 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 
 	err = diContainer.Invoke(func(artistController *controllers.ArtistController) {
 		v1.GET("/artists/search", artistController.SearchArtist)
-		v1.GET("/artists/:spotify-id/releases", artistController.GetReleases)
-		v1.GET("/artists/releases/:spotify-id/", artistController.GetRelease)
+		v1.GET("/artists/:artist-id/releases", artistController.GetReleases)
+		v1.GET("/artists/releases/:id/", artistController.GetRelease)
 	})
 	if err != nil {
 		logDependencyResolvingError(logger, err, controllers.ArtistController{})

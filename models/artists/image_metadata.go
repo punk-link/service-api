@@ -1,4 +1,4 @@
-package responses
+package artists
 
 type ImageMetadata struct {
 	Height int    `json:"height"`

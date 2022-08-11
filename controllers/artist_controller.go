@@ -1,38 +1,62 @@
 package controllers
 
 import (
+	"main/services/artists"
 	"main/services/spotify"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ArtistController struct {
+	artistService  *artists.ArtistService
 	spotifyService *spotify.SpotifyService
 }
 
-func BuildArtistController(spotifyService *spotify.SpotifyService) *ArtistController {
+func BuildArtistController(artistService *artists.ArtistService, spotifyService *spotify.SpotifyService) *ArtistController {
 	return &ArtistController{
+		artistService:  artistService,
 		spotifyService: spotifyService,
 	}
 }
 
-func (controller *ArtistController) GetRelease(ctx *gin.Context) {
-	spotifyId := ctx.Param("spotify-id")
+func (t *ArtistController) GetRelease(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		BadRequest(ctx, err.Error())
+		return
+	}
 
-	result := controller.spotifyService.GetArtistRelease(spotifyId)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result := t.artistService.GetRelease(currentManager, id)
 	Ok(ctx, result)
 }
 
-func (controller *ArtistController) GetReleases(ctx *gin.Context) {
-	spotifyId := ctx.Param("spotify-id")
+func (t *ArtistController) GetReleases(ctx *gin.Context) {
+	artistId, err := strconv.Atoi(ctx.Param("artist-id"))
+	if err != nil {
+		BadRequest(ctx, err.Error())
+		return
+	}
 
-	result := controller.spotifyService.GetArtistReleases(spotifyId)
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result := t.artistService.GetReleases(currentManager, artistId)
 	Ok(ctx, result)
 }
 
-func (controller *ArtistController) SearchArtist(ctx *gin.Context) {
+func (t *ArtistController) SearchArtist(ctx *gin.Context) {
 	query := ctx.Query("query")
 
-	result := controller.spotifyService.SearchArtist(query)
+	result := t.artistService.SearchArtist(query)
 	Ok(ctx, result)
 }
