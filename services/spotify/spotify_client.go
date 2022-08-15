@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"main/services/common"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func makeRequest[T any](logger *common.Logger, method string, url string, result *T) error {
@@ -14,10 +16,31 @@ func makeRequest[T any](logger *common.Logger, method string, url string, result
 	}
 
 	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		return err
+	var response *http.Response
+
+	attemptsLeft := 3
+	for {
+		if attemptsLeft == 0 {
+			break
+		}
+
+		response, err = client.Do(request)
+		if err != nil {
+			return err
+		}
+
+		if response.StatusCode == http.StatusOK {
+			break
+		}
+
+		if response.StatusCode == http.StatusTooManyRequests {
+			timeout := getTimeout(attemptsLeft)
+			time.Sleep(timeout)
+		}
+
+		attemptsLeft--
 	}
+
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
@@ -51,4 +74,19 @@ func getRequest(logger *common.Logger, method string, url string) (*http.Request
 	request.Header.Add("Content-Type", "application/json")
 
 	return request, nil
+}
+
+func getTimeout(attemptNumber int) time.Duration {
+	base := timeouts[attemptNumber]
+	jit := rand.Intn(jitInterval)
+
+	return time.Duration(time.Millisecond * time.Duration(base+jit))
+}
+
+const jitInterval = 500
+
+var timeouts = map[int]int{
+	3: 500,
+	2: 1000,
+	1: 5000,
 }
