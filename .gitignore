@@ -20,6 +20,9 @@ go.work
 # Config files
 bin/
 
+# Visual Studio Code
+.vscode/
+
 app.env
 .env
 *.env
