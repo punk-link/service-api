@@ -32,7 +32,7 @@ func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []artists.ImageM
 	return results
 }
 
-func toRelease(spotifyRelease releases.ArtistRelease) artists.Release {
+func toRelease(spotifyRelease releases.Release) artists.Release {
 	return artists.Release{
 		SpotifyId:     spotifyRelease.Id,
 		Artists:       ToArtistSearchResults(spotifyRelease.Artists),
@@ -46,7 +46,7 @@ func toRelease(spotifyRelease releases.ArtistRelease) artists.Release {
 	}
 }
 
-func toReleases(spotifyReleases []releases.ArtistRelease) []artists.Release {
+func toReleases(spotifyReleases []releases.Release) []artists.Release {
 	releases := make([]artists.Release, len(spotifyReleases))
 	for i, release := range spotifyReleases {
 		releases[i] = toRelease(release)

@@ -18,7 +18,7 @@ func BuildLabelController(labelService *service.LabelService) *LabelController {
 	}
 }
 
-func (controller *LabelController) GetLabel(ctx *gin.Context) {
+func (t *LabelController) GetLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -31,11 +31,11 @@ func (controller *LabelController) GetLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.labelService.GetLabel(currentManager, id)
+	result, err := t.labelService.GetLabel(currentManager, id)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (controller *LabelController) ModifyLabel(ctx *gin.Context) {
+func (t *LabelController) ModifyLabel(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -54,6 +54,6 @@ func (controller *LabelController) ModifyLabel(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.labelService.ModifyLabel(currentManager, label, id)
+	result, err := t.labelService.ModifyLabel(currentManager, label, id)
 	OkOrBadRequest(ctx, result, err)
 }

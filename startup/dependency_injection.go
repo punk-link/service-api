@@ -18,8 +18,10 @@ func buildDependencies() *dig.Container {
 	container.Provide(labelServices.BuildManagerService)
 	container.Provide(spotifyServices.BuildSpotifyService)
 	container.Provide(artistServices.BuildArtistService)
+	container.Provide(artistServices.BuildReleaseService)
 
 	container.Provide(controllers.BuildArtistController)
+	container.Provide(controllers.BuildReleaseController)
 	container.Provide(controllers.BuildLabelController)
 	container.Provide(controllers.BuildManagerController)
 	container.Provide(controllers.BuildStatusController)

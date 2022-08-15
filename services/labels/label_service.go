@@ -7,17 +7,20 @@ import (
 	"main/services/common"
 	"main/services/helpers"
 	validator "main/services/labels/validators"
+	"main/services/spotify"
 	"strings"
 	"time"
 )
 
 type LabelService struct {
-	logger *common.Logger
+	logger         *common.Logger
+	spotifyService *spotify.SpotifyService
 }
 
-func BuildLabelService(logger *common.Logger) *LabelService {
+func BuildLabelService(logger *common.Logger, spotifyService *spotify.SpotifyService) *LabelService {
 	return &LabelService{
-		logger: logger,
+		logger:         logger,
+		spotifyService: spotifyService,
 	}
 }
 

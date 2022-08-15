@@ -10,45 +10,41 @@ import (
 )
 
 func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logger) {
-	err := diContainer.Invoke(func(statusController *controllers.StatusController) {
-		app.GET("/health", statusController.CheckHealth)
+	registerRoutes(logger, diContainer, controllers.StatusController{}, func(controller *controllers.StatusController) {
+		app.GET("/health", controller.CheckHealth)
 	})
-	if err != nil {
-		logDependencyResolvingError(logger, err, controllers.StatusController{})
-	}
 
 	v1 := app.Group("/v1")
-	err = diContainer.Invoke(func(managerController *controllers.ManagerController) {
-		v1.POST("/managers", managerController.AddManager)
-		v1.POST("/managers/master", managerController.AddMasterManager)
-		v1.GET("/managers", managerController.GetManagers)
-		v1.GET("/managers/:id", managerController.GetManager)
-		v1.POST("/managers/:id", managerController.ModifyManager)
-	})
-	if err != nil {
-		logDependencyResolvingError(logger, err, controllers.ManagerController{})
-	}
 
-	err = diContainer.Invoke(func(labelController *controllers.LabelController) {
-		v1.GET("/labels/:id", labelController.GetLabel)
-		v1.POST("/labels/:id", labelController.ModifyLabel)
+	registerRoutes(logger, diContainer, controllers.ManagerController{}, func(controller *controllers.ManagerController) {
+		v1.POST("/managers", controller.AddManager)
+		v1.POST("/managers/master", controller.AddMasterManager)
+		v1.GET("/managers", controller.GetManagers)
+		v1.GET("/managers/:id", controller.GetManager)
+		v1.POST("/managers/:id", controller.ModifyManager)
 	})
-	if err != nil {
-		logDependencyResolvingError(logger, err, controllers.LabelController{})
-	}
 
-	err = diContainer.Invoke(func(artistController *controllers.ArtistController) {
-		v1.GET("/artists/search", artistController.SearchArtist)
-		v1.GET("/artists/:artist-id/releases", artistController.GetReleases)
-		v1.GET("/artists/releases/:id/", artistController.GetRelease)
+	registerRoutes(logger, diContainer, controllers.LabelController{}, func(controller *controllers.LabelController) {
+		v1.GET("/labels/:id", controller.GetLabel)
+		v1.POST("/labels/:id", controller.ModifyLabel)
 	})
-	if err != nil {
-		logDependencyResolvingError(logger, err, controllers.ArtistController{})
-	}
+
+	registerRoutes(logger, diContainer, controllers.ArtistController{}, func(controller *controllers.ArtistController) {
+		v1.POST("/artists/:spotify-id", controller.AddArtist)
+		v1.GET("/artists/search", controller.SearchArtist)
+	})
+
+	registerRoutes(logger, diContainer, controllers.ReleaseController{}, func(controller *controllers.ReleaseController) {
+		v1.GET("/artists/:artist-id/releases", controller.GetReleases)
+		v1.GET("/artists/releases/:id/", controller.GetRelease)
+	})
 }
 
-func logDependencyResolvingError[T any](logger *common.Logger, err error, target T) {
-	structName := helpers.GetStructNameAsString(target)
-	logger.LogFatal(err, "Can't resolve a dependency '%s': %v", structName, err.Error())
-	panic(err.Error())
+func registerRoutes[T any](logger *common.Logger, diContainer *dig.Container, target T, function func(*T)) {
+	err := diContainer.Invoke(function)
+	if err != nil {
+		structName := helpers.GetStructNameAsString(target)
+		logger.LogFatal(err, "Can't resolve a dependency '%s': %v", structName, err.Error())
+		panic(err.Error())
+	}
 }

@@ -5,7 +5,7 @@ import (
 	"main/models/spotify/search"
 )
 
-type ArtistRelease struct {
+type Release struct {
 	Id            string                  `json:"id"`
 	Artists       []search.Artist         `json:"artists"`
 	ImageMetadata []spotify.ImageMetadata `json:"images"`

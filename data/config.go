@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"main/data/artists"
 	"main/data/labels"
 	"main/infrastructure/consul"
 	"main/services/common"
@@ -43,7 +44,11 @@ func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
 
 func AutoMigrate(logger *common.Logger) {
 	err := DB.AutoMigrate(&labels.Label{}, &labels.Manager{})
+	if err != nil {
+		logger.LogFatal(err, err.Error())
+	}
 
+	err = DB.AutoMigrate(&artists.Artist{}, &artists.Release{})
 	if err != nil {
 		logger.LogFatal(err, err.Error())
 	}

@@ -7,6 +7,7 @@ import (
 	"main/models/spotify/search"
 	"main/services/common"
 	"net/url"
+	"strings"
 )
 
 type SpotifyService struct {
@@ -19,21 +20,62 @@ func BuildSpotifyService(logger *common.Logger) *SpotifyService {
 	}
 }
 
-func (t *SpotifyService) GetArtistRelease(spotifyId string) artists.Release {
+func (t *SpotifyService) GetReleaseDetails(spotifyId string) artists.Release {
 	var result artists.Release
 
-	var spotifyRelease releases.ArtistRelease
+	var spotifyRelease releases.Release
 	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
-		fmt.Println(err)
+		t.logger.LogWarn(err.Error())
 		return result
 	}
 
 	return toRelease(spotifyRelease)
 }
 
-func (t *SpotifyService) GetArtistReleases(spotifyId string) []artists.Release {
-	spotifyReleases := t.getReleases(spotifyId)
-	return toReleases(spotifyReleases)
+func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
+	const queryLimit int = 20
+
+	spotifyReleases := make([]releases.Release, 0)
+	skip := 0
+	for i := 0; i < len(spotifyIds); i = i + queryLimit {
+		ids := spotifyIds[skip:getSliceEnd(&spotifyIds, skip+queryLimit)]
+		idQuery := strings.Join(ids, ",")
+
+		var tmpResponse releases.ReleaseDetailsContainer
+		if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums?ids=%s", idQuery), &tmpResponse); err != nil {
+			t.logger.LogWarn(err.Error())
+			return spotifyReleases
+		}
+
+		spotifyReleases = append(spotifyReleases, tmpResponse.Items...)
+		skip += queryLimit
+	}
+
+	return spotifyReleases
+}
+
+func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release {
+	const queryLimit int = 20
+
+	var spotifyResponse releases.ReleaseContainer
+	offset := 0
+	for {
+		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, queryLimit, offset)
+		offset = offset + queryLimit
+
+		var tmpResponse releases.ReleaseContainer
+		if err := makeRequest(t.logger, "GET", urlPattern, &tmpResponse); err != nil {
+			t.logger.LogWarn(err.Error())
+			continue
+		}
+
+		spotifyResponse.Items = append(spotifyResponse.Items, tmpResponse.Items...)
+		if tmpResponse.Next == "" {
+			break
+		}
+	}
+
+	return spotifyResponse.Items
 }
 
 func (t *SpotifyService) SearchArtist(query string) []search.Artist {
@@ -47,26 +89,12 @@ func (t *SpotifyService) SearchArtist(query string) []search.Artist {
 	return spotifyArtistSearchResults.Artists.Items
 }
 
-func (t *SpotifyService) getReleases(spotifyId string) []releases.ArtistRelease {
-	const queryLimit int = 20
+func getSliceEnd[T any](slice *[]T, iterationEnd int) int {
+	sliceEnd := len(*slice)
 
-	var spotifyResponse releases.ArtistReleaseResult
-	offset := 0
-	for {
-		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, queryLimit, offset)
-		offset = offset + queryLimit
-
-		var tmpResponse releases.ArtistReleaseResult
-		if err := makeRequest(t.logger, "GET", urlPattern, &tmpResponse); err != nil {
-			t.logger.LogWarn(err.Error())
-			continue
-		}
-
-		spotifyResponse.Items = append(spotifyResponse.Items, tmpResponse.Items...)
-		if tmpResponse.Next == "" {
-			break
-		}
+	if sliceEnd < iterationEnd {
+		return sliceEnd
 	}
 
-	return spotifyResponse.Items
+	return iterationEnd
 }

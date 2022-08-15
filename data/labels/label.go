@@ -1,6 +1,9 @@
 package labels
 
-import "time"
+import (
+	"main/data/artists"
+	"time"
+)
 
 type Label struct {
 	Id      int       `gorm:"primaryKey,autoIncrement"`
@@ -8,5 +11,6 @@ type Label struct {
 	Name    string    `gorm:"not null"`
 	Updated time.Time `gorm:"not null"`
 
+	Artists  []artists.Artist
 	Managers []Manager
 }
