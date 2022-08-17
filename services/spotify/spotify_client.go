@@ -41,6 +41,29 @@ func makeRequest[T any](logger *common.Logger, method string, url string, result
 		attemptsLeft--
 	}
 
+	return getResponseContent(logger, response, &result)
+}
+
+func getRequest(logger *common.Logger, method string, url string) (*http.Request, error) {
+	request, err := http.NewRequest(method, "https://api.spotify.com/v1/"+url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, _ := getAccessToken(logger)
+	if err != nil {
+		logger.LogWarn(err.Error())
+		return nil, err
+	}
+
+	request.Header.Add("Authorization", "Bearer "+accessToken)
+	request.Header.Add("Accept", "application/json")
+	request.Header.Add("Content-Type", "application/json")
+
+	return request, nil
+}
+
+func getResponseContent[T any](logger *common.Logger, response *http.Response, result *T) error {
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
@@ -55,25 +78,6 @@ func makeRequest[T any](logger *common.Logger, method string, url string, result
 	}
 
 	return nil
-}
-
-func getRequest(logger *common.Logger, method string, url string) (*http.Request, error) {
-	request, err := http.NewRequest(method, "https://api.spotify.com/v1/"+url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken, err := getAccessToken(logger)
-	if err != nil {
-		logger.LogWarn(err.Error())
-		return nil, err
-	}
-
-	request.Header.Add("Authorization", "Bearer "+accessToken)
-	request.Header.Add("Accept", "application/json")
-	request.Header.Add("Content-Type", "application/json")
-
-	return request, nil
 }
 
 func getTimeout(attemptNumber int) time.Duration {

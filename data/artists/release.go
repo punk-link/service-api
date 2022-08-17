@@ -1,20 +1,24 @@
 package artists
 
-import "time"
+import (
+	"time"
+
+	"github.com/jackc/pgtype"
+)
 
 type Release struct {
-	Id      int       `gorm:"primaryKey,autoIncrement"`
-	Created time.Time `gorm:"not null"`
-	//ImageMetadata []spotify.ImageMetadata `json:"images"`
-	Label           string    `json:"label"`
-	Name            string    `gorm:"not null"`
-	PrimaryArtistId int       `gorm:"not null,index"`
-	ReleaseDate     time.Time `gorm:"not null"`
-	SpotifyId       string    `gorm:"not null,index"`
-	TrackNumber     int       `gorm:"not null"`
-	//Tracks          TrackContainer `json:"tracks"`
-	Type    string    `gorm:"not null"`
-	Updated time.Time `gorm:"not null"`
+	Id              int               `gorm:"primaryKey,autoIncrement"`
+	Created         time.Time         `gorm:"not null"`
+	ImageMetadata   pgtype.JSONB      `gorm:"type:jsonb;default:'{}';not null"`
+	Label           string            `gorm:"not null"`
+	Name            string            `gorm:"not null"`
+	PrimaryArtistId int               `gorm:"not null,index"`
+	ReleaseDate     time.Time         `gorm:"not null"`
+	SpotifyId       string            `gorm:"not null,index"`
+	TrackNumber     int               `gorm:"not null"`
+	Tracks          pgtype.JSONBArray `gorm:"type:jsonb;default:'[]';not null"`
+	Type            string            `gorm:"not null"`
+	Updated         time.Time         `gorm:"not null"`
 
 	Artists []*Artist `gorm:"many2many:release_artists;"`
 }

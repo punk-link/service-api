@@ -6,13 +6,14 @@ import (
 )
 
 type Release struct {
-	Id            string                  `json:"id"`
-	Artists       []search.Artist         `json:"artists"`
-	ImageMetadata []spotify.ImageMetadata `json:"images"`
-	Label         string                  `json:"label"`
-	Name          string                  `json:"name"`
-	ReleaseDate   string                  `json:"release_date"`
-	TrackNumber   int                     `json:"total_tracks"`
-	Tracks        TrackContainer          `json:"tracks"`
-	Type          string                  `json:"album_type"`
+	Id                   string                  `json:"id"`
+	Artists              []search.Artist         `json:"artists"`
+	ImageMetadata        []spotify.ImageMetadata `json:"images"`
+	Label                string                  `json:"label"`
+	Name                 string                  `json:"name"`
+	ReleaseDate          string                  `json:"release_date"`
+	ReleaseDatePrecision string                  `json:"release_date_precision"`
+	TrackNumber          int                     `json:"total_tracks"`
+	Tracks               TrackContainer          `json:"tracks"`
+	Type                 string                  `json:"album_type"`
 }

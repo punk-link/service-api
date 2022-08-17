@@ -2,16 +2,35 @@ package spotify
 
 import (
 	"main/models/artists"
+	"main/models/common"
 	"main/models/spotify"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
 )
 
+func ToArtist(spotifyArtists []search.Artist) []artists.Artist {
+	results := make([]artists.Artist, len(spotifyArtists))
+	for i, artist := range spotifyArtists {
+		results[i] = artists.Artist{
+			ImageMetadata: toImageMetadataResponse(artist.ImageMetadata)[0],
+			Name:          artist.Name,
+			Id:            0,
+		}
+	}
+
+	return results
+}
+
 func ToArtistSearchResults(spotifyArtists []search.Artist) []artists.ArtistSearchResult {
 	results := make([]artists.ArtistSearchResult, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
+		imadeMetadata := common.ImageMetadata{}
+		if 0 < len(artist.ImageMetadata) {
+			imadeMetadata = toImageMetadataResponse(artist.ImageMetadata)[0]
+		}
+
 		results[i] = artists.ArtistSearchResult{
-			ImageMetadata: toImageMetadataResponse(artist.ImageMetadata),
+			ImageMetadata: imadeMetadata,
 			Name:          artist.Name,
 			SpotifyId:     artist.Id,
 		}
@@ -20,10 +39,10 @@ func ToArtistSearchResults(spotifyArtists []search.Artist) []artists.ArtistSearc
 	return results
 }
 
-func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []artists.ImageMetadata {
-	results := make([]artists.ImageMetadata, len(metadatas))
+func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []common.ImageMetadata {
+	results := make([]common.ImageMetadata, len(metadatas))
 	for i, metadata := range metadatas {
-		results[i] = artists.ImageMetadata{
+		results[i] = common.ImageMetadata{
 			Height: metadata.Height,
 			Url:    metadata.Url,
 		}
@@ -35,7 +54,7 @@ func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []artists.ImageM
 func toRelease(spotifyRelease releases.Release) artists.Release {
 	return artists.Release{
 		SpotifyId:     spotifyRelease.Id,
-		Artists:       ToArtistSearchResults(spotifyRelease.Artists),
+		Artists:       ToArtist(spotifyRelease.Artists),
 		ImageMetadata: toImageMetadataResponse(spotifyRelease.ImageMetadata),
 		Lable:         spotifyRelease.Label,
 		Name:          spotifyRelease.Name,
@@ -60,7 +79,7 @@ func toTracks(spotifyTracks []releases.Track) []artists.Track {
 	for i, track := range spotifyTracks {
 		tracks[i] = artists.Track{
 			SpotifyId:       track.Id,
-			Artists:         ToArtistSearchResults(track.Artists),
+			Artists:         ToArtist(track.Artists),
 			DiscNumber:      track.DiscNumber,
 			DurationSeconds: track.DurationMilliseconds / 1000,
 			IsExplicit:      track.IsExplicit,

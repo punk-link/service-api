@@ -6,7 +6,9 @@ require github.com/gin-gonic/gin v1.8.1 // direct
 
 require (
 	github.com/getsentry/sentry-go v0.13.0
+	github.com/goccy/go-json v0.9.7
 	github.com/hashicorp/consul/api v1.14.0
+	github.com/jackc/pgtype v1.11.0
 	github.com/rs/zerolog v1.27.0
 	go.uber.org/dig v1.15.0
 	gorm.io/driver/postgres v1.3.7
@@ -20,7 +22,6 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
-	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/hashicorp/consul/sdk v0.11.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
@@ -35,10 +36,9 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
