@@ -9,7 +9,7 @@ import (
 type Release struct {
 	Id              int               `gorm:"primaryKey,autoIncrement"`
 	Created         time.Time         `gorm:"not null"`
-	ImageMetadata   pgtype.JSONB      `gorm:"type:jsonb;default:'{}';not null"`
+	ImageDetails    pgtype.JSONB      `gorm:"type:jsonb;default:'{}';not null"`
 	Label           string            `gorm:"not null"`
 	Name            string            `gorm:"not null"`
 	PrimaryArtistId int               `gorm:"not null,index"`

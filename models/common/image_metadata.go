@@ -1,6 +1,6 @@
 package common
 
-type ImageMetadata struct {
+type ImageDetails struct {
 	AltText string `json:"altText"`
 	Height  int    `json:"height"`
 	Url     string `json:"url"`

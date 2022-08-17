@@ -73,22 +73,22 @@ func (t *ArtistService) getDatabaseArtistBySpotifyId(spotifyId string) (artistDa
 	return dbArtist, nil
 }
 
-func (t *ArtistService) getImageMetadata(release releases.Release) commonModels.ImageMetadata {
-	imageMetadata := commonModels.ImageMetadata{}
-	if 0 < len(release.ImageMetadata) {
-		sort.SliceStable(release.ImageMetadata, func(i, j int) bool {
-			return release.ImageMetadata[i].Height > release.ImageMetadata[j].Height
+func (t *ArtistService) getImageDetails(release releases.Release) commonModels.ImageDetails {
+	details := commonModels.ImageDetails{}
+	if 0 < len(release.ImageDetails) {
+		sort.SliceStable(release.ImageDetails, func(i, j int) bool {
+			return release.ImageDetails[i].Height > release.ImageDetails[j].Height
 		})
 
-		imageMetadata = commonModels.ImageMetadata{
+		details = commonModels.ImageDetails{
 			AltText: release.Name,
-			Height:  release.ImageMetadata[0].Height,
-			Url:     release.ImageMetadata[0].Url,
-			Width:   release.ImageMetadata[0].Width,
+			Height:  release.ImageDetails[0].Height,
+			Url:     release.ImageDetails[0].Url,
+			Width:   release.ImageDetails[0].Width,
 		}
 	}
 
-	return imageMetadata
+	return details
 }
 
 func (t *ArtistService) getLabelName(release releases.Release) string {
@@ -170,14 +170,14 @@ func (t *ArtistService) getTracks(release releases.Release) []artists.Track {
 	for i, track := range release.Tracks.Items {
 		trackArtists := make([]artists.Artist, len(track.Artists))
 		for i, artist := range track.Artists {
-			sort.SliceStable(artist.ImageMetadata, func(i, j int) bool {
-				return artist.ImageMetadata[i].Height > artist.ImageMetadata[j].Height
+			sort.SliceStable(artist.ImageDetails, func(i, j int) bool {
+				return artist.ImageDetails[i].Height > artist.ImageDetails[j].Height
 			})
 
 			trackArtists[i] = artists.Artist{
-				Id:            0,
-				ImageMetadata: commonModels.ImageMetadata{},
-				Name:          artist.Name,
+				Id:           0,
+				ImageDetails: commonModels.ImageDetails{},
+				Name:         artist.Name,
 			}
 		}
 
@@ -198,10 +198,10 @@ func (t *ArtistService) getTracks(release releases.Release) []artists.Track {
 func (t *ArtistService) prepareRelease(timeStamp time.Time, dbArtist artistData.Artist, release releases.Release, wg *sync.WaitGroup, results chan<- artistData.Release) {
 	defer wg.Done()
 
-	imageMetadata := t.getImageMetadata(release)
-	metadataJson, err := json.Marshal(imageMetadata)
+	imageDetails := t.getImageDetails(release)
+	imageDetailsJson, err := json.Marshal(imageDetails)
 	if err != nil {
-		t.logger.LogError(err, "Can't serialize image metadata: '%s'", err.Error())
+		t.logger.LogError(err, "Can't serialize image details: '%s'", err.Error())
 		return
 	}
 
@@ -225,7 +225,7 @@ func (t *ArtistService) prepareRelease(timeStamp time.Time, dbArtist artistData.
 		Updated:         timeStamp,
 	}
 
-	dbRelease.ImageMetadata.Set(metadataJson)
+	dbRelease.ImageDetails.Set(imageDetailsJson)
 	dbRelease.Tracks.Set(tracksJson)
 
 	results <- dbRelease

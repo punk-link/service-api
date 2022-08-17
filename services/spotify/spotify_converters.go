@@ -12,9 +12,9 @@ func ToArtist(spotifyArtists []search.Artist) []artists.Artist {
 	results := make([]artists.Artist, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
 		results[i] = artists.Artist{
-			ImageMetadata: toImageMetadataResponse(artist.ImageMetadata)[0],
-			Name:          artist.Name,
-			Id:            0,
+			ImageDetails: toImageDetailsaResponse(artist.ImageDetails)[0],
+			Name:         artist.Name,
+			Id:           0,
 		}
 	}
 
@@ -24,27 +24,27 @@ func ToArtist(spotifyArtists []search.Artist) []artists.Artist {
 func ToArtistSearchResults(spotifyArtists []search.Artist) []artists.ArtistSearchResult {
 	results := make([]artists.ArtistSearchResult, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
-		imadeMetadata := common.ImageMetadata{}
-		if 0 < len(artist.ImageMetadata) {
-			imadeMetadata = toImageMetadataResponse(artist.ImageMetadata)[0]
+		imageDetails := common.ImageDetails{}
+		if 0 < len(artist.ImageDetails) {
+			imageDetails = toImageDetailsaResponse(artist.ImageDetails)[0]
 		}
 
 		results[i] = artists.ArtistSearchResult{
-			ImageMetadata: imadeMetadata,
-			Name:          artist.Name,
-			SpotifyId:     artist.Id,
+			ImageDetails: imageDetails,
+			Name:         artist.Name,
+			SpotifyId:    artist.Id,
 		}
 	}
 
 	return results
 }
 
-func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []common.ImageMetadata {
-	results := make([]common.ImageMetadata, len(metadatas))
-	for i, metadata := range metadatas {
-		results[i] = common.ImageMetadata{
-			Height: metadata.Height,
-			Url:    metadata.Url,
+func toImageDetailsaResponse(imageDetails []spotify.ImageDetails) []common.ImageDetails {
+	results := make([]common.ImageDetails, len(imageDetails))
+	for i, details := range imageDetails {
+		results[i] = common.ImageDetails{
+			Height: details.Height,
+			Url:    details.Url,
 		}
 	}
 
@@ -53,15 +53,15 @@ func toImageMetadataResponse(metadatas []spotify.ImageMetadata) []common.ImageMe
 
 func toRelease(spotifyRelease releases.Release) artists.Release {
 	return artists.Release{
-		SpotifyId:     spotifyRelease.Id,
-		Artists:       ToArtist(spotifyRelease.Artists),
-		ImageMetadata: toImageMetadataResponse(spotifyRelease.ImageMetadata),
-		Lable:         spotifyRelease.Label,
-		Name:          spotifyRelease.Name,
-		ReleaseDate:   spotifyRelease.ReleaseDate,
-		TrackNumber:   spotifyRelease.TrackNumber,
-		Tracks:        toTracks(spotifyRelease.Tracks.Items),
-		Type:          spotifyRelease.Type,
+		SpotifyId:    spotifyRelease.Id,
+		Artists:      ToArtist(spotifyRelease.Artists),
+		ImageDetails: toImageDetailsaResponse(spotifyRelease.ImageDetails),
+		Lable:        spotifyRelease.Label,
+		Name:         spotifyRelease.Name,
+		ReleaseDate:  spotifyRelease.ReleaseDate,
+		TrackNumber:  spotifyRelease.TrackNumber,
+		Tracks:       toTracks(spotifyRelease.Tracks.Items),
+		Type:         spotifyRelease.Type,
 	}
 }
 

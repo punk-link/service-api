@@ -1,6 +1,6 @@
 package spotify
 
-type ImageMetadata struct {
+type ImageDetails struct {
 	Height int
 	Url    string
 	Width  int
