@@ -65,15 +65,6 @@ func toRelease(spotifyRelease releases.Release) artists.Release {
 	}
 }
 
-func toReleases(spotifyReleases []releases.Release) []artists.Release {
-	releases := make([]artists.Release, len(spotifyReleases))
-	for i, release := range spotifyReleases {
-		releases[i] = toRelease(release)
-	}
-
-	return releases
-}
-
 func toTracks(spotifyTracks []releases.Track) []artists.Track {
 	tracks := make([]artists.Track, len(spotifyTracks))
 	for i, track := range spotifyTracks {

@@ -2,8 +2,8 @@ package startup
 
 import (
 	"main/controllers"
+	"main/helpers"
 	"main/services/common"
-	"main/services/helpers"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/dig"
