@@ -123,13 +123,13 @@ func (t *SpotifyService) divideChunkToLoops(chunkedIds [][]string, iterationStep
 func (t *SpotifyService) getReleasesDetails(idQuery string, wg *sync.WaitGroup, results chan<- []releases.Release) {
 	defer wg.Done()
 
-	var tmpResponse releases.ReleaseDetailsContainer
-	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums?ids=%s", idQuery), &tmpResponse); err != nil {
+	var releaseContainer releases.ReleaseDetailsContainer
+	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums?ids=%s", idQuery), &releaseContainer); err != nil {
 		t.logger.LogWarn(err.Error())
 		return
 	}
 
-	results <- tmpResponse.Items
+	results <- releaseContainer.Releases
 }
 
 const queryLimit int = 20

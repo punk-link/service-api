@@ -1,5 +1,5 @@
 package releases
 
 type ReleaseDetailsContainer struct {
-	Items []Release `json:"albums"`
+	Releases []Release `json:"albums"`
 }
