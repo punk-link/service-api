@@ -24,7 +24,7 @@ func BuildLabelService(logger *common.Logger, spotifyService *spotify.SpotifySer
 	}
 }
 
-func (service *LabelService) AddLabel(labelName string) (labels.Label, error) {
+func (t *LabelService) AddLabel(labelName string) (labels.Label, error) {
 	trimmedName := strings.TrimSpace(labelName)
 	if err := validator.NameNotEmpty(trimmedName); err != nil {
 		return labels.Label{}, err
@@ -39,14 +39,14 @@ func (service *LabelService) AddLabel(labelName string) (labels.Label, error) {
 
 	result := data.DB.Create(&dbLabel)
 	if result.Error != nil {
-		service.logger.LogError(result.Error, result.Error.Error())
+		t.logger.LogError(result.Error, result.Error.Error())
 		return labels.Label{}, result.Error
 	}
 
 	return getLabelWithoutContextCheck(dbLabel.Id)
 }
 
-func (service *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
+func (t *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
 	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
 		return labels.Label{}, err
 	}
@@ -54,7 +54,7 @@ func (service *LabelService) GetLabel(currentManager labels.ManagerContext, id i
 	return getLabelWithoutContextCheck(id)
 }
 
-func (service *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
+func (t *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
 	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
 		return labels.Label{}, err
 	}
@@ -77,7 +77,7 @@ func (service *LabelService) ModifyLabel(currentManager labels.ManagerContext, l
 	dbLabel.Updated = time.Now().UTC()
 	data.DB.Save(&dbLabel)
 
-	return service.GetLabel(currentManager, label.Id)
+	return t.GetLabel(currentManager, label.Id)
 }
 
 func getLabelWithoutContextCheck(id int) (labels.Label, error) {
