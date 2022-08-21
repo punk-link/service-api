@@ -1,7 +1,6 @@
 package labels
 
 import (
-	"main/data/artists"
 	"time"
 )
 
@@ -11,6 +10,5 @@ type Label struct {
 	Name    string    `gorm:"not null"`
 	Updated time.Time `gorm:"not null"`
 
-	Artists  []artists.Artist
 	Managers []Manager
 }

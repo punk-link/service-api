@@ -2,12 +2,12 @@ package releases
 
 import (
 	"main/models/spotify"
-	"main/models/spotify/search"
+	"main/models/spotify/artists"
 )
 
 type Release struct {
 	Id                   string                 `json:"id"`
-	Artists              []search.Artist        `json:"artists"`
+	Artists              []artists.SlimArtist   `json:"artists"`
 	ImageDetails         []spotify.ImageDetails `json:"images"`
 	Label                string                 `json:"label"`
 	Name                 string                 `json:"name"`

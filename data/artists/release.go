@@ -20,5 +20,5 @@ type Release struct {
 	Type            string            `gorm:"not null"`
 	Updated         time.Time         `gorm:"not null"`
 
-	Artists []*Artist `gorm:"many2many:release_artists;"`
+	Artists []Artist `gorm:"many2many:release_artists;"`
 }

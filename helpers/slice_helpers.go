@@ -15,6 +15,22 @@ func Chunk[T any](source []T, chunkSize int) [][]T {
 	return chunked
 }
 
+func DivideChunkToLoops[T any](chunkedUrls []T, iterationStep int) ([]T, []T) {
+	var reducedLoop []T
+	mainLoop := make([]T, 0)
+
+	if len(chunkedUrls) < iterationStep {
+		reducedLoop = chunkedUrls
+	} else {
+		extraElements := len(chunkedUrls) % iterationStep
+
+		mainLoop = chunkedUrls[0 : len(chunkedUrls)-extraElements]
+		reducedLoop = chunkedUrls[len(chunkedUrls)-extraElements:]
+	}
+
+	return mainLoop, reducedLoop
+}
+
 func getChunkEndPosition[T any](chunk []T, iterationStepEnd int) int {
 	chunkEndPosition := len(chunk)
 

@@ -1,5 +1,7 @@
 package search
 
+import "main/models/spotify/artists"
+
 type ArtistContainer struct {
-	Items []Artist `json:"items"`
+	Items []artists.SlimArtist `json:"items"`
 }

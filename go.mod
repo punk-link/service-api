@@ -6,7 +6,6 @@ require github.com/gin-gonic/gin v1.8.1 // direct
 
 require (
 	github.com/getsentry/sentry-go v0.13.0
-	github.com/goccy/go-json v0.9.7
 	github.com/hashicorp/consul/api v1.14.0
 	github.com/jackc/pgtype v1.11.0
 	github.com/rs/zerolog v1.27.0
@@ -22,6 +21,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
+	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/hashicorp/consul/sdk v0.11.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect

@@ -4,11 +4,11 @@ import (
 	"main/models/artists"
 	"main/models/common"
 	"main/models/spotify"
+	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
-	"main/models/spotify/search"
 )
 
-func ToArtist(spotifyArtists []search.Artist) []artists.Artist {
+func ToArtist(spotifyArtists []spotifyArtists.SlimArtist) []artists.Artist {
 	results := make([]artists.Artist, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
 		results[i] = artists.Artist{
@@ -21,7 +21,7 @@ func ToArtist(spotifyArtists []search.Artist) []artists.Artist {
 	return results
 }
 
-func ToArtistSearchResults(spotifyArtists []search.Artist) []artists.ArtistSearchResult {
+func ToArtistSearchResults(spotifyArtists []spotifyArtists.SlimArtist) []artists.ArtistSearchResult {
 	results := make([]artists.ArtistSearchResult, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
 		imageDetails := common.ImageDetails{}

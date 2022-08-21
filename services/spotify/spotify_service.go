@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"main/helpers"
 	"main/models/artists"
+	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
 	"main/services/common"
 	"net/url"
 	"strings"
-	"sync"
-	"time"
 )
 
 type SpotifyService struct {
@@ -23,52 +22,33 @@ func BuildSpotifyService(logger *common.Logger) *SpotifyService {
 	}
 }
 
-func (t *SpotifyService) GetReleaseDetails(spotifyId string) artists.Release {
-	var result artists.Release
-
-	var spotifyRelease releases.Release
-	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
+func (t *SpotifyService) GetArtist(spotifyId string) spotifyArtists.Artist {
+	var spotifyArtist spotifyArtists.Artist
+	if err := makeRequest(t.logger, "GET", fmt.Sprintf("artists/%s", spotifyId), &spotifyArtist); err != nil {
 		t.logger.LogWarn(err.Error())
-		return result
 	}
 
-	return toRelease(spotifyRelease)
+	return spotifyArtist
 }
 
-func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
+func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist {
+	const queryLimit int = 50
 	chunkedIds := helpers.Chunk(spotifyIds, queryLimit)
-	mainLoop, extraLoop := t.divideChunkToLoops(chunkedIds, iterationStep)
 
-	var wg sync.WaitGroup
-	results := make(chan []releases.Release)
-	for i := 0; i < len(mainLoop); i = i + iterationStep {
-		wg.Add(iterationStep)
-
-		for j := 0; j < iterationStep; j++ {
-			idQuery := strings.Join(mainLoop[i+j], ",")
-			go t.getReleasesDetails(idQuery, &wg, results)
-		}
-
-		time.Sleep(requestBatchTimeoutDuration)
+	urls := make([]string, len(chunkedIds))
+	for i, chunk := range chunkedIds {
+		ids := strings.Join(chunk, ",")
+		urls[i] = fmt.Sprintf("artists?ids=%s", ids)
 	}
 
-	for _, chunk := range extraLoop {
-		wg.Add(1)
-		idQuery := strings.Join(chunk, ",")
-		go t.getReleasesDetails(idQuery, &wg, results)
+	spotifyArtistContainers := makeBatchRequest[spotifyArtists.ArtistContainer](t.logger, "GET", urls)
+
+	results := make([]spotifyArtists.Artist, 0)
+	for _, container := range spotifyArtistContainers {
+		results = append(results, container.Artists...)
 	}
 
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	spotifyReleases := make([]releases.Release, 0)
-	for result := range results {
-		spotifyReleases = append(spotifyReleases, result...)
-	}
-
-	return spotifyReleases
+	return results
 }
 
 func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release {
@@ -93,45 +73,45 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	return spotifyResponse.Items
 }
 
-func (t *SpotifyService) SearchArtist(query string) []search.Artist {
+func (t *SpotifyService) GetReleaseDetails(spotifyId string) artists.Release {
+	var result artists.Release
+
+	var spotifyRelease releases.Release
+	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
+		t.logger.LogWarn(err.Error())
+		return result
+	}
+
+	return toRelease(spotifyRelease)
+}
+
+func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
+	chunkedIds := helpers.Chunk(spotifyIds, queryLimit)
+	urls := make([]string, len(chunkedIds))
+	for i, chunk := range chunkedIds {
+		ids := strings.Join(chunk, ",")
+		urls[i] = fmt.Sprintf("albums?ids=%s", ids)
+	}
+
+	releaseContainers := makeBatchRequest[releases.ReleaseDetailsContainer](t.logger, "GET", urls)
+
+	spotifyReleases := make([]releases.Release, 0)
+	for _, container := range releaseContainers {
+		spotifyReleases = append(spotifyReleases, container.Releases...)
+	}
+
+	return spotifyReleases
+}
+
+func (t *SpotifyService) SearchArtist(query string) []spotifyArtists.SlimArtist {
 	var spotifyArtistSearchResults search.ArtistSearchResult
 	err := makeRequest(t.logger, "GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)), &spotifyArtistSearchResults)
 	if err != nil {
 		t.logger.LogWarn(err.Error())
-		return make([]search.Artist, 0)
+		return make([]spotifyArtists.SlimArtist, 0)
 	}
 
 	return spotifyArtistSearchResults.Artists.Items
 }
 
-func (t *SpotifyService) divideChunkToLoops(chunkedIds [][]string, iterationStep int) ([][]string, [][]string) {
-	var extraLoop [][]string
-	mainLoop := make([][]string, 0)
-
-	if len(chunkedIds) < iterationStep {
-		extraLoop = chunkedIds
-	} else {
-		extraElements := len(chunkedIds) % iterationStep
-
-		mainLoop = chunkedIds[0 : len(chunkedIds)-extraElements]
-		extraLoop = chunkedIds[len(chunkedIds)-extraElements:]
-	}
-
-	return mainLoop, extraLoop
-}
-
-func (t *SpotifyService) getReleasesDetails(idQuery string, wg *sync.WaitGroup, results chan<- []releases.Release) {
-	defer wg.Done()
-
-	var releaseContainer releases.ReleaseDetailsContainer
-	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums?ids=%s", idQuery), &releaseContainer); err != nil {
-		t.logger.LogWarn(err.Error())
-		return
-	}
-
-	results <- releaseContainer.Releases
-}
-
 const queryLimit int = 20
-const iterationStep int = 4
-const requestBatchTimeoutDuration time.Duration = time.Millisecond * 100
