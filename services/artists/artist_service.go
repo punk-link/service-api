@@ -50,6 +50,8 @@ func (t *ArtistService) AddArtist(currentManager labels.ManagerContext, spotifyI
 		}
 	}
 
+	// TODO: update label id
+
 	missingReleaseSpotifyIds := t.releaseService.GetMissingReleaseIds(dbArtist)
 	releases := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
 	artists, err := t.GetOrAddReleasesArtists(dbArtist, releases, now)
@@ -100,6 +102,18 @@ func (t *ArtistService) SearchArtist(query string) []artistModels.ArtistSearchRe
 	return spotify.ToArtistSearchResults(results)
 }
 
+func (t *ArtistService) addArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) (artistData.Artist, error) {
+	dbArtist := t.toDbArtist(artist, labelId, timeStamp)
+
+	result := data.DB.Create(&dbArtist)
+	if result.Error != nil {
+		t.logger.LogError(result.Error, result.Error.Error())
+		return artistData.Artist{}, result.Error
+	}
+
+	return dbArtist, nil
+}
+
 func (t *ArtistService) addMissingArtists(existingSpotifyIds map[string]int, spotifyIds []string, timeStamp time.Time) ([]artistData.Artist, error) {
 	missingSpotifyIds := make([]string, 0)
 	for _, id := range spotifyIds {
@@ -122,18 +136,6 @@ func (t *ArtistService) addMissingArtists(existingSpotifyIds map[string]int, spo
 	}
 
 	return dbArtists, nil
-}
-
-func (t *ArtistService) addArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) (artistData.Artist, error) {
-	dbArtist := t.toDbArtist(artist, labelId, timeStamp)
-
-	result := data.DB.Create(&dbArtist)
-	if result.Error != nil {
-		t.logger.LogError(result.Error, result.Error.Error())
-		return artistData.Artist{}, result.Error
-	}
-
-	return dbArtist, nil
 }
 
 func (t *ArtistService) getDatabaseArtistsBySpotifyIds(spotifyIds []string) (map[string]artistData.Artist, error) {
@@ -169,6 +171,14 @@ func (t *ArtistService) getReleasesArtistsSpotifyIds(releases []releases.Release
 		for _, artist := range release.Artists {
 			if _, isExists := artistIds[artist.Id]; !isExists {
 				artistIds[artist.Id] = 0
+			}
+		}
+
+		for _, track := range release.Tracks.Items {
+			for _, artist := range track.Artists {
+				if _, isExists := artistIds[artist.Id]; !isExists {
+					artistIds[artist.Id] = 0
+				}
 			}
 		}
 	}

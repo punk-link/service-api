@@ -13,6 +13,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/jackc/pgtype"
 )
 
 type ReleaseService struct {
@@ -56,6 +58,7 @@ func (t *ReleaseService) AddReleases(currentManager labels.ManagerContext, artis
 }
 
 func (t *ReleaseService) GetRelease(currentManager labels.ManagerContext, id int) artistModels.Release {
+
 	return artistModels.Release{}
 }
 
@@ -73,7 +76,13 @@ func (t *ReleaseService) buildReleaseFromSpotifyDetails(wg *sync.WaitGroup, resu
 		return
 	}
 
-	tracks := t.getTracks(release)
+	imageDetailsJsonb := pgtype.JSONB{}
+	err = imageDetailsJsonb.Set(imageDetailsJson)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+	}
+
+	tracks := t.getTracks(release, artists)
 	tracksJson, err := json.Marshal(tracks)
 	if err != nil {
 		t.logger.LogError(err, "Can't serialize track: '%s'", err.Error())
@@ -85,18 +94,17 @@ func (t *ReleaseService) buildReleaseFromSpotifyDetails(wg *sync.WaitGroup, resu
 	dbRelease := artistData.Release{
 		Artists:         releaseArtists,
 		Created:         timeStamp,
+		ImageDetails:    string(imageDetailsJson),
 		Label:           t.getLabelName(release),
 		Name:            release.Name,
 		PrimaryArtistId: releaseArtists[0].Id,
 		ReleaseDate:     t.getReleaseDate(release),
 		SpotifyId:       release.Id,
 		TrackNumber:     release.TrackNumber,
+		Tracks:          string(tracksJson),
 		Type:            release.Type,
 		Updated:         timeStamp,
 	}
-
-	dbRelease.ImageDetails.Set(string(imageDetailsJson))
-	dbRelease.Tracks.Set(string(tracksJson))
 
 	results <- dbRelease
 }
@@ -186,7 +194,7 @@ func (t *ReleaseService) getReleaseDate(release releases.Release) time.Time {
 	return releaseDate
 }
 
-func (t *ReleaseService) getTracks(release releases.Release) []artistModels.Track {
+func (t *ReleaseService) getTracks(release releases.Release, artists map[string]artistData.Artist) []artistModels.Track {
 	sort.SliceStable(release.Tracks.Items, func(i, j int) bool {
 		return release.Tracks.Items[i].DiscNumber < release.Tracks.Items[j].DiscNumber && release.Tracks.Items[i].TrackNumber < release.Tracks.Items[j].TrackNumber
 	})
@@ -200,7 +208,7 @@ func (t *ReleaseService) getTracks(release releases.Release) []artistModels.Trac
 			})
 
 			trackArtists[i] = artistModels.Artist{
-				Id:           0,
+				Id:           artists[artist.Id].Id,
 				ImageDetails: commonModels.ImageDetails{},
 				Name:         artist.Name,
 			}
