@@ -6,8 +6,8 @@ import (
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	"main/models/labels"
-	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
+	"main/services/artists/validators"
 	"main/services/common"
 	"main/services/spotify"
 	"time"
@@ -27,123 +27,133 @@ func BuildArtistService(logger *common.Logger, releaseService *ReleaseService, s
 	}
 }
 
-func (t *ArtistService) AddArtist(currentManager labels.ManagerContext, spotifyId string) (interface{}, error) {
+func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId string) (artistModels.Artist, error) {
+	var err error
 	if spotifyId == "" {
-		return "", errors.New("artist's spotify ID is empty")
+		err = errors.New("artist's spotify ID is empty")
 	}
 
-	dbArtist, err := t.getDatabaseArtistBySpotifyId(spotifyId)
-	if err != nil {
-		return "", err
-	}
+	dbArtist, err := t.getDbArtistBySpotifyId(err, spotifyId)
+	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
 
 	now := time.Now().UTC()
 	if dbArtist.Id != 0 {
-		if dbArtist.LabelId != currentManager.LabelId {
-			return "", errors.New("artist already added to another label")
-		}
+		dbArtist, err = t.updateLabelIfNeeded(err, dbArtist, currentManager.LabelId)
 	} else {
-		spotifyArtist := t.spotifyService.GetArtist(spotifyId)
-		dbArtist, err = t.addArtist(spotifyArtist, currentManager.LabelId, now)
-		if err != nil {
-			return "", err
-		}
+		dbArtist, err = t.addArtist(err, spotifyId, currentManager.LabelId, now)
 	}
 
-	// TODO: update label id
-
-	missingReleaseSpotifyIds := t.releaseService.GetMissingReleaseIds(dbArtist)
-	releases := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
-	artists, err := t.GetOrAddReleasesArtists(dbArtist, releases, now)
-	if err != nil {
-		return make([]artistModels.Release, 0), err
-	}
-
-	_, err = t.releaseService.AddReleases(currentManager, artists, releases, now)
-	if err != nil {
-		return "", err
-	}
-
-	return "", nil
+	err = t.findAndAddMissingReleases(err, currentManager, dbArtist, now)
+	return t.getInternal(err, currentManager, dbArtist.Id)
 }
 
-func (t *ArtistService) GetOrAddReleasesArtists(dbArtist artistData.Artist, releases []releases.Release, timeStamp time.Time) (map[string]artistData.Artist, error) {
-	spotifyIds := t.getReleasesArtistsSpotifyIds(releases)
-	results, err := t.getDatabaseArtistsBySpotifyIds(spotifyIds)
+func (t *ArtistService) Get(currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
+	return t.getInternal(nil, currentManager, id)
+}
+
+func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
+	const minimalQueryLength int = 3
+	if len(query) < minimalQueryLength {
+		return make([]artistModels.ArtistSearchResult, 0)
+	}
+
+	searchResults := t.spotifyService.SearchArtist(query)
+	return toArtistSearchResults(searchResults)
+}
+
+func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, timeStamp time.Time) (artistData.Artist, error) {
+	if err != nil {
+		return artistData.Artist{}, err
+	}
+
+	spotifyArtist := t.spotifyService.GetArtist(spotifyId)
+	dbArtist := toDbArtist(spotifyArtist, labelId, timeStamp)
+
+	err = data.DB.Create(&dbArtist).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+	}
+
+	return dbArtist, err
+}
+
+func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Time) ([]artistData.Artist, error) {
+	missingArtists := t.spotifyService.GetArtists(spotifyIds)
+
+	dbArtists := make([]artistData.Artist, len(missingArtists))
+	for i, artist := range missingArtists {
+		dbArtists[i] = toDbArtist(artist, 0, timeStamp)
+	}
+
+	err := data.DB.CreateInBatches(&dbArtists, 50).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+	}
+
+	return dbArtists, err
+}
+
+func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
 	if err != nil {
 		return make(map[string]artistData.Artist, 0), err
 	}
 
-	existingSpotifyIds := make(map[string]int, len(results))
-	for _, artist := range results {
-		existingSpotifyIds[artist.SpotifyId] = 0
-	}
-
-	dbArtists, err := t.addMissingArtists(existingSpotifyIds, spotifyIds, timeStamp)
-	for _, dbArtist := range dbArtists {
+	results := make(map[string]artistData.Artist)
+	addedDbArtists, err := t.addMissingArtists(spotifyIds, timeStamp)
+	for _, dbArtist := range addedDbArtists {
 		if err == nil {
 			results[dbArtist.SpotifyId] = dbArtist
 		}
 	}
 
-	return results, nil
+	return results, err
 }
 
-func (t *ArtistService) SearchArtist(query string) []artistModels.ArtistSearchResult {
-	var result []artistModels.ArtistSearchResult
-
-	const minimalQueryLength int = 3
-	if len(query) < minimalQueryLength {
-		return result
+func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
+	if err != nil {
+		return err
 	}
 
-	results := t.spotifyService.SearchArtist(query)
+	missingReleases := t.releaseService.GetMissingSpotifyReleases(dbArtist)
 
-	return spotify.ToArtistSearchResults(results)
+	artistSpotifyIds := t.getFeaturingArtistSpotifyIds(missingReleases)
+	existingArtists, err := t.getExistingFeaturingArtists(dbArtist, artistSpotifyIds, timeStamp)
+
+	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, existingArtists, artistSpotifyIds)
+	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
+	if err != nil {
+		return err
+	}
+
+	artists := existingArtists
+	for key, artist := range addedArtists {
+		artists[key] = artist
+	}
+
+	_, err = t.releaseService.AddReleases(currentManager, artists, missingReleases, timeStamp)
+	return err
 }
 
-func (t *ArtistService) addArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) (artistData.Artist, error) {
-	dbArtist := t.toDbArtist(artist, labelId, timeStamp)
-
-	result := data.DB.Create(&dbArtist)
-	if result.Error != nil {
-		t.logger.LogError(result.Error, result.Error.Error())
-		return artistData.Artist{}, result.Error
+func (t *ArtistService) getDbArtistBySpotifyId(err error, spotifyId string) (artistData.Artist, error) {
+	if err != nil {
+		return artistData.Artist{}, err
 	}
 
-	return dbArtist, nil
+	var dbArtist artistData.Artist
+	err = data.DB.Model(&artistData.Artist{}).Preload("Releases").Where("spotify_id = ?", spotifyId).FirstOrInit(&dbArtist).Error
+	if err != nil {
+		t.logger.LogFatal(err, err.Error())
+	}
+
+	return dbArtist, err
 }
 
-func (t *ArtistService) addMissingArtists(existingSpotifyIds map[string]int, spotifyIds []string, timeStamp time.Time) ([]artistData.Artist, error) {
-	missingSpotifyIds := make([]string, 0)
-	for _, id := range spotifyIds {
-		if _, isExists := existingSpotifyIds[id]; !isExists {
-			missingSpotifyIds = append(missingSpotifyIds, id)
-		}
-	}
-
-	missingArtists := t.spotifyService.GetArtists(missingSpotifyIds)
-
-	dbArtists := make([]artistData.Artist, len(missingArtists))
-	for i, artist := range missingArtists {
-		dbArtists[i] = t.toDbArtist(artist, 0, timeStamp)
-	}
-
-	result := data.DB.CreateInBatches(&dbArtists, 50)
-	if result.Error != nil {
-		t.logger.LogError(result.Error, result.Error.Error())
-		return make([]artistData.Artist, 0), result.Error
-	}
-
-	return dbArtists, nil
-}
-
-func (t *ArtistService) getDatabaseArtistsBySpotifyIds(spotifyIds []string) (map[string]artistData.Artist, error) {
+func (t *ArtistService) getExistingFeaturingArtists(dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
 	var existedArtists []artistData.Artist
-	queryResult := data.DB.Where("spotify_id IN ?", spotifyIds).Find(&existedArtists)
-	if queryResult.Error != nil {
-		t.logger.LogFatal(queryResult.Error, queryResult.Error.Error())
-		return make(map[string]artistData.Artist), queryResult.Error
+	err := data.DB.Where("spotify_id IN ?", spotifyIds).Find(&existedArtists).Error
+	if err != nil {
+		t.logger.LogFatal(err, err.Error())
+		return make(map[string]artistData.Artist), err
 	}
 
 	results := make(map[string]artistData.Artist, 0)
@@ -154,18 +164,46 @@ func (t *ArtistService) getDatabaseArtistsBySpotifyIds(spotifyIds []string) (map
 	return results, nil
 }
 
-func (t *ArtistService) getDatabaseArtistBySpotifyId(spotifyId string) (artistData.Artist, error) {
-	var dbArtist artistData.Artist
-	queryResult := data.DB.Model(&artistData.Artist{}).Preload("Releases").Where("spotify_id = ?", spotifyId).FirstOrInit(&dbArtist)
-	if queryResult.Error != nil {
-		t.logger.LogFatal(queryResult.Error, queryResult.Error.Error())
-		return dbArtist, queryResult.Error
+func (t *ArtistService) getInternal(err error, currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
+	if err != nil {
+		return artistModels.Artist{}, err
 	}
 
-	return dbArtist, nil
+	var dbArtist artistData.Artist
+	err = data.DB.Model(&artistData.Artist{}).Preload("Releases").First(&dbArtist, id).Error
+	if err != nil {
+		t.logger.LogFatal(err, err.Error())
+	}
+
+	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	return toArtist(dbArtist), nil
 }
 
-func (t *ArtistService) getReleasesArtistsSpotifyIds(releases []releases.Release) []string {
+func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existingArtists map[string]artistData.Artist, artistSpotifyIds []string) ([]string, error) {
+	if err != nil {
+		return make([]string, 0), err
+	}
+
+	existingArtistSpotifyIds := make(map[string]int, len(existingArtists))
+	for _, artist := range existingArtists {
+		existingArtistSpotifyIds[artist.SpotifyId] = 0
+	}
+
+	missingSpotifyIds := make([]string, 0)
+	for _, id := range artistSpotifyIds {
+		if _, isExists := existingArtistSpotifyIds[id]; !isExists {
+			missingSpotifyIds = append(missingSpotifyIds, id)
+		}
+	}
+
+	return missingSpotifyIds, nil
+}
+
+func (t *ArtistService) getFeaturingArtistSpotifyIds(releases []releases.Release) []string {
 	artistIds := make(map[string]int)
 	for _, release := range releases {
 		for _, artist := range release.Artists {
@@ -191,12 +229,15 @@ func (t *ArtistService) getReleasesArtistsSpotifyIds(releases []releases.Release
 	return spotifyIds
 }
 
-func (t *ArtistService) toDbArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) artistData.Artist {
-	return artistData.Artist{
-		Created:   timeStamp,
-		LabelId:   labelId,
-		Name:      artist.Name,
-		SpotifyId: artist.Id,
-		Updated:   timeStamp,
+func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artist, labelId int) (artistData.Artist, error) {
+	if err != nil {
+		return artistData.Artist{}, err
 	}
+
+	if dbArtist.LabelId == 0 {
+		dbArtist.LabelId = labelId
+		err = data.DB.Save(&dbArtist).Error
+	}
+
+	return dbArtist, err
 }

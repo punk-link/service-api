@@ -30,8 +30,9 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 	})
 
 	registerRoutes(logger, diContainer, controllers.ArtistController{}, func(controller *controllers.ArtistController) {
-		v1.POST("/artists/:spotify-id", controller.AddArtist)
-		v1.GET("/artists/search", controller.SearchArtist)
+		v1.POST("/artists/:spotify-id", controller.Add)
+		v1.GET("/artists/:id", controller.Get)
+		v1.GET("/artists/search", controller.Search)
 	})
 
 	registerRoutes(logger, diContainer, controllers.ReleaseController{}, func(controller *controllers.ReleaseController) {

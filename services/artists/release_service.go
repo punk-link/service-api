@@ -47,23 +47,48 @@ func (t *ReleaseService) AddReleases(currentManager labels.ManagerContext, artis
 		dbReleases = append(dbReleases, result)
 	}
 
-	result := data.DB.CreateInBatches(&dbReleases, 50)
-	if result.Error != nil {
-		t.logger.LogError(result.Error, result.Error.Error())
-		return make([]artistModels.Release, 0), result.Error
+	err := data.DB.CreateInBatches(&dbReleases, 50).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+		return make([]artistModels.Release, 0), err
 	}
 
-	results := t.GetReleases(currentManager, dbReleases[0].Artists[0].Id)
-	return results, nil
+	return t.GetReleases(currentManager, dbReleases[0].Artists[0].Id)
 }
 
 func (t *ReleaseService) GetRelease(currentManager labels.ManagerContext, id int) artistModels.Release {
-
 	return artistModels.Release{}
 }
 
-func (t *ReleaseService) GetReleases(currentManager labels.ManagerContext, artistId int) []artistModels.Release {
-	return make([]artistModels.Release, 0)
+func (t *ReleaseService) GetReleases(currentManager labels.ManagerContext, artistId int) ([]artistModels.Release, error) {
+	var dbReleases []artistData.Release
+	err := data.DB.Model(&artistData.Release{}).Preload("Artists").Where("primary_artist_id = ?", artistId).Find(&dbReleases).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+		return make([]artistModels.Release, 0), err
+	}
+
+	return toReleases(dbReleases), nil
+}
+
+func toReleases(dbReleases []artistData.Release) []artistModels.Release {
+	results := make([]artistModels.Release, len(dbReleases))
+	for i, dbRelease := range dbReleases {
+
+		results[i] = artistModels.Release{
+			Id:           dbRelease.Id,
+			Artists:      []artistModels.Artist{},
+			ImageDetails: commonModels.ImageDetails{},
+			Lable:        dbRelease.Label,
+			Name:         dbRelease.Name,
+			ReleaseDate:  dbRelease.ReleaseDate,
+			TrackNumber:  dbRelease.TrackNumber,
+			Tracks:       []artistModels.Track{},
+			Type:         dbRelease.Type,
+		}
+	}
+
+	return results
 }
 
 func (t *ReleaseService) buildReleaseFromSpotifyDetails(wg *sync.WaitGroup, results chan<- artistData.Release, timeStamp time.Time, artists map[string]artistData.Artist, release releases.Release) {
@@ -109,7 +134,7 @@ func (t *ReleaseService) buildReleaseFromSpotifyDetails(wg *sync.WaitGroup, resu
 	results <- dbRelease
 }
 
-func (t *ReleaseService) GetMissingReleaseIds(dbArtist artistData.Artist) []string {
+func (t *ReleaseService) GetMissingSpotifyReleases(dbArtist artistData.Artist) []releases.Release {
 	dbReleaseIds := make(map[string]int, len(dbArtist.Releases))
 	for _, release := range dbArtist.Releases {
 		dbReleaseIds[release.SpotifyId] = 0
@@ -123,7 +148,7 @@ func (t *ReleaseService) GetMissingReleaseIds(dbArtist artistData.Artist) []stri
 		}
 	}
 
-	return missingReleaseSpotifyIds
+	return t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
 }
 
 func (t *ReleaseService) getImageDetails(release releases.Release) commonModels.ImageDetails {

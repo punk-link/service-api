@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"main/services/artists"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +17,7 @@ func BuildArtistController(artistService *artists.ArtistService) *ArtistControll
 	}
 }
 
-func (t *ArtistController) AddArtist(ctx *gin.Context) {
+func (t *ArtistController) Add(ctx *gin.Context) {
 	spotifyId := ctx.Param("spotify-id")
 
 	currentManager, err := getCurrentManagerContext(ctx)
@@ -25,13 +26,30 @@ func (t *ArtistController) AddArtist(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.artistService.AddArtist(currentManager, spotifyId)
+	result, err := t.artistService.Add(currentManager, spotifyId)
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (t *ArtistController) SearchArtist(ctx *gin.Context) {
+func (t *ArtistController) Get(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		BadRequest(ctx, err.Error())
+		return
+	}
+
+	currentManager, err := getCurrentManagerContext(ctx)
+	if err != nil {
+		NotFound(ctx, err.Error())
+		return
+	}
+
+	result, err := t.artistService.Get(currentManager, id)
+	OkOrBadRequest(ctx, result, err)
+}
+
+func (t *ArtistController) Search(ctx *gin.Context) {
 	query := ctx.Query("query")
 
-	result := t.artistService.SearchArtist(query)
+	result := t.artistService.Search(query)
 	Ok(ctx, result)
 }

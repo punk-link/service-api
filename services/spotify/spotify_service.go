@@ -3,7 +3,6 @@ package spotify
 import (
 	"fmt"
 	"main/helpers"
-	"main/models/artists"
 	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
@@ -71,18 +70,6 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	}
 
 	return spotifyResponse.Items
-}
-
-func (t *SpotifyService) GetReleaseDetails(spotifyId string) artists.Release {
-	var result artists.Release
-
-	var spotifyRelease releases.Release
-	if err := makeRequest(t.logger, "GET", fmt.Sprintf("albums/%s", spotifyId), &spotifyRelease); err != nil {
-		t.logger.LogWarn(err.Error())
-		return result
-	}
-
-	return toRelease(spotifyRelease)
 }
 
 func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {

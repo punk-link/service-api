@@ -47,6 +47,6 @@ func (t *ReleaseController) GetReleases(ctx *gin.Context) {
 		return
 	}
 
-	result := t.releaseService.GetReleases(currentManager, artistId)
-	Ok(ctx, result)
+	result, err := t.releaseService.GetReleases(currentManager, artistId)
+	OkOrBadRequest(ctx, result, err)
 }
