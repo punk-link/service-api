@@ -13,18 +13,19 @@ import (
 func buildDependencies() *dig.Container {
 	container := dig.New()
 
-	container.Provide(common.BuildLogger)
-	container.Provide(labelServices.BuildLabelService)
-	container.Provide(labelServices.BuildManagerService)
-	container.Provide(spotifyServices.BuildSpotifyService)
-	container.Provide(artistServices.BuildReleaseService)
-	container.Provide(artistServices.BuildArtistService)
+	container.Provide(common.ConstructLogger)
 
-	container.Provide(controllers.BuildArtistController)
-	container.Provide(controllers.BuildReleaseController)
-	container.Provide(controllers.BuildLabelController)
-	container.Provide(controllers.BuildManagerController)
-	container.Provide(controllers.BuildStatusController)
+	container.Provide(labelServices.ConstructLabelService)
+	container.Provide(labelServices.ConstructManagerService)
+	container.Provide(spotifyServices.ConstructSpotifyService)
+	container.Provide(artistServices.ConstructReleaseService)
+	container.Provide(artistServices.ConstructArtistService)
+
+	container.Provide(controllers.ConstructArtistController)
+	container.Provide(controllers.ConstructReleaseController)
+	container.Provide(controllers.ConstructLabelController)
+	container.Provide(controllers.ConstructManagerController)
+	container.Provide(controllers.ConstructStatusController)
 
 	return container
 }

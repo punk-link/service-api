@@ -4,7 +4,7 @@ import "github.com/rs/zerolog/log"
 
 type Logger struct{}
 
-func BuildLogger() *Logger {
+func ConstructLogger() *Logger {
 	return &Logger{}
 }
 

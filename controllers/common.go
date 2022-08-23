@@ -17,6 +17,6 @@ func getCurrentManagerContext(ctx *gin.Context) (labels.ManagerContext, error) {
 	}
 
 	// TODO: add an injection maybe
-	managerService := service.BuildManagerService(&service.LabelService{}, &common.Logger{})
+	managerService := service.ConstructManagerService(&service.LabelService{}, &common.Logger{})
 	return managerService.GetManagerContext(managerId)
 }

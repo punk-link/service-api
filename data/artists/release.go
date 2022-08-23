@@ -10,9 +10,9 @@ type Release struct {
 	ImageDetails    string    `gorm:"type:jsonb;default:'{}';not null"`
 	Label           string    `gorm:"not null"`
 	Name            string    `gorm:"not null"`
-	PrimaryArtistId int       `gorm:"not null,index"`
+	PrimaryArtistId int       `gorm:"not null,uniqueIndex"`
 	ReleaseDate     time.Time `gorm:"not null"`
-	SpotifyId       string    `gorm:"not null,index"`
+	SpotifyId       string    `gorm:"not null,uniqueIndex"`
 	TrackNumber     int       `gorm:"not null"`
 	Tracks          string    `gorm:"type:jsonb;default:'[]';not null"`
 	Type            string    `gorm:"not null"`

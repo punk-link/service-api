@@ -13,7 +13,7 @@ type ManagerController struct {
 	managerService *service.ManagerService
 }
 
-func BuildManagerController(managerService *service.ManagerService) *ManagerController {
+func ConstructManagerController(managerService *service.ManagerService) *ManagerController {
 	return &ManagerController{
 		managerService: managerService,
 	}

@@ -12,7 +12,7 @@ type StatusController struct {
 	logger *common.Logger
 }
 
-func BuildStatusController(logger *common.Logger) *StatusController {
+func ConstructStatusController(logger *common.Logger) *StatusController {
 	return &StatusController{
 		logger: logger,
 	}
@@ -22,6 +22,8 @@ func (controller *StatusController) CheckHealth(ctx *gin.Context) {
 	sqlDb, err := data.DB.DB()
 	if err != nil {
 		controller.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
+		ctx.Status(http.StatusInternalServerError)
+		return
 	}
 
 	err = sqlDb.Ping()

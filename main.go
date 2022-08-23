@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	logger := common.BuildLogger()
+	logger := common.ConstructLogger()
 
 	environmentName := infrastructure.GetEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)

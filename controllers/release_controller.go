@@ -11,7 +11,7 @@ type ReleaseController struct {
 	releaseService *artists.ReleaseService
 }
 
-func BuildReleaseController(releaseService *artists.ReleaseService) *ReleaseController {
+func ConstructReleaseController(releaseService *artists.ReleaseService) *ReleaseController {
 	return &ReleaseController{
 		releaseService: releaseService,
 	}
@@ -30,7 +30,7 @@ func (t *ReleaseController) GetRelease(ctx *gin.Context) {
 		return
 	}
 
-	result := t.releaseService.GetRelease(currentManager, id)
+	result := t.releaseService.GetOne(currentManager, id)
 	Ok(ctx, result)
 }
 
@@ -47,6 +47,6 @@ func (t *ReleaseController) GetReleases(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.releaseService.GetReleases(currentManager, artistId)
+	result, err := t.releaseService.Get(currentManager, artistId)
 	OkOrBadRequest(ctx, result, err)
 }

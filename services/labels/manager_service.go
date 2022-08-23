@@ -17,7 +17,7 @@ type ManagerService struct {
 	logger       *common.Logger
 }
 
-func BuildManagerService(labelService *LabelService, logger *common.Logger) *ManagerService {
+func ConstructManagerService(labelService *LabelService, logger *common.Logger) *ManagerService {
 	return &ManagerService{
 		labelService: labelService,
 		logger:       logger,

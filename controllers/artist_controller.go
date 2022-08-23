@@ -11,7 +11,7 @@ type ArtistController struct {
 	artistService *artists.ArtistService
 }
 
-func BuildArtistController(artistService *artists.ArtistService) *ArtistController {
+func ConstructArtistController(artistService *artists.ArtistService) *ArtistController {
 	return &ArtistController{
 		artistService: artistService,
 	}

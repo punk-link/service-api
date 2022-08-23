@@ -17,7 +17,7 @@ type LabelService struct {
 	spotifyService *spotify.SpotifyService
 }
 
-func BuildLabelService(logger *common.Logger, spotifyService *spotify.SpotifyService) *LabelService {
+func ConstructLabelService(logger *common.Logger, spotifyService *spotify.SpotifyService) *LabelService {
 	return &LabelService{
 		logger:         logger,
 		spotifyService: spotifyService,

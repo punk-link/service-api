@@ -1,9 +1,9 @@
 package converters
 
 import (
+	"main/helpers"
 	"main/models/common"
 	"main/models/spotify"
-	"sort"
 )
 
 func ToImageDetailsFromSpotify(imageDetails []spotify.ImageDetails) common.ImageDetails {
@@ -11,10 +11,7 @@ func ToImageDetailsFromSpotify(imageDetails []spotify.ImageDetails) common.Image
 		return common.ImageDetails{}
 	}
 
-	sort.SliceStable(imageDetails, func(i, j int) bool {
-		return imageDetails[i].Height > imageDetails[j].Height
-	})
-
+	helpers.ReorderImageDetailsDesc(imageDetails)
 	return common.ImageDetails{
 		Height: imageDetails[0].Height,
 		Url:    imageDetails[0].Url,

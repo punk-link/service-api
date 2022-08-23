@@ -7,6 +7,7 @@ import (
 	artistModels "main/models/artists"
 	"main/models/labels"
 	"main/models/spotify/releases"
+	"main/services/artists/converters"
 	"main/services/artists/validators"
 	"main/services/common"
 	"main/services/spotify"
@@ -19,7 +20,7 @@ type ArtistService struct {
 	releaseService *ReleaseService
 }
 
-func BuildArtistService(logger *common.Logger, releaseService *ReleaseService, spotifyService *spotify.SpotifyService) *ArtistService {
+func ConstructArtistService(logger *common.Logger, releaseService *ReleaseService, spotifyService *spotify.SpotifyService) *ArtistService {
 	return &ArtistService{
 		logger:         logger,
 		releaseService: releaseService,
@@ -58,7 +59,7 @@ func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
 	}
 
 	searchResults := t.spotifyService.SearchArtist(query)
-	return toArtistSearchResults(searchResults)
+	return converters.ToArtistSearchResults(searchResults)
 }
 
 func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, timeStamp time.Time) (artistData.Artist, error) {
@@ -67,7 +68,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 	}
 
 	spotifyArtist := t.spotifyService.GetArtist(spotifyId)
-	dbArtist := toDbArtist(spotifyArtist, labelId, timeStamp)
+	dbArtist := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
 
 	err = data.DB.Create(&dbArtist).Error
 	if err != nil {
@@ -82,7 +83,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 
 	dbArtists := make([]artistData.Artist, len(missingArtists))
 	for i, artist := range missingArtists {
-		dbArtists[i] = toDbArtist(artist, 0, timeStamp)
+		dbArtists[i] = converters.ToDbArtist(artist, 0, timeStamp)
 	}
 
 	err := data.DB.CreateInBatches(&dbArtists, 50).Error
@@ -114,7 +115,7 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 		return err
 	}
 
-	missingReleases := t.releaseService.GetMissingSpotifyReleases(dbArtist)
+	missingReleases := t.releaseService.GetMissingReleases(dbArtist)
 
 	artistSpotifyIds := t.getFeaturingArtistSpotifyIds(missingReleases)
 	existingArtists, err := t.getExistingFeaturingArtists(dbArtist, artistSpotifyIds, timeStamp)
@@ -130,8 +131,7 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 		artists[key] = artist
 	}
 
-	_, err = t.releaseService.AddReleases(currentManager, artists, missingReleases, timeStamp)
-	return err
+	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
 func (t *ArtistService) getDbArtistBySpotifyId(err error, spotifyId string) (artistData.Artist, error) {
@@ -180,7 +180,7 @@ func (t *ArtistService) getInternal(err error, currentManager labels.ManagerCont
 		return artistModels.Artist{}, err
 	}
 
-	return toArtist(dbArtist), nil
+	return converters.ToArtist(dbArtist), nil
 }
 
 func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existingArtists map[string]artistData.Artist, artistSpotifyIds []string) ([]string, error) {

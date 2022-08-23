@@ -15,7 +15,7 @@ type SpotifyService struct {
 	logger *common.Logger
 }
 
-func BuildSpotifyService(logger *common.Logger) *SpotifyService {
+func ConstructSpotifyService(logger *common.Logger) *SpotifyService {
 	return &SpotifyService{
 		logger: logger,
 	}
