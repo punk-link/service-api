@@ -7,7 +7,8 @@ import (
 	"main/models/labels"
 	requests "main/requests/labels"
 	"main/services/common"
-	validator "main/services/labels/validators"
+	"main/services/labels/converters"
+	"main/services/labels/validators"
 	"strings"
 	"time"
 )
@@ -24,111 +25,102 @@ func ConstructManagerService(labelService *LabelService, logger *common.Logger) 
 	}
 }
 
-func (service *ManagerService) AddManager(currentManager labels.ManagerContext, manager labels.Manager) (labels.Manager, error) {
+func (t *ManagerService) Add(currentManager labels.ManagerContext, manager labels.Manager) (labels.Manager, error) {
 	trimmedName := strings.TrimSpace(manager.Name)
-	if err := validator.NameNotEmpty(trimmedName); err != nil {
-		return labels.Manager{}, err
-	}
+	err := validators.NameNotEmpty(trimmedName)
 
-	now := time.Now().UTC()
-	dbManager := labelData.Manager{
-		Created: now,
-		Name:    trimmedName,
-		LabelId: currentManager.LabelId,
-		Updated: now,
-	}
-
-	result := data.DB.Create(&dbManager)
-	if result.Error != nil {
-		service.logger.LogError(result.Error, result.Error.Error())
-		return labels.Manager{}, result.Error
-	}
-
-	return service.GetManager(currentManager, dbManager.Id)
+	return t.addInternal(err, currentManager, trimmedName)
 }
 
-func (service *ManagerService) AddMasterManager(request requests.AddMasterManagerRequest) (labels.Manager, error) {
-	label, err := service.labelService.AddLabel(request.LabelName)
+func (t *ManagerService) AddMaster(request requests.AddMasterManagerRequest) (labels.Manager, error) {
+	trimmedName := strings.TrimSpace(request.Name)
+	err := validators.NameNotEmpty(trimmedName)
 	if err != nil {
 		return labels.Manager{}, err
 	}
 
-	manager, err := service.AddManager(labels.ManagerContext{LabelId: label.Id}, labels.Manager{Name: request.Name})
-	if err != nil {
-		return labels.Manager{}, err
-	}
-
-	currentManager, _ := service.GetManagerContext(manager.Id) // Assuming there is no error here
-	return service.GetManager(currentManager, manager.Id)
+	label, err := t.labelService.AddLabel(request.LabelName)
+	return t.addInternal(err, labels.ManagerContext{LabelId: label.Id}, trimmedName)
 }
 
-func (service *ManagerService) GetManager(currentManager labels.ManagerContext, id int) (labels.Manager, error) {
-	dbManager, err := helpers.GetEntity[labelData.Manager](id)
-	if err != nil {
-		return labels.Manager{}, err
-	}
-
-	if err := validator.CurrentManagerBelongsToLabel(currentManager, dbManager.LabelId); err != nil {
-		return labels.Manager{}, err
-	}
-
-	return toManager(dbManager), nil
-}
-
-func (service *ManagerService) GetManagerContext(id int) (labels.ManagerContext, error) {
-	dbManager, err := helpers.GetEntity[labelData.Manager](id)
-	if err != nil {
-		return labels.ManagerContext{}, err
-	}
-
-	return labels.ManagerContext{
-		Id:      dbManager.Id,
-		LabelId: dbManager.LabelId,
-	}, nil
-}
-
-func (service *ManagerService) GetLabelManagers(currentManager labels.ManagerContext) []labels.Manager {
+func (t *ManagerService) Get(currentManager labels.ManagerContext) []labels.Manager {
 	var dbManagers []labelData.Manager
 	data.DB.Where("label_id = ?", currentManager.LabelId).Find(&dbManagers)
 
-	managers := make([]labels.Manager, len(dbManagers))
-	for i, manager := range dbManagers {
-		managers[i] = toManager(manager)
-	}
-
-	return managers
+	return converters.ToManagers(dbManagers)
 }
 
-func (service *ManagerService) ModifyManager(currentManager labels.ManagerContext, manager labels.Manager, id int) (labels.Manager, error) {
-	if err := validator.IdConsistsOverRequest(manager.Id, id); err != nil {
-		return labels.Manager{}, err
-	}
+func (t *ManagerService) GetContext(id int) (labels.ManagerContext, error) {
+	manager, err := t.getOneInternal(nil, id)
+
+	return labels.ManagerContext{
+		Id:      manager.Id,
+		LabelId: manager.LabelId,
+	}, err
+}
+
+func (t *ManagerService) GetOne(currentManager labels.ManagerContext, id int) (labels.Manager, error) {
+	manager, err1 := t.getOneInternal(nil, id)
+	err2 := validators.CurrentManagerBelongsToLabel(currentManager, manager.LabelId)
+
+	return manager, helpers.AccumulateErrors(err1, err2)
+}
+
+func (t *ManagerService) Modify(currentManager labels.ManagerContext, manager labels.Manager, id int) (labels.Manager, error) {
+	err1 := validators.IdConsistsOverRequest(manager.Id, id)
 
 	trimmedName := strings.TrimSpace(manager.Name)
-	if err := validator.NameNotEmpty(trimmedName); err != nil {
-		return labels.Manager{}, err
-	}
+	err2 := validators.NameNotEmpty(trimmedName)
 
-	dbManager, err := helpers.GetEntity[labelData.Manager](id)
+	dbManager, err3 := t.getOneInternal(helpers.AccumulateErrors(err1, err2), manager.Id)
+	err4 := validators.CurrentManagerBelongsToLabel(currentManager, dbManager.LabelId)
+
+	return t.modifyInternal(helpers.AccumulateErrors(err3, err4), manager.Id, trimmedName)
+}
+
+func (t *ManagerService) addInternal(err error, currentManager labels.ManagerContext, managerName string) (labels.Manager, error) {
 	if err != nil {
 		return labels.Manager{}, err
 	}
 
-	if err := validator.CurrentManagerBelongsToLabel(currentManager, dbManager.LabelId); err != nil {
+	dbManager := converters.ToDbManager(managerName, currentManager.LabelId)
+	err = data.DB.Create(&dbManager).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
 		return labels.Manager{}, err
 	}
 
-	dbManager.Name = trimmedName
-	dbManager.Updated = time.Now().UTC()
-	data.DB.Save(&dbManager)
-
-	return service.GetManager(currentManager, id)
+	return t.getOneInternal(err, dbManager.Id)
 }
 
-func toManager(source labelData.Manager) labels.Manager {
-	return labels.Manager{
-		Id:      source.Id,
-		Name:    source.Name,
-		LabelId: source.LabelId,
+func (t *ManagerService) getOneInternal(err error, id int) (labels.Manager, error) {
+	if err != nil {
+		return labels.Manager{}, err
 	}
+
+	var dbManager labelData.Manager
+	err = data.DB.First(&dbManager, id).Error
+	if err != nil {
+		return labels.Manager{}, err
+	}
+
+	return converters.ToManager(dbManager), nil
+}
+
+func (t *ManagerService) modifyInternal(err error, id int, managerName string) (labels.Manager, error) {
+	if err != nil {
+		return labels.Manager{}, err
+	}
+
+	var dbManager labelData.Manager
+	err = data.DB.First(&dbManager, id).Error
+	if err != nil {
+		return labels.Manager{}, err
+	}
+
+	dbManager.Name = managerName
+	dbManager.Updated = time.Now().UTC()
+	err = data.DB.Save(&dbManager).Error
+
+	return t.getOneInternal(err, id)
 }

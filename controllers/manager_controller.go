@@ -32,7 +32,7 @@ func (controller *ManagerController) AddManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.managerService.AddManager(currentManager, manager)
+	result, err := controller.managerService.Add(currentManager, manager)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -43,7 +43,7 @@ func (controller *ManagerController) AddMasterManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.managerService.AddMasterManager(request)
+	result, err := controller.managerService.AddMaster(request)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -60,7 +60,7 @@ func (controller *ManagerController) GetManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.managerService.GetManager(currentManager, id)
+	result, err := controller.managerService.GetOne(currentManager, id)
 	OkOrBadRequest(ctx, result, err)
 }
 
@@ -71,7 +71,7 @@ func (controller *ManagerController) GetManagers(ctx *gin.Context) {
 		return
 	}
 
-	result := controller.managerService.GetLabelManagers(currentManager)
+	result := controller.managerService.Get(currentManager)
 	Ok(ctx, result)
 }
 
@@ -94,6 +94,6 @@ func (controller *ManagerController) ModifyManager(ctx *gin.Context) {
 		return
 	}
 
-	result, err := controller.managerService.ModifyManager(currentManager, manager, id)
+	result, err := controller.managerService.Modify(currentManager, manager, id)
 	OkOrBadRequest(ctx, result, err)
 }

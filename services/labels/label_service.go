@@ -43,8 +43,7 @@ func (t *LabelService) ModifyLabel(currentManager labels.ManagerContext, label l
 	trimmedName := strings.TrimSpace(label.Name)
 	err3 := validator.NameNotEmpty(trimmedName)
 
-	err := helpers.AccumulateErrors(err1, err2, err3)
-	return t.modifyLabelInternal(err, currentManager, trimmedName)
+	return t.modifyLabelInternal(helpers.AccumulateErrors(err1, err2, err3), currentManager, trimmedName)
 }
 
 func (t *LabelService) addLabelInternal(err error, labelName string) (labels.Label, error) {
