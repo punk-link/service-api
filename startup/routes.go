@@ -17,16 +17,16 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 	v1 := app.Group("/v1")
 
 	registerRoutes(logger, diContainer, controllers.ManagerController{}, func(controller *controllers.ManagerController) {
-		v1.POST("/managers", controller.AddManager)
-		v1.POST("/managers/master", controller.AddMasterManager)
-		v1.GET("/managers", controller.GetManagers)
-		v1.GET("/managers/:id", controller.GetManager)
-		v1.POST("/managers/:id", controller.ModifyManager)
+		v1.POST("/managers", controller.Add)
+		v1.POST("/managers/master", controller.AddMaster)
+		v1.GET("/managers", controller.Get)
+		v1.GET("/managers/:id", controller.GetOne)
+		v1.POST("/managers/:id", controller.Modify)
 	})
 
 	registerRoutes(logger, diContainer, controllers.LabelController{}, func(controller *controllers.LabelController) {
-		v1.GET("/labels/:id", controller.GetLabel)
-		v1.POST("/labels/:id", controller.ModifyLabel)
+		v1.GET("/labels/:id", controller.Get)
+		v1.POST("/labels/:id", controller.Modify)
 	})
 
 	registerRoutes(logger, diContainer, controllers.ArtistController{}, func(controller *controllers.ArtistController) {
@@ -36,8 +36,8 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 	})
 
 	registerRoutes(logger, diContainer, controllers.ReleaseController{}, func(controller *controllers.ReleaseController) {
-		v1.GET("/artists/:artist-id/releases", controller.GetReleases)
-		v1.GET("/artists/releases/:id/", controller.GetRelease)
+		v1.GET("/artists/:artist-id/releases", controller.Get)
+		v1.GET("/artists/releases/:id/", controller.GetOne)
 	})
 }
 

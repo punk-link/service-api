@@ -21,13 +21,14 @@ func ConstructSpotifyService(logger *common.Logger) *SpotifyService {
 	}
 }
 
-func (t *SpotifyService) GetArtist(spotifyId string) spotifyArtists.Artist {
+func (t *SpotifyService) GetArtist(spotifyId string) (spotifyArtists.Artist, error) {
 	var spotifyArtist spotifyArtists.Artist
 	if err := makeRequest(t.logger, "GET", fmt.Sprintf("artists/%s", spotifyId), &spotifyArtist); err != nil {
 		t.logger.LogWarn(err.Error())
+		return spotifyArtists.Artist{}, err
 	}
 
-	return spotifyArtist
+	return spotifyArtist, nil
 }
 
 func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist {

@@ -19,7 +19,7 @@ func ConstructManagerController(managerService *service.ManagerService) *Manager
 	}
 }
 
-func (controller *ManagerController) AddManager(ctx *gin.Context) {
+func (controller *ManagerController) Add(ctx *gin.Context) {
 	var manager labels.Manager
 	if err := ctx.ShouldBindJSON(&manager); err != nil {
 		UnprocessableEntity(ctx, err)
@@ -36,7 +36,7 @@ func (controller *ManagerController) AddManager(ctx *gin.Context) {
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (controller *ManagerController) AddMasterManager(ctx *gin.Context) {
+func (controller *ManagerController) AddMaster(ctx *gin.Context) {
 	var request requests.AddMasterManagerRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		UnprocessableEntity(ctx, err)
@@ -47,7 +47,7 @@ func (controller *ManagerController) AddMasterManager(ctx *gin.Context) {
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (controller *ManagerController) GetManager(ctx *gin.Context) {
+func (controller *ManagerController) GetOne(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
@@ -64,7 +64,7 @@ func (controller *ManagerController) GetManager(ctx *gin.Context) {
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (controller *ManagerController) GetManagers(ctx *gin.Context) {
+func (controller *ManagerController) Get(ctx *gin.Context) {
 	currentManager, err := getCurrentManagerContext(ctx)
 	if err != nil {
 		NotFound(ctx, err.Error())
@@ -75,7 +75,7 @@ func (controller *ManagerController) GetManagers(ctx *gin.Context) {
 	Ok(ctx, result)
 }
 
-func (controller *ManagerController) ModifyManager(ctx *gin.Context) {
+func (controller *ManagerController) Modify(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())

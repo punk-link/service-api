@@ -67,9 +67,12 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 		return artistData.Artist{}, err
 	}
 
-	spotifyArtist := t.spotifyService.GetArtist(spotifyId)
-	dbArtist := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
+	spotifyArtist, err := t.spotifyService.GetArtist(spotifyId)
+	if err != nil {
+		return artistData.Artist{}, err
+	}
 
+	dbArtist := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
 	err = data.DB.Create(&dbArtist).Error
 	if err != nil {
 		t.logger.LogError(err, err.Error())
