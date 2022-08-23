@@ -26,62 +26,54 @@ func ConstructLabelService(logger *common.Logger, spotifyService *spotify.Spotif
 
 func (t *LabelService) AddLabel(labelName string) (labels.Label, error) {
 	trimmedName := strings.TrimSpace(labelName)
-	if err := validator.NameNotEmpty(trimmedName); err != nil {
+	err := validator.NameNotEmpty(trimmedName)
+
+	return t.addLabelInternal(err, trimmedName)
+}
+
+func (t *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
+	err := validator.CurrentManagerBelongsToLabel(currentManager, id)
+	return t.getLabelWithoutContextCheck(err, id)
+}
+
+func (t *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
+	err1 := validator.CurrentManagerBelongsToLabel(currentManager, id)
+	err2 := validator.IdConsistsOverRequest(label.Id, id)
+
+	trimmedName := strings.TrimSpace(label.Name)
+	err3 := validator.NameNotEmpty(trimmedName)
+
+	err := helpers.AccumulateErrors(err1, err2, err3)
+	return t.modifyLabelInternal(err, currentManager, trimmedName)
+}
+
+func (t *LabelService) addLabelInternal(err error, labelName string) (labels.Label, error) {
+	if err != nil {
 		return labels.Label{}, err
 	}
 
 	now := time.Now().UTC()
 	dbLabel := labelData.Label{
 		Created: now,
-		Name:    trimmedName,
+		Name:    labelName,
 		Updated: now,
 	}
 
-	result := data.DB.Create(&dbLabel)
-	if result.Error != nil {
-		t.logger.LogError(result.Error, result.Error.Error())
-		return labels.Label{}, result.Error
+	err = data.DB.Create(&dbLabel).Error
+	if err != nil {
+		t.logger.LogError(err, err.Error())
 	}
 
-	return getLabelWithoutContextCheck(dbLabel.Id)
+	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }
 
-func (t *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
-	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
-		return labels.Label{}, err
-	}
-
-	return getLabelWithoutContextCheck(id)
-}
-
-func (t *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
-	if err := validator.CurrentManagerBelongsToLabel(currentManager, id); err != nil {
-		return labels.Label{}, err
-	}
-
-	if err := validator.IdConsistsOverRequest(label.Id, id); err != nil {
-		return labels.Label{}, err
-	}
-
-	trimmedName := strings.TrimSpace(label.Name)
-	if err := validator.NameNotEmpty(trimmedName); err != nil {
-		return labels.Label{}, err
-	}
-
-	dbLabel, err := helpers.GetEntity[labelData.Label](label.Id)
+func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labels.Label, error) {
 	if err != nil {
 		return labels.Label{}, err
 	}
 
-	dbLabel.Name = trimmedName
-	dbLabel.Updated = time.Now().UTC()
-	data.DB.Save(&dbLabel)
-
-	return t.GetLabel(currentManager, label.Id)
-}
-
-func getLabelWithoutContextCheck(id int) (labels.Label, error) {
-	dbLabel, err := helpers.GetEntity[labelData.Label](id)
+	var dbLabel labelData.Label
+	err = data.DB.First(&dbLabel, id).Error
 	if err != nil {
 		return labels.Label{}, err
 	}
@@ -90,4 +82,22 @@ func getLabelWithoutContextCheck(id int) (labels.Label, error) {
 		Id:   dbLabel.Id,
 		Name: dbLabel.Name,
 	}, nil
+}
+
+func (t *LabelService) modifyLabelInternal(err error, currentManager labels.ManagerContext, lebelName string) (labels.Label, error) {
+	if err != nil {
+		return labels.Label{}, err
+	}
+
+	var dbLabel labelData.Label
+	err = data.DB.First(&dbLabel, currentManager.LabelId).Error
+	if err != nil {
+		return labels.Label{}, err
+	}
+
+	dbLabel.Name = lebelName
+	dbLabel.Updated = time.Now().UTC()
+	err = data.DB.Save(&dbLabel).Error
+
+	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }
