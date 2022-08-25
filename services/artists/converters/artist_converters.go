@@ -2,22 +2,42 @@ package converters
 
 import (
 	data "main/data/artists"
+	"main/helpers"
 	models "main/models/artists"
-	"main/models/common"
 	spotifyArtists "main/models/spotify/artists"
 	spotifyReleases "main/models/spotify/releases"
 	commonConverters "main/services/common/converters"
 	"time"
 )
 
-func ToArtist(dbArtist data.Artist) models.Artist {
+func ToArtist(dbArtist data.Artist) (models.Artist, error) {
+	imageDetails, err := commonConverters.FromJson(dbArtist.ImageDetails)
+
+	releases, releaseErr := ToReleases(dbArtist.Releases)
+	err = helpers.CombineErrors(err, releaseErr)
+
 	return models.Artist{
 		Id:           dbArtist.Id,
-		ImageDetails: common.ImageDetails{},
+		ImageDetails: imageDetails,
 		LabelId:      dbArtist.LabelId,
 		Name:         dbArtist.Name,
-		Releases:     []models.Release{},
+		Releases:     releases,
+	}, err
+}
+
+func ToArtists(dbArtists []data.Artist) ([]models.Artist, error) {
+	var err error
+	results := make([]models.Artist, len(dbArtists))
+	for i, dbArtist := range dbArtists {
+		artist, localErr := ToArtist(dbArtist)
+		if localErr != nil {
+			err = helpers.CombineErrors(err, localErr)
+		}
+
+		results[i] = artist
 	}
+
+	return results, err
 }
 
 func ToArtistsFromSpotifyTrack(track spotifyReleases.Track, artists map[string]data.Artist) []models.Artist {
@@ -25,7 +45,7 @@ func ToArtistsFromSpotifyTrack(track spotifyReleases.Track, artists map[string]d
 	for i, artist := range track.Artists {
 		trackArtists[i] = models.Artist{
 			Id:           artists[artist.Id].Id,
-			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails),
+			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
 			Name:         artist.Name,
 		}
 	}
@@ -37,7 +57,7 @@ func ToArtistSearchResults(spotifyArtists []spotifyArtists.SlimArtist) []models.
 	results := make([]models.ArtistSearchResult, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
 		results[i] = models.ArtistSearchResult{
-			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails),
+			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
 			Name:         artist.Name,
 			SpotifyId:    artist.Id,
 		}
@@ -46,12 +66,15 @@ func ToArtistSearchResults(spotifyArtists []spotifyArtists.SlimArtist) []models.
 	return results
 }
 
-func ToDbArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) data.Artist {
+func ToDbArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) (data.Artist, error) {
+	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(artist.ImageDetails, artist.Name)
+
 	return data.Artist{
-		Created:   timeStamp,
-		LabelId:   labelId,
-		Name:      artist.Name,
-		SpotifyId: artist.Id,
-		Updated:   timeStamp,
-	}
+		Created:      timeStamp,
+		ImageDetails: imageDetailsJson,
+		LabelId:      labelId,
+		Name:         artist.Name,
+		SpotifyId:    artist.Id,
+		Updated:      timeStamp,
+	}, err
 }

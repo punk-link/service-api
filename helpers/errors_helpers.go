@@ -19,3 +19,15 @@ func AccumulateErrors(errs ...error) error {
 
 	return nil
 }
+
+func CombineErrors(err error, newErr error) error {
+	if err == nil {
+		return newErr
+	}
+
+	if newErr == nil {
+		return err
+	}
+
+	return fmt.Errorf("%s; %s", err.Error(), newErr.Error())
+}

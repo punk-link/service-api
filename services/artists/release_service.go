@@ -4,7 +4,6 @@ import (
 	"main/data"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
-	commonModels "main/models/common"
 	"main/models/labels"
 	"main/models/spotify/releases"
 	"main/services/artists/converters"
@@ -46,7 +45,12 @@ func (t *ReleaseService) Get(currentManager labels.ManagerContext, artistId int)
 		return make([]artistModels.Release, 0), err
 	}
 
-	return converters.ToReleases(dbReleases), nil
+	releases, err := converters.ToReleases(dbReleases)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+	}
+
+	return releases, err
 }
 
 func (t *ReleaseService) GetMissingReleases(dbArtist artistData.Artist) []releases.Release {
@@ -96,7 +100,7 @@ func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, r
 func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- artistData.Release, artists map[string]artistData.Artist, release releases.Release, timeStamp time.Time) {
 	defer wg.Done()
 
-	imageDetails := t.getImageDetails(release)
+	imageDetails := commonConverters.ToImageDetailsFromSpotify(release.ImageDetails, release.Name)
 	releaseArtists := t.getReleaseArtists(release, artists)
 	tracks := converters.ToTracksFromSpotify(release.Tracks.Items, artists)
 
@@ -107,15 +111,6 @@ func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- art
 	}
 
 	results <- dbArtist
-}
-
-func (t *ReleaseService) getImageDetails(release releases.Release) commonModels.ImageDetails {
-	details := commonModels.ImageDetails{}
-	if 0 < len(release.ImageDetails) {
-		details = commonConverters.ToImageDetailsFromSpotify(release.ImageDetails)
-	}
-
-	return details
 }
 
 func (t *ReleaseService) getReleaseArtists(release releases.Release, artists map[string]artistData.Artist) []artistData.Artist {

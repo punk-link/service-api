@@ -30,8 +30,8 @@ func (t *ArtistController) Add(ctx *gin.Context) {
 	OkOrBadRequest(ctx, result, err)
 }
 
-func (t *ArtistController) Get(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+func (t *ArtistController) GetOne(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("artist-id"))
 	if err != nil {
 		BadRequest(ctx, err.Error())
 		return
@@ -43,7 +43,7 @@ func (t *ArtistController) Get(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.artistService.Get(currentManager, id)
+	result, err := t.artistService.GetOne(currentManager, id)
 	OkOrBadRequest(ctx, result, err)
 }
 

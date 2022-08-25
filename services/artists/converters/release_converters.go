@@ -4,34 +4,43 @@ import (
 	"encoding/json"
 	"fmt"
 	data "main/data/artists"
+	"main/helpers"
 	models "main/models/artists"
 	commonModels "main/models/common"
 	spotifyReleases "main/models/spotify/releases"
+	commonConverters "main/services/common/converters"
 	"time"
 )
 
-func ToReleases(dbReleases []data.Release) []models.Release {
+func ToReleases(dbReleases []data.Release) ([]models.Release, error) {
+	var err error
+
 	results := make([]models.Release, len(dbReleases))
 	for i, dbRelease := range dbReleases {
+		artists, artistErr := ToArtists(dbRelease.Artists)
+		tracks, tracksErr := getTracks(dbRelease.Tracks)
+		imageDetails, imageErr := commonConverters.FromJson(dbRelease.ImageDetails)
+
+		err = helpers.CombineErrors(err, helpers.AccumulateErrors(artistErr, tracksErr, imageErr))
 
 		results[i] = models.Release{
-			Id:      dbRelease.Id,
-			Artists: []models.Artist{},
-			//ImageDetails: commonModels.ImageDetails{}, // TODO: add
-			Lable:       dbRelease.Label,
-			Name:        dbRelease.Name,
-			ReleaseDate: dbRelease.ReleaseDate,
-			TrackNumber: dbRelease.TrackNumber,
-			Tracks:      []models.Track{},
-			Type:        dbRelease.Type,
+			Id:           dbRelease.Id,
+			Artists:      artists,
+			ImageDetails: imageDetails,
+			Lable:        dbRelease.Label,
+			Name:         dbRelease.Name,
+			ReleaseDate:  dbRelease.ReleaseDate,
+			TrackNumber:  dbRelease.TrackNumber,
+			Tracks:       tracks,
+			Type:         dbRelease.Type,
 		}
 	}
 
-	return results
+	return results, err
 }
 
 func ToDbReleaseFromSpotify(release spotifyReleases.Release, releaseArtists []data.Artist, imageDetails commonModels.ImageDetails, tracks []models.Track, timeStamp time.Time) (data.Release, error) {
-	imageDetailsJson, err := getImageDetailsJson(imageDetails)
+	imageDetailsJson, err := commonConverters.ToJson(imageDetails)
 	tracksJson, err := getTracksJson(err, tracks)
 	releaseDate, err := getReleaseDate(err, release)
 	if err != nil {
@@ -52,15 +61,6 @@ func ToDbReleaseFromSpotify(release spotifyReleases.Release, releaseArtists []da
 		Type:            release.Type,
 		Updated:         timeStamp,
 	}, nil
-}
-
-func getImageDetailsJson(imageDetails commonModels.ImageDetails) (string, error) {
-	imageDetailsBytes, err := json.Marshal(imageDetails)
-	if err != nil {
-		return "", fmt.Errorf("can't serialize image details: '%s'", err.Error())
-	}
-
-	return string(imageDetailsBytes), nil
 }
 
 func getLabelName(release spotifyReleases.Release) string {
@@ -92,6 +92,16 @@ func getReleaseDate(err error, release spotifyReleases.Release) (time.Time, erro
 	}
 
 	return releaseDate, nil
+}
+
+func getTracks(tracksJson string) ([]models.Track, error) {
+	var tracks []models.Track
+	err := json.Unmarshal([]byte(tracksJson), &tracks)
+	if err != nil {
+		tracks = make([]models.Track, 0)
+	}
+
+	return tracks, err
 }
 
 func getTracksJson(err error, tracks []models.Track) (string, error) {
