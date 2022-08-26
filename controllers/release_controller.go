@@ -24,13 +24,7 @@ func (t *ReleaseController) GetOne(ctx *gin.Context) {
 		return
 	}
 
-	currentManager, err := getCurrentManagerContext(ctx)
-	if err != nil {
-		NotFound(ctx, err.Error())
-		return
-	}
-
-	result := t.releaseService.GetOne(currentManager, id)
+	result := t.releaseService.GetOne(id)
 	Ok(ctx, result)
 }
 
@@ -41,12 +35,6 @@ func (t *ReleaseController) Get(ctx *gin.Context) {
 		return
 	}
 
-	currentManager, err := getCurrentManagerContext(ctx)
-	if err != nil {
-		NotFound(ctx, err.Error())
-		return
-	}
-
-	result, err := t.releaseService.Get(currentManager, artistId)
+	result, err := t.releaseService.Get(artistId)
 	OkOrBadRequest(ctx, result, err)
 }

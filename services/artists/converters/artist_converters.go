@@ -13,15 +13,16 @@ import (
 func ToArtist(dbArtist data.Artist) (models.Artist, error) {
 	imageDetails, err := commonConverters.FromJson(dbArtist.ImageDetails)
 
-	releases, releaseErr := ToReleases(dbArtist.Releases)
-	err = helpers.CombineErrors(err, releaseErr)
+	// TODO
+	//releases, releaseErr := ToReleases(dbArtist.Releases)
+	//err = helpers.CombineErrors(err, releaseErr)
 
 	return models.Artist{
 		Id:           dbArtist.Id,
 		ImageDetails: imageDetails,
 		LabelId:      dbArtist.LabelId,
 		Name:         dbArtist.Name,
-		Releases:     releases,
+		//Releases:     releases,
 	}, err
 }
 

@@ -105,6 +105,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 	}
 
 	if err != nil {
+		t.logger.LogError(err, err.Error())
 		return make([]artistData.Artist, 0), err
 	}
 
@@ -137,10 +138,9 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 		return err
 	}
 
-	missingReleases := t.releaseService.GetMissingReleases(dbArtist)
-
-	artistSpotifyIds := t.getFeaturingArtistSpotifyIds(missingReleases)
-	existingArtists, err := t.getExistingFeaturingArtists(dbArtist, artistSpotifyIds, timeStamp)
+	missingReleases, err := t.releaseService.GetMissingReleases(dbArtist.Id, dbArtist.SpotifyId)
+	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
+	existingArtists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
 
 	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, existingArtists, artistSpotifyIds)
 	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
@@ -162,7 +162,10 @@ func (t *ArtistService) getDbArtistBySpotifyId(err error, spotifyId string) (art
 	}
 
 	var dbArtist artistData.Artist
-	err = data.DB.Model(&artistData.Artist{}).Preload("Releases").Where("spotify_id = ?", spotifyId).FirstOrInit(&dbArtist).Error
+	err = data.DB.Model(&artistData.Artist{}).
+		Where("spotify_id = ?", spotifyId).
+		FirstOrInit(&dbArtist).
+		Error
 	if err != nil {
 		t.logger.LogFatal(err, err.Error())
 	}
@@ -170,9 +173,15 @@ func (t *ArtistService) getDbArtistBySpotifyId(err error, spotifyId string) (art
 	return dbArtist, err
 }
 
-func (t *ArtistService) getExistingFeaturingArtists(dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
+func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
+	if err != nil {
+		return make(map[string]artistData.Artist, 0), err
+	}
+
 	var existedArtists []artistData.Artist
-	err := data.DB.Where("spotify_id IN ?", spotifyIds).Find(&existedArtists).Error
+	err = data.DB.Where("spotify_id IN ?", spotifyIds).
+		Find(&existedArtists).
+		Error
 	if err != nil {
 		t.logger.LogFatal(err, err.Error())
 		return make(map[string]artistData.Artist), err
@@ -198,13 +207,14 @@ func (t *ArtistService) getInternal(err error, currentManager labels.ManagerCont
 	}
 
 	var dbArtist artistData.Artist
-	err = data.DB.Model(&artistData.Artist{}).Preload("Releases").First(&dbArtist, id).Error
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
+	err = data.DB.Model(&artistData.Artist{}).
+		Preload("Releases").
+		First(&dbArtist, id).
+		Error
 
 	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
 	if err != nil {
+		t.logger.LogError(err, err.Error())
 		return artistModels.Artist{}, err
 	}
 
@@ -238,7 +248,11 @@ func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existing
 	return missingSpotifyIds, nil
 }
 
-func (t *ArtistService) getFeaturingArtistSpotifyIds(releases []releases.Release) []string {
+func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []releases.Release) ([]string, error) {
+	if err != nil {
+		return make([]string, 0), err
+	}
+
 	artistIds := make(map[string]int)
 	for _, release := range releases {
 		for _, artist := range release.Artists {
@@ -261,7 +275,7 @@ func (t *ArtistService) getFeaturingArtistSpotifyIds(releases []releases.Release
 		spotifyIds = append(spotifyIds, i)
 	}
 
-	return spotifyIds
+	return spotifyIds, nil
 }
 
 func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artist, labelId int) (artistData.Artist, error) {

@@ -10,6 +10,4 @@ type Artist struct {
 	Name         string    `gorm:"not null"`
 	SpotifyId    string    `gorm:"uniqueIndex,not null"`
 	Updated      time.Time `gorm:"not null"`
-
-	Releases []Release `gorm:"many2many:release_artists;"`
 }

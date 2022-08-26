@@ -1,6 +1,7 @@
 package artists
 
 import (
+	"fmt"
 	"main/data"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
@@ -8,7 +9,6 @@ import (
 	"main/models/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/common"
-	commonConverters "main/services/common/converters"
 	"main/services/spotify"
 	"sync"
 	"time"
@@ -29,6 +29,7 @@ func ConstructReleaseService(logger *common.Logger, spotifyService *spotify.Spot
 func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) error {
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
 
+	// TODO: make a transaction
 	err := data.DB.CreateInBatches(&dbReleases, 50).Error
 	if err != nil {
 		t.logger.LogError(err, err.Error())
@@ -37,11 +38,9 @@ func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[s
 	return err
 }
 
-func (t *ReleaseService) Get(currentManager labels.ManagerContext, artistId int) ([]artistModels.Release, error) {
-	var dbReleases []artistData.Release
-	err := data.DB.Model(&artistData.Release{}).Preload("Artists").Where("primary_artist_id = ?", artistId).Find(&dbReleases).Error
+func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
+	dbReleases, err := t.getDbDeleases(artistId)
 	if err != nil {
-		t.logger.LogError(err, err.Error())
 		return make([]artistModels.Release, 0), err
 	}
 
@@ -53,15 +52,18 @@ func (t *ReleaseService) Get(currentManager labels.ManagerContext, artistId int)
 	return releases, err
 }
 
-func (t *ReleaseService) GetMissingReleases(dbArtist artistData.Artist) []releases.Release {
-	// TODO: replace dbArtist with ID
+func (t *ReleaseService) GetMissingReleases(artistId int, artistSpotifyId string) ([]releases.Release, error) {
+	dbReleases, err := t.getDbDeleases(artistId)
+	if err != nil {
+		return make([]releases.Release, 0), err
+	}
 
-	dbReleaseIds := make(map[string]int, len(dbArtist.Releases))
-	for _, release := range dbArtist.Releases {
+	dbReleaseIds := make(map[string]int, len(dbReleases))
+	for _, release := range dbReleases {
 		dbReleaseIds[release.SpotifyId] = 0
 	}
 
-	spotifyReleases := t.spotifyService.GetArtistReleases(dbArtist.SpotifyId)
+	spotifyReleases := t.spotifyService.GetArtistReleases(artistSpotifyId)
 	missingReleaseSpotifyIds := make([]string, 0)
 	for _, spotifyRelease := range spotifyReleases {
 		if _, isContains := dbReleaseIds[spotifyRelease.Id]; !isContains {
@@ -69,10 +71,10 @@ func (t *ReleaseService) GetMissingReleases(dbArtist artistData.Artist) []releas
 		}
 	}
 
-	return t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
+	return t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds), nil
 }
 
-func (t *ReleaseService) GetOne(currentManager labels.ManagerContext, id int) artistModels.Release {
+func (t *ReleaseService) GetOne(id int) artistModels.Release {
 	return artistModels.Release{}
 }
 
@@ -100,11 +102,11 @@ func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, r
 func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- artistData.Release, artists map[string]artistData.Artist, release releases.Release, timeStamp time.Time) {
 	defer wg.Done()
 
-	imageDetails := commonConverters.ToImageDetailsFromSpotify(release.ImageDetails, release.Name)
-	releaseArtists := t.getReleaseArtists(release, artists)
-	tracks := converters.ToTracksFromSpotify(release.Tracks.Items, artists)
+	if release.Id == "3KJkuNlqibuitH4N2gJxsy" {
+		fmt.Print("hit")
+	}
 
-	dbArtist, err := converters.ToDbReleaseFromSpotify(release, releaseArtists, imageDetails, tracks, timeStamp)
+	dbArtist, err := converters.ToDbReleaseFromSpotify(release, artists, timeStamp)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 		return
@@ -113,24 +115,17 @@ func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- art
 	results <- dbArtist
 }
 
-func (t *ReleaseService) getReleaseArtists(release releases.Release, artists map[string]artistData.Artist) []artistData.Artist {
-	featuredArtists := make([]artistData.Artist, 0)
-	for _, track := range release.Tracks.Items {
-		if len(track.Artists) < 2 {
-			continue
-		}
+func (t *ReleaseService) getDbDeleases(artistId int) ([]artistData.Release, error) {
+	var dbReleases []artistData.Release
+	err := data.DB.Joins("join artist_release_relations rel on rel.release_id = releases.id").
+		Where("rel.artist_id = ?", artistId).
+		Find(&dbReleases).
+		Error
 
-		trackArtists := make([]artistData.Artist, len(track.Artists)-1)
-		for i := 1; i < len(track.Artists); i++ {
-			trackArtists[i-1] = artists[track.Artists[i].Id]
-		}
-
-		featuredArtists = append(featuredArtists, trackArtists...)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+		return make([]artistData.Release, 0), err
 	}
 
-	results := make([]artistData.Artist, 1+len(featuredArtists))
-	results[0] = artists[release.Artists[0].Id]
-	results = append(results, featuredArtists...)
-
-	return results
+	return dbReleases, nil
 }

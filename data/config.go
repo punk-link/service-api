@@ -43,15 +43,17 @@ func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
 }
 
 func AutoMigrate(logger *common.Logger) {
-	err := DB.AutoMigrate(&labels.Label{}, &labels.Manager{})
+	err := migrate(logger, nil, &labels.Label{}, &labels.Manager{})
+	_ = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
+}
+
+func migrate(logger *common.Logger, err error, dst ...interface{}) error {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
+		return err
 	}
 
-	err = DB.AutoMigrate(&artists.Artist{}, &artists.Release{})
-	if err != nil {
-		logger.LogFatal(err, err.Error())
-	}
+	return DB.AutoMigrate(dst...)
 }
 
 var DB *gorm.DB
