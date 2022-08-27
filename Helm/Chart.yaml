@@ -1,0 +1,10 @@
+apiVersion: v2
+name: punk-link-api
+description: A Helm chart for Kubernetes
+
+
+type: apilication
+
+version: 0.1.0
+
+appVersion: "1.16.0"
