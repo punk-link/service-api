@@ -77,4 +77,8 @@ tolerations: []
 
 affinity: {}
 
+env:
+  GO_ENVIRONMENT: "Development"
+  LOG_LEVEL: "Warn"
+  PNKL_CONSUL_ADDR: "65.21.241.207:8500"
 

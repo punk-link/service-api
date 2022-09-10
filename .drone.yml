@@ -15,6 +15,14 @@ steps:
     DOCKER_BUILDKIT: 1
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
+    GO_ENVIRONMENT:
+      from_secret: GO_ENVIRONMENT
+    ARG LOG_LEVEL:
+      from_secret: ARG LOG_LEVEL
+    PNKL_CONSUL_ADDR:
+      from_secret: PNKL_CONSUL_ADDR
+    PNKL_CONSUL_TOKEN:
+      from_secret: PNKL_CONSUL_TOKEN
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
   settings:
     registry: registry.punk.link
