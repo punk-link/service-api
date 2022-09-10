@@ -18,7 +18,7 @@ steps:
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
   settings:
     registry: registry.punk.link
-    repo: registry.punk.link/service-app
+    repo: registry.punk.link/service-api
     tags:
       - ${DRONE_COMMIT_SHA:0:7}
       - ${DRONE_COMMIT_BRANCH}
