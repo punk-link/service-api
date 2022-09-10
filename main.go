@@ -22,11 +22,14 @@ func main() {
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
 	consul := consul.BuildConsulClient(logger, "service-api")
-	app := startup.Configure(logger, consul)
 
 	hostSettings := consul.Get("HostSettings").(map[string]interface{})
 	hostAddress := hostSettings["Address"]
 	hostPort := hostSettings["Port"]
+	ginMode := hostSettings["Mode"].(string)
+
+	app := startup.Configure(logger, consul, ginMode)
+
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", hostAddress, hostPort),
 		Handler: app,
