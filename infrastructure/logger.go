@@ -32,5 +32,5 @@ func init() {
 		log.Logger = log.With().Str("host", host).Logger()
 	}
 
-	log.Logger = log.With().Caller().Logger()
+	log.Logger = log.With().Stack().Caller().Logger()
 }
