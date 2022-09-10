@@ -15,10 +15,17 @@ steps:
     DOCKER_BUILDKIT: 1
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
+    GO_ENVIRONMENT:
+      from_secret: GO_ENVIRONMENT
+    LOG_LEVEL:
+      from_secret: LOG_LEVEL
+    PNKL_CONSUL_ADDR:
+      from_secret: PNKL_CONSUL_ADDR
+
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
   settings:
     registry: registry.punk.link
-    repo: registry.punk.link/service-app
+    repo: registry.punk.link/service-api
     tags:
       - ${DRONE_COMMIT_SHA:0:7}
       - ${DRONE_COMMIT_BRANCH}
@@ -31,6 +38,10 @@ steps:
     build_args_from_env:
       - GITHUB_TOKEN
       - BUILD_VERSION
+      - GO_ENVIRONMENT
+      - LOG_LEVEL
+      - PNKL_CONSUL_ADDR
+
 
 - name: Deploy to DEV
   image: pelotech/drone-helm3
