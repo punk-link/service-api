@@ -2,7 +2,6 @@ package converters
 
 import (
 	data "main/data/artists"
-	"main/helpers"
 	models "main/models/artists"
 	spotifyArtists "main/models/spotify/artists"
 	spotifyReleases "main/models/spotify/releases"
@@ -10,35 +9,16 @@ import (
 	"time"
 )
 
-func ToArtist(dbArtist data.Artist) (models.Artist, error) {
+func ToArtist(dbArtist data.Artist, releases []models.Release) (models.Artist, error) {
 	imageDetails, err := commonConverters.FromJson(dbArtist.ImageDetails)
-
-	// TODO
-	//releases, releaseErr := ToReleases(dbArtist.Releases)
-	//err = helpers.CombineErrors(err, releaseErr)
 
 	return models.Artist{
 		Id:           dbArtist.Id,
 		ImageDetails: imageDetails,
 		LabelId:      dbArtist.LabelId,
 		Name:         dbArtist.Name,
-		//Releases:     releases,
+		Releases:     releases,
 	}, err
-}
-
-func ToArtists(dbArtists []data.Artist) ([]models.Artist, error) {
-	var err error
-	results := make([]models.Artist, len(dbArtists))
-	for i, dbArtist := range dbArtists {
-		artist, localErr := ToArtist(dbArtist)
-		if localErr != nil {
-			err = helpers.CombineErrors(err, localErr)
-		}
-
-		results[i] = artist
-	}
-
-	return results, err
 }
 
 func ToArtistsFromSpotifyTrack(track spotifyReleases.Track, artists map[string]data.Artist) []models.Artist {

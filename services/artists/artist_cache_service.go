@@ -63,7 +63,7 @@ func (t *ArtistCacheService) Set(key string, value artists.Artist, interval time
 }
 
 func (t *ArtistCacheService) watch() {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	for range ticker.C {
 		for key, value := range t.cache {
 			if time.Now().UTC().After(value.Treshold) {

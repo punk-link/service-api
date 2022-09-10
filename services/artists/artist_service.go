@@ -3,7 +3,6 @@ package artists
 import (
 	"errors"
 	"fmt"
-	"main/data"
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
@@ -38,7 +37,7 @@ func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId stri
 		err = errors.New("artist's spotify ID is empty")
 	}
 
-	dbArtist, err := t.getDbArtistBySpotifyId(err, spotifyId)
+	dbArtist, err := getDbArtistBySpotifyId(t.logger, err, spotifyId)
 
 	now := time.Now().UTC()
 	if dbArtist.Id != 0 {
@@ -72,19 +71,12 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 	}
 
 	spotifyArtist, err := t.spotifyService.GetArtist(spotifyId)
-	if err != nil {
+	if err == nil {
 		return artistData.Artist{}, err
 	}
 
 	dbArtist, err := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
-	if err != nil {
-		return artistData.Artist{}, err
-	}
-
-	err = data.DB.Create(&dbArtist).Error
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
+	err = createDbArtist(t.logger, err, &dbArtist)
 
 	return dbArtist, err
 }
@@ -106,13 +98,9 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 
 	if err != nil {
 		t.logger.LogError(err, err.Error())
-		return make([]artistData.Artist, 0), err
 	}
 
-	err = data.DB.CreateInBatches(&dbArtists, 50).Error
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
+	err = createDbArtistsInBatches(t.logger, err, &dbArtists)
 
 	return dbArtists, err
 }
@@ -124,13 +112,17 @@ func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []strin
 
 	results := make(map[string]artistData.Artist)
 	addedDbArtists, err := t.addMissingArtists(spotifyIds, timeStamp)
-	for _, dbArtist := range addedDbArtists {
-		if err == nil {
+	if err == nil {
+		for _, dbArtist := range addedDbArtists {
 			results[dbArtist.SpotifyId] = dbArtist
 		}
 	}
 
 	return results, err
+}
+
+func (t *ArtistService) buildCacheKey(id int) string {
+	return fmt.Sprintf("%v", id)
 }
 
 func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
@@ -140,15 +132,14 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 
 	missingReleases, err := t.releaseService.GetMissingReleases(dbArtist.Id, dbArtist.SpotifyId)
 	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
-	existingArtists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
+	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
 
-	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, existingArtists, artistSpotifyIds)
+	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
 	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
 	if err != nil {
 		return err
 	}
 
-	artists := existingArtists
 	for key, artist := range addedArtists {
 		artists[key] = artist
 	}
@@ -156,96 +147,19 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
-func (t *ArtistService) getDbArtistBySpotifyId(err error, spotifyId string) (artistData.Artist, error) {
-	if err != nil {
-		return artistData.Artist{}, err
-	}
-
-	var dbArtist artistData.Artist
-	err = data.DB.Model(&artistData.Artist{}).
-		Where("spotify_id = ?", spotifyId).
-		FirstOrInit(&dbArtist).
-		Error
-	if err != nil {
-		t.logger.LogFatal(err, err.Error())
-	}
-
-	return dbArtist, err
-}
-
 func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
 	if err != nil {
 		return make(map[string]artistData.Artist, 0), err
 	}
 
-	var existedArtists []artistData.Artist
-	err = data.DB.Where("spotify_id IN ?", spotifyIds).
-		Find(&existedArtists).
-		Error
-	if err != nil {
-		t.logger.LogFatal(err, err.Error())
-		return make(map[string]artistData.Artist), err
-	}
+	existedArtists, err := getDbArtistsBySpotifyIds(t.logger, err, spotifyIds)
 
 	results := make(map[string]artistData.Artist, 0)
 	for _, artist := range existedArtists {
 		results[artist.SpotifyId] = artist
 	}
 
-	return results, nil
-}
-
-func (t *ArtistService) getInternal(err error, currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
-	if err != nil {
-		return artistModels.Artist{}, err
-	}
-
-	cacheKey := fmt.Sprintf("%v", id)
-	value, isCached := t.cache.TryGet(cacheKey)
-	if isCached {
-		return value, nil
-	}
-
-	var dbArtist artistData.Artist
-	err = data.DB.Model(&artistData.Artist{}).
-		Preload("Releases").
-		First(&dbArtist, id).
-		Error
-
-	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-		return artistModels.Artist{}, err
-	}
-
-	artist, err := converters.ToArtist(dbArtist)
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
-
-	t.cache.Set(cacheKey, artist, time.Minute*1)
-
-	return artist, err
-}
-
-func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existingArtists map[string]artistData.Artist, artistSpotifyIds []string) ([]string, error) {
-	if err != nil {
-		return make([]string, 0), err
-	}
-
-	existingArtistSpotifyIds := make(map[string]int, len(existingArtists))
-	for _, artist := range existingArtists {
-		existingArtistSpotifyIds[artist.SpotifyId] = 0
-	}
-
-	missingSpotifyIds := make([]string, 0)
-	for _, id := range artistSpotifyIds {
-		if _, isExists := existingArtistSpotifyIds[id]; !isExists {
-			missingSpotifyIds = append(missingSpotifyIds, id)
-		}
-	}
-
-	return missingSpotifyIds, nil
+	return results, err
 }
 
 func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []releases.Release) ([]string, error) {
@@ -278,6 +192,58 @@ func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []relea
 	return spotifyIds, nil
 }
 
+func (t *ArtistService) getInternal(err error, currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	cacheKey := t.buildCacheKey(id)
+	value, isCached := t.cache.TryGet(cacheKey)
+	if isCached {
+		return value, nil
+	}
+
+	dbArtist, err := getDbArtist(t.logger, err, id)
+	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
+	if err != nil {
+		t.logger.LogWarn(err.Error())
+		return artistModels.Artist{}, err
+	}
+
+	releases, releasesErr := t.releaseService.Get(id)
+	artist, artistErr := converters.ToArtist(dbArtist, releases)
+
+	err = helpers.CombineErrors(releasesErr, artistErr)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+		return artistModels.Artist{}, err
+	} else {
+		t.cache.Set(cacheKey, artist, ARTIST_CACHE_DURATION)
+	}
+
+	return artist, err
+}
+
+func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existingArtists map[string]artistData.Artist, artistSpotifyIds []string) ([]string, error) {
+	if err != nil {
+		return make([]string, 0), err
+	}
+
+	existingArtistSpotifyIds := make(map[string]int, len(existingArtists))
+	for _, artist := range existingArtists {
+		existingArtistSpotifyIds[artist.SpotifyId] = 0
+	}
+
+	missingSpotifyIds := make([]string, 0)
+	for _, id := range artistSpotifyIds {
+		if _, isExists := existingArtistSpotifyIds[id]; !isExists {
+			missingSpotifyIds = append(missingSpotifyIds, id)
+		}
+	}
+
+	return missingSpotifyIds, nil
+}
+
 func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artist, labelId int) (artistData.Artist, error) {
 	if err != nil {
 		return artistData.Artist{}, err
@@ -285,8 +251,11 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 
 	if dbArtist.LabelId == 0 {
 		dbArtist.LabelId = labelId
-		err = data.DB.Save(&dbArtist).Error
+		err = updateDbArtist(t.logger, err, &dbArtist)
 	}
 
+	t.cache.Remove(t.buildCacheKey(dbArtist.Id))
 	return dbArtist, err
 }
+
+const ARTIST_CACHE_DURATION time.Duration = time.Hour * 24

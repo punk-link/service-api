@@ -9,12 +9,10 @@ import (
 )
 
 func FromJson(detailsJson string) (common.ImageDetails, error) {
-	var imageDetails common.ImageDetails
+	imageDetails := common.ImageDetails{}
 	var err error
 
-	if detailsJson == emptyJsonToken {
-		imageDetails = common.ImageDetails{}
-	} else {
+	if detailsJson != emptyJsonToken {
 		err = json.Unmarshal([]byte(detailsJson), &imageDetails)
 	}
 
