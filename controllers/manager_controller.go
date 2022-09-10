@@ -71,8 +71,8 @@ func (controller *ManagerController) Get(ctx *gin.Context) {
 		return
 	}
 
-	result := controller.managerService.Get(currentManager)
-	Ok(ctx, result)
+	result, err := controller.managerService.Get(currentManager)
+	OkOrBadRequest(ctx, result, err)
 }
 
 func (controller *ManagerController) Modify(ctx *gin.Context) {

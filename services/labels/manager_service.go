@@ -43,11 +43,13 @@ func (t *ManagerService) AddMaster(request requests.AddMasterManagerRequest) (la
 	return t.addInternal(err, labels.ManagerContext{LabelId: label.Id}, trimmedName)
 }
 
-func (t *ManagerService) Get(currentManager labels.ManagerContext) []labels.Manager {
-	var dbManagers []labelData.Manager
-	data.DB.Where("label_id = ?", currentManager.LabelId).Find(&dbManagers)
+func (t *ManagerService) Get(currentManager labels.ManagerContext) ([]labels.Manager, error) {
+	dbManagers, err := getDbManagersByLabelId(t.logger, nil, currentManager.LabelId)
+	if err != nil {
+		return make([]labels.Manager, 0), err
+	}
 
-	return converters.ToManagers(dbManagers)
+	return converters.ToManagers(dbManagers), nil
 }
 
 func (t *ManagerService) GetContext(id int) (labels.ManagerContext, error) {
