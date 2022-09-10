@@ -4,21 +4,49 @@ import (
 	"main/data"
 	artistData "main/data/artists"
 	"main/services/common"
+
+	"gorm.io/gorm"
 )
 
-func createDbReleasesInBatches(logger *common.Logger, err error, artists *[]artistData.Release) error {
-	if err != nil {
+func createDbReleasesInBatches(logger *common.Logger, err error, releases *[]artistData.Release) error {
+	if err != nil || len(*releases) == 0 {
 		return err
 	}
 
-	err = data.DB.CreateInBatches(&artists, CREATE_RELEASES_BATCH_SIZE).
-		Error
+	return data.DB.Transaction(func(tx *gorm.DB) error {
+		err = data.DB.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).
+			Error
 
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
+		if err != nil {
+			logger.LogError(err, err.Error())
+			return err
+		}
 
-	return err
+		relations := make([]artistData.ArtistReleaseRelation, 0)
+		for _, release := range *releases {
+			artistIds := getArtistsIdsFromDbRelease(logger, release)
+
+			releaseRelations := make([]artistData.ArtistReleaseRelation, 0)
+			for _, id := range artistIds {
+				releaseRelations = append(releaseRelations, artistData.ArtistReleaseRelation{
+					ArtistId:  id,
+					ReleaseId: release.Id,
+				})
+			}
+
+			relations = append(relations, releaseRelations...)
+		}
+
+		err = data.DB.CreateInBatches(&relations, CREATE_RELEASES_BATCH_SIZE).
+			Error
+
+		if err != nil {
+			logger.LogError(err, err.Error())
+			return err
+		}
+
+		return nil
+	})
 }
 
 func getDbReleasesByArtistId(logger *common.Logger, err error, artistId int) ([]artistData.Release, error) {

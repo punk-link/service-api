@@ -71,7 +71,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 	}
 
 	spotifyArtist, err := t.spotifyService.GetArtist(spotifyId)
-	if err == nil {
+	if err != nil {
 		return artistData.Artist{}, err
 	}
 

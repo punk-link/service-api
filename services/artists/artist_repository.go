@@ -20,7 +20,7 @@ func createDbArtist(logger *common.Logger, err error, artist *artistData.Artist)
 }
 
 func createDbArtistsInBatches(logger *common.Logger, err error, artists *[]artistData.Artist) error {
-	if err != nil {
+	if err != nil || len(*artists) == 0 {
 		return err
 	}
 

@@ -15,6 +15,19 @@ func Chunk[T any](source []T, chunkSize int) [][]T {
 	return chunked
 }
 
+func Distinct[T comparable](source []T) []T {
+	distincted := make([]T, 0)
+	distinctionMap := make(map[T]int, 0)
+	for _, item := range source {
+		if _, isDuplicated := distinctionMap[item]; !isDuplicated {
+			distinctionMap[item] = 0
+			distincted = append(distincted, item)
+		}
+	}
+
+	return distincted
+}
+
 func DivideChunkToLoops[T any](chunkedUrls []T, iterationStep int) ([]T, []T) {
 	var reducedLoop []T
 	mainLoop := make([]T, 0)

@@ -24,7 +24,7 @@ func ToImageDetailsFromSpotify(imageDetails []spotify.ImageDetails, altText stri
 		return common.ImageDetails{}
 	}
 
-	helpers.ReorderImageDetailsDesc(imageDetails)
+	helpers.OrderImageDetailsDesc(imageDetails)
 	return common.ImageDetails{
 		AltText: altText,
 		Height:  imageDetails[0].Height,

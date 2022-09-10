@@ -1,10 +1,7 @@
 package artists
 
 import (
-	"encoding/json"
-	"fmt"
 	artistData "main/data/artists"
-	"main/helpers"
 	artistModels "main/models/artists"
 	"main/models/labels"
 	"main/models/spotify/releases"
@@ -29,6 +26,8 @@ func ConstructReleaseService(logger *common.Logger, spotifyService *spotify.Spot
 
 func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) error {
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
+	orderReleasesChronologically(dbReleases)
+
 	return createDbReleasesInBatches(t.logger, nil, &dbReleases)
 }
 
@@ -85,10 +84,6 @@ func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, r
 func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- artistData.Release, artists map[string]artistData.Artist, release releases.Release, timeStamp time.Time) {
 	defer wg.Done()
 
-	if release.Id == "3KJkuNlqibuitH4N2gJxsy" {
-		fmt.Print("hit")
-	}
-
 	dbArtist, err := converters.ToDbReleaseFromSpotify(release, artists, timeStamp)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
@@ -96,20 +91,6 @@ func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- art
 	}
 
 	results <- dbArtist
-}
-
-// reducing the number of ids to improve the db query
-func (t *ReleaseService) distinctIds(artistIds []int) []int {
-	uniqueArtistIds := make([]int, 0)
-	uniqueArtistMap := make(map[int]int, 0)
-	for _, id := range artistIds {
-		if _, isDuplicated := uniqueArtistMap[id]; !isDuplicated {
-			uniqueArtistMap[id] = 0
-			uniqueArtistIds = append(uniqueArtistIds, id)
-		}
-	}
-
-	return uniqueArtistIds
 }
 
 func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []artistData.Release, artistSpotifyId string) ([]string, error) {
@@ -138,7 +119,7 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 		return make(map[int]artistModels.Artist, 0), err
 	}
 
-	artistIds := t.getArtistsIdsFromDbReleases(releases)
+	artistIds := getArtistsIdsFromDbReleases(t.logger, releases)
 	artists, err := getDbArtists(t.logger, err, artistIds)
 
 	results := make(map[int]artistModels.Artist, len(artists))
@@ -150,24 +131,4 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	}
 
 	return results, err
-}
-
-func (t *ReleaseService) getArtistsIdsFromDbReleases(releases []artistData.Release) []int {
-	artistIds := make([]int, 0)
-	for _, release := range releases {
-		var featuringArtistIds []int
-		featuringArtistErr := json.Unmarshal([]byte(release.FeaturingArtistIds), &featuringArtistIds)
-		artistIds = append(artistIds, featuringArtistIds...)
-
-		var releaseArtistIds []int
-		releaseArtistErr := json.Unmarshal([]byte(release.FeaturingArtistIds), &releaseArtistIds)
-		artistIds = append(artistIds, releaseArtistIds...)
-
-		err := helpers.CombineErrors(featuringArtistErr, releaseArtistErr)
-		if err != nil {
-			t.logger.LogError(err, err.Error())
-		}
-	}
-
-	return t.distinctIds(artistIds)
 }
