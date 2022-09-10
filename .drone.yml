@@ -17,8 +17,8 @@ steps:
       from_secret: GITHUB_TOKEN
     GO_ENVIRONMENT:
       from_secret: GO_ENVIRONMENT
-    ARG LOG_LEVEL:
-      from_secret: ARG LOG_LEVEL
+    LOG_LEVEL:
+      from_secret: LOG_LEVEL
     PNKL_CONSUL_ADDR:
       from_secret: PNKL_CONSUL_ADDR
     PNKL_CONSUL_TOKEN:
@@ -39,6 +39,10 @@ steps:
     build_args_from_env:
       - GITHUB_TOKEN
       - BUILD_VERSION
+      - GO_ENVIRONMENT
+      - LOG_LEVEL
+      - PNKL_CONSUL_ADDR
+      - PNKL_CONSUL_TOKEN
 
 - name: Deploy to DEV
   image: pelotech/drone-helm3
