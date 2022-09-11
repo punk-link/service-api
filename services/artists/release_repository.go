@@ -50,9 +50,13 @@ func getDbReleasesByArtistId(logger *common.Logger, err error, artistId int) ([]
 		return make([]artistData.Release, 0), err
 	}
 
+	subQuery := data.DB.Select("release_id").
+		Where("artist_id = ?", artistId).
+		Table("artist_release_relations")
+
 	var releases []artistData.Release
-	err = data.DB.Joins("join artist_release_relations rel on rel.release_id = releases.id").
-		Where("rel.artist_id = ?", artistId).
+	err = data.DB.Where("id IN (?)", subQuery).
+		Order("release_date").
 		Find(&releases).
 		Error
 

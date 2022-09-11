@@ -54,7 +54,6 @@ func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
 		return releases, err
 	}
 
-	orderReleasesChronologically(releases)
 	t.cache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 
 	return releases, err
@@ -145,7 +144,7 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	results := make(map[int]artistModels.Artist, len(artists))
 	for _, dbArtist := range artists {
 		artist, err := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
-		if err != nil {
+		if err == nil {
 			results[artist.Id] = artist
 		}
 	}
