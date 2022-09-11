@@ -12,7 +12,6 @@ steps:
 - name: Build docker image & push to repository
   image: plugins/docker
   environment:
-    DOCKER_BUILDKIT: 1
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
     GO_ENVIRONMENT:
