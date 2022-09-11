@@ -43,6 +43,7 @@ steps:
       - GO_ENVIRONMENT
       - LOG_LEVEL
       - PNKL_CONSUL_ADDR
+      - PNKL_CONSUL_TOKEN  
 
 
 - name: Deploy to DEV
