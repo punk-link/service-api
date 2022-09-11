@@ -80,7 +80,6 @@ affinity: {}
 env:
   GO_ENVIRONMENT: "Development"
   LOG_LEVEL: "Warn"
-  #PNKL_CONSUL_ADDR: "65.21.241.207:8500"
-  #PNKL_CONSUL_TOKEN: "5b0e9aba-79de-e63b-8a0f-9eb865769ae5"
+
 
   
