@@ -38,7 +38,6 @@ spec:
               containerPort: 8080
               protocol: TCP
           livenessProbe:
-            enabled: false
             httpGet:
               path: /health
               port: http
@@ -46,6 +45,8 @@ spec:
             httpGet:
               path: /health
               port: http
+            initialDelaySeconds: 30
+            periodSeconds: 40
           envFrom:
             - configMapRef:
                 name: {{ .Chart.Name }}-env
