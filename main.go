@@ -9,11 +9,12 @@ import (
 	"main/services/common"
 	"main/startup"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
+
+//"os"
+//"os/signal"
+//"syscall"
 
 func main() {
 	logger := common.ConstructLogger()
@@ -36,15 +37,16 @@ func main() {
 	}
 
 	go func() {
+		logger.LogInfo("Starting...")
 		err := server.ListenAndServe()
 		if err != nil && errors.Is(err, http.ErrServerClosed) {
-			logger.LogError(err, "Listen error: %s\n", err)
+			logger.LogError(err, "Listen error: %s\n", err.Error())
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	//quit := make(chan os.Signal, 1)
+	//signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	//<-quit
 
 	logger.LogInfo("Sutting down...")
 
