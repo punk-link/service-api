@@ -45,6 +45,23 @@ func createDbReleasesInBatches(logger *common.Logger, err error, releases *[]art
 	})
 }
 
+func getDbRelease(logger *common.Logger, err error, id int) (artistData.Release, error) {
+	if err != nil {
+		return artistData.Release{}, err
+	}
+
+	var release artistData.Release
+	err = data.DB.Model(&artistData.Release{}).
+		First(&release, id).
+		Error
+
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	return release, err
+}
+
 func getDbReleasesByArtistId(logger *common.Logger, err error, artistId int) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err

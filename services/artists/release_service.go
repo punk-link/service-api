@@ -71,8 +71,34 @@ func (t *ReleaseService) GetMissingReleases(artistId int, artistSpotifyId string
 	return details, err
 }
 
-func (t *ReleaseService) GetOne(id int) artistModels.Release {
-	return artistModels.Release{}
+func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
+	cacheKey := t.buildCacheKey(id)
+	value, isCached := t.cache.TryGet(cacheKey)
+	if isCached {
+		return value.(artistModels.Release), nil
+	}
+
+	dbRelease, err := getDbRelease(t.logger, nil, id)
+	dbReleasesOfOne := []artistData.Release{dbRelease}
+
+	artists, err := t.getReleasesArtists(err, dbReleasesOfOne)
+	if err != nil {
+		return artistModels.Release{}, err
+	}
+
+	releases, err := converters.ToReleases(dbReleasesOfOne, artists)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+		return artistModels.Release{}, err
+	}
+
+	t.cache.Set(cacheKey, releases[0], RELEASE_CACHE_DURATION)
+
+	return releases[0], nil
+}
+
+func (t *ReleaseService) buildCacheKey(id int) string {
+	return fmt.Sprintf("Release::%v", id)
 }
 
 func (t *ReleaseService) buildArtistReleasesCacheKey(artistId int) string {

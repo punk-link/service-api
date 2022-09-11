@@ -74,6 +74,8 @@ func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labe
 	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
+// Get
+
 func (t *ArtistService) GetOne(currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
 	return t.getInternal(nil, currentManager, id)
 }
@@ -144,7 +146,7 @@ func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []strin
 	return results, err
 }
 
-func (t *ArtistService) buildArtistCacheKey(id int) string {
+func (t *ArtistService) buildCacheKey(id int) string {
 	return fmt.Sprintf("Artist::%v", id)
 }
 
@@ -198,7 +200,7 @@ func (t *ArtistService) getInternal(err error, currentManager labels.ManagerCont
 		return artistModels.Artist{}, err
 	}
 
-	cacheKey := t.buildArtistCacheKey(id)
+	cacheKey := t.buildCacheKey(id)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
 		return value.(artistModels.Artist), nil
@@ -252,7 +254,7 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 		err = updateDbArtist(t.logger, err, &dbArtist)
 	}
 
-	t.cache.Remove(t.buildArtistCacheKey(dbArtist.Id))
+	t.cache.Remove(t.buildCacheKey(dbArtist.Id))
 	return dbArtist, err
 }
 

@@ -24,8 +24,8 @@ func (t *ReleaseController) GetOne(ctx *gin.Context) {
 		return
 	}
 
-	result := t.releaseService.GetOne(id)
-	Ok(ctx, result)
+	result, err := t.releaseService.GetOne(id)
+	OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ReleaseController) Get(ctx *gin.Context) {
