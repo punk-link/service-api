@@ -38,6 +38,7 @@ spec:
               containerPort: 8080
               protocol: TCP
           livenessProbe:
+            enabled: false
             httpGet:
               path: /health
               port: http
