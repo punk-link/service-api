@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	artistData "main/data/artists"
 	"main/helpers"
+	models "main/models/artists"
 	"main/services/common"
 	"sort"
 )
@@ -37,7 +38,13 @@ func getArtistsIdsFromDbReleases(logger *common.Logger, releases []artistData.Re
 	return helpers.Distinct(artistIds)
 }
 
-func orderReleasesChronologically(target []artistData.Release) {
+func orderDbReleasesChronologically(target []artistData.Release) {
+	sort.Slice(target, func(i, j int) bool {
+		return target[i].ReleaseDate.Before(target[j].ReleaseDate)
+	})
+}
+
+func orderReleasesChronologically(target []models.Release) {
 	sort.Slice(target, func(i, j int) bool {
 		return target[i].ReleaseDate.Before(target[j].ReleaseDate)
 	})

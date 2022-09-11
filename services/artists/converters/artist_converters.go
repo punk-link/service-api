@@ -28,6 +28,7 @@ func ToArtistsFromSpotifyTrack(track spotifyReleases.Track, artists map[string]d
 			Id:           artists[artist.Id].Id,
 			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
 			Name:         artist.Name,
+			Releases:     make([]models.Release, 0),
 		}
 	}
 

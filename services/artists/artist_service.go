@@ -10,19 +10,20 @@ import (
 	"main/models/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/artists/validators"
+	"main/services/cache"
 	"main/services/common"
 	"main/services/spotify"
 	"time"
 )
 
 type ArtistService struct {
-	cache          *ArtistCacheService
+	cache          *cache.MemoryCacheService
 	logger         *common.Logger
 	spotifyService *spotify.SpotifyService
 	releaseService *ReleaseService
 }
 
-func ConstructArtistService(cache *ArtistCacheService, logger *common.Logger, releaseService *ReleaseService, spotifyService *spotify.SpotifyService) *ArtistService {
+func ConstructArtistService(cache *cache.MemoryCacheService, logger *common.Logger, releaseService *ReleaseService, spotifyService *spotify.SpotifyService) *ArtistService {
 	return &ArtistService{
 		cache:          cache,
 		logger:         logger,
@@ -47,8 +48,30 @@ func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId stri
 		dbArtist, err = t.addArtist(err, spotifyId, currentManager.LabelId, now)
 	}
 
-	err = t.findAndAddMissingReleases(err, currentManager, dbArtist, now)
+	err = t.FindAndAddMissingReleases(err, currentManager, dbArtist, now)
 	return t.getInternal(err, currentManager, dbArtist.Id)
+}
+
+func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
+	if err != nil {
+		return err
+	}
+
+	missingReleases, err := t.releaseService.GetMissingReleases(dbArtist.Id, dbArtist.SpotifyId)
+	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
+	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
+	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
+	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
+
+	if err != nil {
+		return err
+	}
+
+	for key, artist := range addedArtists {
+		artists[key] = artist
+	}
+
+	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
 func (t *ArtistService) GetOne(currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
@@ -121,30 +144,8 @@ func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []strin
 	return results, err
 }
 
-func (t *ArtistService) buildCacheKey(id int) string {
-	return fmt.Sprintf("%v", id)
-}
-
-func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
-	if err != nil {
-		return err
-	}
-
-	missingReleases, err := t.releaseService.GetMissingReleases(dbArtist.Id, dbArtist.SpotifyId)
-	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
-	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
-	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
-	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
-
-	if err != nil {
-		return err
-	}
-
-	for key, artist := range addedArtists {
-		artists[key] = artist
-	}
-
-	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
+func (t *ArtistService) buildArtistCacheKey(id int) string {
+	return fmt.Sprintf("Artist::%v", id)
 }
 
 func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
@@ -197,10 +198,10 @@ func (t *ArtistService) getInternal(err error, currentManager labels.ManagerCont
 		return artistModels.Artist{}, err
 	}
 
-	cacheKey := t.buildCacheKey(id)
+	cacheKey := t.buildArtistCacheKey(id)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
-		return value, nil
+		return value.(artistModels.Artist), nil
 	}
 
 	dbArtist, err := getDbArtist(t.logger, err, id)
@@ -210,16 +211,13 @@ func (t *ArtistService) getInternal(err error, currentManager labels.ManagerCont
 		return artistModels.Artist{}, err
 	}
 
-	releases, releasesErr := t.releaseService.Get(id)
-	artist, artistErr := converters.ToArtist(dbArtist, releases)
-
-	err = helpers.CombineErrors(releasesErr, artistErr)
+	artist, err := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 		return artistModels.Artist{}, err
-	} else {
-		t.cache.Set(cacheKey, artist, ARTIST_CACHE_DURATION)
 	}
+
+	t.cache.Set(cacheKey, artist, ARTIST_CACHE_DURATION)
 
 	return artist, err
 }
@@ -254,7 +252,7 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 		err = updateDbArtist(t.logger, err, &dbArtist)
 	}
 
-	t.cache.Remove(t.buildCacheKey(dbArtist.Id))
+	t.cache.Remove(t.buildArtistCacheKey(dbArtist.Id))
 	return dbArtist, err
 }
 

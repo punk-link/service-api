@@ -1,11 +1,13 @@
 package artists
 
 import (
+	"fmt"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	"main/models/labels"
 	"main/models/spotify/releases"
 	"main/services/artists/converters"
+	"main/services/cache"
 	"main/services/common"
 	"main/services/spotify"
 	"sync"
@@ -13,12 +15,14 @@ import (
 )
 
 type ReleaseService struct {
+	cache          *cache.MemoryCacheService
 	logger         *common.Logger
 	spotifyService *spotify.SpotifyService
 }
 
-func ConstructReleaseService(logger *common.Logger, spotifyService *spotify.SpotifyService) *ReleaseService {
+func ConstructReleaseService(cache *cache.MemoryCacheService, logger *common.Logger, spotifyService *spotify.SpotifyService) *ReleaseService {
 	return &ReleaseService{
+		cache:          cache,
 		logger:         logger,
 		spotifyService: spotifyService,
 	}
@@ -26,12 +30,18 @@ func ConstructReleaseService(logger *common.Logger, spotifyService *spotify.Spot
 
 func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) error {
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
-	orderReleasesChronologically(dbReleases)
+	orderDbReleasesChronologically(dbReleases)
 
 	return createDbReleasesInBatches(t.logger, nil, &dbReleases)
 }
 
 func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
+	cacheKey := t.buildArtistReleasesCacheKey(artistId)
+	value, isCached := t.cache.TryGet(cacheKey)
+	if isCached {
+		return value.([]artistModels.Release), nil
+	}
+
 	dbReleases, err := getDbReleasesByArtistId(t.logger, nil, artistId)
 	artists, err := t.getReleasesArtists(err, dbReleases)
 	if err != nil {
@@ -41,7 +51,11 @@ func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
 	releases, err := converters.ToReleases(dbReleases, artists)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
+		return releases, err
 	}
+
+	orderReleasesChronologically(releases)
+	t.cache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 
 	return releases, err
 }
@@ -60,6 +74,10 @@ func (t *ReleaseService) GetMissingReleases(artistId int, artistSpotifyId string
 
 func (t *ReleaseService) GetOne(id int) artistModels.Release {
 	return artistModels.Release{}
+}
+
+func (t *ReleaseService) buildArtistReleasesCacheKey(artistId int) string {
+	return fmt.Sprintf("ArtistReleases::%v", artistId)
 }
 
 func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) []artistData.Release {
@@ -134,3 +152,5 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 
 	return results, err
 }
+
+const RELEASE_CACHE_DURATION time.Duration = time.Hour * 24
