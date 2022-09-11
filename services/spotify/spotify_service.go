@@ -55,8 +55,8 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	var spotifyResponse releases.ReleaseContainer
 	offset := 0
 	for {
-		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, queryLimit, offset)
-		offset = offset + queryLimit
+		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, QUERY_LIMIT, offset)
+		offset = offset + QUERY_LIMIT
 
 		var tmpResponse releases.ReleaseContainer
 		if err := makeRequest(t.logger, "GET", urlPattern, &tmpResponse); err != nil {
@@ -74,7 +74,7 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 }
 
 func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
-	chunkedIds := helpers.Chunk(spotifyIds, queryLimit)
+	chunkedIds := helpers.Chunk(spotifyIds, QUERY_LIMIT)
 	urls := make([]string, len(chunkedIds))
 	for i, chunk := range chunkedIds {
 		ids := strings.Join(chunk, ",")
@@ -102,4 +102,4 @@ func (t *SpotifyService) SearchArtist(query string) []spotifyArtists.SlimArtist 
 	return spotifyArtistSearchResults.Artists.Items
 }
 
-const queryLimit int = 20
+const QUERY_LIMIT int = 20

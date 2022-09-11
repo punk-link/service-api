@@ -10,6 +10,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
@@ -23,7 +24,11 @@ func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password),
 		PreferSimpleProtocol: true,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: gormLogger.New(logger, gormLogger.Config{
+			LogLevel: gormLogger.Error,
+		}),
+	})
 	if err != nil {
 		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
 	}

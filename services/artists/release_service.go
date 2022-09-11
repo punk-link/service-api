@@ -53,7 +53,9 @@ func (t *ReleaseService) GetMissingReleases(artistId int, artistSpotifyId string
 		return make([]releases.Release, 0), err
 	}
 
-	return t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds), nil
+	details, err := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds), nil
+
+	return details, err
 }
 
 func (t *ReleaseService) GetOne(id int) artistModels.Release {

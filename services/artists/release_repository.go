@@ -14,9 +14,7 @@ func createDbReleasesInBatches(logger *common.Logger, err error, releases *[]art
 	}
 
 	return data.DB.Transaction(func(tx *gorm.DB) error {
-		err = data.DB.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).
-			Error
-
+		err = data.DB.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
 		if err != nil {
 			logger.LogError(err, err.Error())
 			return err
@@ -37,9 +35,7 @@ func createDbReleasesInBatches(logger *common.Logger, err error, releases *[]art
 			relations = append(relations, releaseRelations...)
 		}
 
-		err = data.DB.CreateInBatches(&relations, CREATE_RELEASES_BATCH_SIZE).
-			Error
-
+		err = data.DB.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
 		if err != nil {
 			logger.LogError(err, err.Error())
 			return err
@@ -67,4 +63,5 @@ func getDbReleasesByArtistId(logger *common.Logger, err error, artistId int) ([]
 	return releases, err
 }
 
-const CREATE_RELEASES_BATCH_SIZE int = 50
+const CREATE_RELEASES_BATCH_SIZE int = 100
+const CREATE_RELATION_BATCH_SIZE int = 2000

@@ -23,3 +23,7 @@ func (logger *Logger) LogInfo(format string, args ...interface{}) {
 func (logger *Logger) LogWarn(format string, args ...interface{}) {
 	log.Warn().Msgf(format, args...)
 }
+
+func (logger *Logger) Printf(format string, values ...interface{}) {
+	log.Printf(format, values...)
+}

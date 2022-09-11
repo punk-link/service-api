@@ -133,9 +133,9 @@ func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labe
 	missingReleases, err := t.releaseService.GetMissingReleases(dbArtist.Id, dbArtist.SpotifyId)
 	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
 	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
-
 	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
 	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
+
 	if err != nil {
 		return err
 	}
