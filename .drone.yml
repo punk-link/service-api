@@ -12,16 +12,18 @@ steps:
 - name: Build docker image & push to repository
   image: plugins/docker
   environment:
+
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
+
+    PNKL_CONSUL_ADDR:
+      from_secret: PNKL_CONSUL_ADDR
+    PNKL_CONSUL_TOKEN:
+      from_secret: PNKL_CONSUL_TOKEN      
     GO_ENVIRONMENT:
       from_secret: GO_ENVIRONMENT
     LOG_LEVEL:
-      from_secret: LOG_LEVEL
-    CONSUL_ADDR:
-      from_secret: CONSUL_ADDR
-    PNKL_CONSUL_TOKEN:
-      from_secret: PNKL_CONSUL_TOKEN      
+      from_secret: LOG_LEVEL      
 
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
   settings:
@@ -39,10 +41,11 @@ steps:
     build_args_from_env:
       - GITHUB_TOKEN
       - BUILD_VERSION
+      - PNKL_CONSUL_ADDR
+      - PNKL_CONSUL_TOKEN       
       - GO_ENVIRONMENT
       - LOG_LEVEL
-      - CONSUL_ADDR
-      - PNKL_CONSUL_TOKEN  
+ 
 
 
 - name: Deploy to DEV
