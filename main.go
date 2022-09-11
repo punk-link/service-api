@@ -36,13 +36,13 @@ func main() {
 		Handler: app,
 	}
 
-	go func() {
-		logger.LogInfo("Starting...")
-		err := server.ListenAndServe()
-		if err != nil && errors.Is(err, http.ErrServerClosed) {
-			logger.LogError(err, "Listen error: %s\n", err.Error())
-		}
-	}()
+	//go func() {
+	logger.LogInfo("Starting...")
+	err := server.ListenAndServe()
+	if err != nil && errors.Is(err, http.ErrServerClosed) {
+		logger.LogError(err, "Listen error: %s\n", err.Error())
+	}
+	//}()
 
 	//quit := make(chan os.Signal, 1)
 	//signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
