@@ -25,8 +25,14 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 	})
 
 	registerRoutes(logger, diContainer, controllers.LabelController{}, func(controller *controllers.LabelController) {
-		v1.GET("/labels/:id", controller.Get)
-		v1.POST("/labels/:id", controller.Modify)
+		subroutes := v1.Group("/labels")
+		{
+			subroutes.GET("/:id", controller.Get)
+			subroutes.POST("/:id", controller.Modify)
+			registerRoutes(logger, diContainer, controllers.ArtistController{}, func(controller *controllers.ArtistController) {
+				subroutes.GET("/:id/artists/", controller.Get)
+			})
+		}
 	})
 
 	registerRoutes(logger, diContainer, controllers.ArtistController{}, func(controller *controllers.ArtistController) {

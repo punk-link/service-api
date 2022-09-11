@@ -49,6 +49,25 @@ func getDbArtist(logger *common.Logger, err error, id int) (artistData.Artist, e
 	return artist, err
 }
 
+func getDbArtistIdsByLabelId(logger *common.Logger, err error, labelId int) ([]int, error) {
+	if err != nil {
+		return make([]int, 0), err
+	}
+
+	var artistIds []int
+	err = data.DB.Model(&artistData.Artist{}).
+		Select("id").
+		Where("label_id = ?", labelId).
+		Find(&artistIds).
+		Error
+
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	return artistIds, err
+}
+
 func getDbArtists(logger *common.Logger, err error, ids []int) ([]artistData.Artist, error) {
 	if err != nil {
 		return make([]artistData.Artist, 0), err

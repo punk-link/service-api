@@ -49,7 +49,12 @@ func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId stri
 	}
 
 	err = t.FindAndAddMissingReleases(err, currentManager, dbArtist, now)
-	return t.getInternal(err, currentManager, dbArtist.Id)
+	artist, err := t.getInternal(err, []int{dbArtist.Id})
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	return artist[0], nil
 }
 
 func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
@@ -74,10 +79,18 @@ func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labe
 	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
-// Get
+func (t *ArtistService) Get(labelId int) ([]artistModels.Artist, error) {
+	dbArtistIds, err := getDbArtistIdsByLabelId(t.logger, nil, labelId)
+	return t.getInternal(err, dbArtistIds)
+}
 
-func (t *ArtistService) GetOne(currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
-	return t.getInternal(nil, currentManager, id)
+func (t *ArtistService) GetOne(id int) (artistModels.Artist, error) {
+	artists, err := t.getInternal(nil, []int{id})
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	return artists[0], nil
 }
 
 func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
@@ -195,33 +208,34 @@ func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []relea
 	return spotifyIds, nil
 }
 
-func (t *ArtistService) getInternal(err error, currentManager labels.ManagerContext, id int) (artistModels.Artist, error) {
+func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist, error) {
 	if err != nil {
-		return artistModels.Artist{}, err
+		return make([]artistModels.Artist, 0), err
 	}
 
-	cacheKey := t.buildCacheKey(id)
-	value, isCached := t.cache.TryGet(cacheKey)
-	if isCached {
-		return value.(artistModels.Artist), nil
+	artists := make([]artistModels.Artist, len(ids))
+	for i, id := range ids {
+		cacheKey := t.buildCacheKey(id)
+		value, isCached := t.cache.TryGet(cacheKey)
+		if isCached {
+			artists[i] = value.(artistModels.Artist)
+			continue
+		}
+
+		dbArtist, dbArtistErr := getDbArtist(t.logger, err, id)
+		artist, conversionErr := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
+		if err != nil {
+			t.logger.LogError(err, err.Error())
+			err = helpers.CombineErrors(err, helpers.AccumulateErrors(dbArtistErr, conversionErr))
+			continue
+		}
+
+		t.cache.Set(cacheKey, artist, ARTIST_CACHE_DURATION)
+
+		artists[i] = artist
 	}
 
-	dbArtist, err := getDbArtist(t.logger, err, id)
-	err = validators.CurrentDbArtistBelongsToLabel(err, dbArtist, currentManager.LabelId)
-	if err != nil {
-		t.logger.LogWarn(err.Error())
-		return artistModels.Artist{}, err
-	}
-
-	artist, err := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-		return artistModels.Artist{}, err
-	}
-
-	t.cache.Set(cacheKey, artist, ARTIST_CACHE_DURATION)
-
-	return artist, err
+	return artists, err
 }
 
 func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existingArtists map[string]artistData.Artist, artistSpotifyIds []string) ([]string, error) {
