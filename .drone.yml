@@ -41,7 +41,7 @@ steps:
       - BUILD_VERSION
       - GO_ENVIRONMENT
       - LOG_LEVEL
-      - PNKL_CONSUL_ADDR
+      - CONSUL_ADDR
       - PNKL_CONSUL_TOKEN  
 
 
