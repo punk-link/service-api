@@ -1,7 +1,6 @@
 package startup
 
 import (
-	"main/infrastructure"
 	"main/infrastructure/consul"
 	"main/services/common"
 
@@ -18,7 +17,7 @@ func initSentry(app *gin.Engine, logger *common.Logger, consul *consul.ConsulCli
 	dsn := consul.Get("SentryDsn").(string)
 	err := sentry.Init(sentry.ClientOptions{
 		AttachStacktrace: true,
-		Dsn:              infrastructure.GetEnvironmentVariable(dsn),
+		Dsn:              dsn,
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {
