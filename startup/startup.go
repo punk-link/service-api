@@ -14,6 +14,9 @@ func Configure(logger *common.Logger, consul *consul.ConsulClient, ginMode strin
 	gin.SetMode(ginMode)
 	app := gin.Default()
 
+	app.LoadHTMLGlob("./var/www/templates/**/*.tmpl")
+	app.Static("/assets", "./var/www/assets")
+
 	initSentry(app, logger, consul)
 	setupRouts(app, diContainer, logger)
 

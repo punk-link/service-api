@@ -1,0 +1,16 @@
+{{ define "release.tmpl" }}
+<html lang="en">
+    {{ template "global/head.tmpl" . }}
+    <body>
+	    <h1>{{ .ArtistName }}</h1>
+	    <h1>{{ .ReleaseTitle }}</h1>
+	    <h2>{{ .ReleaseDate }}</h2>
+        <img src="{{ .ImageUrl }}" alt="Girl in a jacket" width="200" height="200">
+        <ul>
+            {{ range .Tracks }}
+            <li>{{ . }}</li>
+            {{ end }}
+        </ul>
+    </body>
+</html>   
+{{ end }}

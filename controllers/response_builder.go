@@ -24,6 +24,10 @@ func Ok[T any](ctx *gin.Context, result T) {
 	})
 }
 
+func OkTemplate(ctx *gin.Context, templateName string, data map[string]any) {
+	ctx.HTML(http.StatusOK, templateName, data)
+}
+
 func OkOrBadRequest[T any](ctx *gin.Context, result T, err error) {
 	if err != nil {
 		BadRequest(ctx, err.Error())

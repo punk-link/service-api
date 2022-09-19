@@ -2,6 +2,7 @@ package startup
 
 import (
 	apiControllers "main/controllers/api"
+	mvcControllers "main/controllers/mvc"
 	artistServices "main/services/artists"
 	"main/services/cache"
 	"main/services/common"
@@ -23,6 +24,7 @@ func buildDependencies() *dig.Container {
 	container.Provide(spotifyServices.ConstructSpotifyService)
 
 	container.Provide(artistServices.ConstructReleaseService)
+	container.Provide(artistServices.ConstructMvcReleaseService)
 	container.Provide(artistServices.ConstructArtistService)
 
 	container.Provide(apiControllers.ConstructArtistController)
@@ -30,6 +32,8 @@ func buildDependencies() *dig.Container {
 	container.Provide(apiControllers.ConstructManagerController)
 	container.Provide(apiControllers.ConstructReleaseController)
 	container.Provide(apiControllers.ConstructStatusController)
+
+	container.Provide(mvcControllers.ConstructMvcReleaseController)
 
 	return container
 }

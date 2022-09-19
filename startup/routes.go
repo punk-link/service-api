@@ -2,6 +2,7 @@ package startup
 
 import (
 	apiControllers "main/controllers/api"
+	mvcControllers "main/controllers/mvc"
 	"main/helpers"
 	"main/services/common"
 
@@ -12,6 +13,10 @@ import (
 func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logger) {
 	registerRoutes(logger, diContainer, apiControllers.StatusController{}, func(controller *apiControllers.StatusController) {
 		app.GET("/health", controller.CheckHealth)
+	})
+
+	registerRoutes(logger, diContainer, mvcControllers.MvcReleaseController{}, func(controller *mvcControllers.MvcReleaseController) {
+		app.GET("/releases/:hash", controller.Get)
 	})
 
 	v1 := app.Group("/v1")
