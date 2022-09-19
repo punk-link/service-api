@@ -3,12 +3,17 @@
     {{ template "global/head.tmpl" . }}
     <body>
 	    <h1>{{ .ArtistName }}</h1>
-	    <h1>{{ .ReleaseTitle }}</h1>
+	    <h1>{{ .ReleaseName }}</h1>
 	    <h2>{{ .ReleaseDate }}</h2>
-        <img src="{{ .ImageUrl }}" alt="Girl in a jacket" width="200" height="200">
+        <img src="{{ .ImageDetails.Url }}" alt="{{ .ImageDetails.AltText }}" width="200" height="200">
         <ul>
             {{ range .Tracks }}
-            <li>{{ . }}</li>
+            <li>
+                {{ .Name }}
+                {{ if .IsExplicit }}
+                <span>E</span>
+                {{ end }}
+            </li>
             {{ end }}
         </ul>
     </body>
