@@ -1,9 +1,9 @@
-package controllers
+package api
 
 import (
+	base "main/controllers"
 	"main/data"
 	"main/services/common"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,16 +22,16 @@ func (controller *StatusController) CheckHealth(ctx *gin.Context) {
 	sqlDb, err := data.DB.DB()
 	if err != nil {
 		controller.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
-		ctx.Status(http.StatusInternalServerError)
+		base.InternalServerError(ctx, err.Error())
 		return
 	}
 
 	err = sqlDb.Ping()
 	if err != nil {
 		controller.logger.LogError(err, "Can't reach any database instances: %v", err.Error())
-		ctx.Status(http.StatusInternalServerError)
+		base.InternalServerError(ctx, err.Error())
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	base.Ok(ctx, "OK")
 }

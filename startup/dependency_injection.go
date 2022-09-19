@@ -1,7 +1,7 @@
 package startup
 
 import (
-	"main/controllers"
+	apiControllers "main/controllers/api"
 	artistServices "main/services/artists"
 	"main/services/cache"
 	"main/services/common"
@@ -25,11 +25,11 @@ func buildDependencies() *dig.Container {
 	container.Provide(artistServices.ConstructReleaseService)
 	container.Provide(artistServices.ConstructArtistService)
 
-	container.Provide(controllers.ConstructArtistController)
-	container.Provide(controllers.ConstructLabelController)
-	container.Provide(controllers.ConstructManagerController)
-	container.Provide(controllers.ConstructReleaseController)
-	container.Provide(controllers.ConstructStatusController)
+	container.Provide(apiControllers.ConstructArtistController)
+	container.Provide(apiControllers.ConstructLabelController)
+	container.Provide(apiControllers.ConstructManagerController)
+	container.Provide(apiControllers.ConstructReleaseController)
+	container.Provide(apiControllers.ConstructStatusController)
 
 	return container
 }

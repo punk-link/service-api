@@ -1,6 +1,7 @@
-package controllers
+package api
 
 import (
+	base "main/controllers"
 	"main/models/labels"
 	service "main/services/labels"
 	"strconv"
@@ -21,39 +22,39 @@ func ConstructLabelController(labelService *service.LabelService) *LabelControll
 func (t *LabelController) Get(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		BadRequest(ctx, err.Error())
+		base.BadRequest(ctx, err.Error())
 		return
 	}
 
-	currentManager, err := getCurrentManagerContext(ctx)
+	currentManager, err := base.GetCurrentManagerContext(ctx)
 	if err != nil {
-		NotFound(ctx, err.Error())
+		base.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.labelService.GetLabel(currentManager, id)
-	OkOrBadRequest(ctx, result, err)
+	base.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *LabelController) Modify(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		BadRequest(ctx, err.Error())
+		base.BadRequest(ctx, err.Error())
 		return
 	}
 
 	var label labels.Label
 	if err := ctx.ShouldBindJSON(&label); err != nil {
-		UnprocessableEntity(ctx, err)
+		base.UnprocessableEntity(ctx, err)
 		return
 	}
 
-	currentManager, err := getCurrentManagerContext(ctx)
+	currentManager, err := base.GetCurrentManagerContext(ctx)
 	if err != nil {
-		NotFound(ctx, err.Error())
+		base.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.labelService.ModifyLabel(currentManager, label, id)
-	OkOrBadRequest(ctx, result, err)
+	base.OkOrBadRequest(ctx, result, err)
 }

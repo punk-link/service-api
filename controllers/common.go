@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getCurrentManagerContext(ctx *gin.Context) (labels.ManagerContext, error) {
+func GetCurrentManagerContext(ctx *gin.Context) (labels.ManagerContext, error) {
 	headerValue := ctx.Request.Header["X-User-Id"][0]
 	managerId, err := strconv.Atoi(headerValue)
 	if err != nil {

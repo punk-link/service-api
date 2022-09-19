@@ -1,6 +1,7 @@
-package controllers
+package api
 
 import (
+	base "main/controllers"
 	"main/services/artists"
 	"strconv"
 
@@ -20,21 +21,21 @@ func ConstructReleaseController(releaseService *artists.ReleaseService) *Release
 func (t *ReleaseController) GetOne(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		BadRequest(ctx, err.Error())
+		base.BadRequest(ctx, err.Error())
 		return
 	}
 
 	result, err := t.releaseService.GetOne(id)
-	OkOrBadRequest(ctx, result, err)
+	base.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ReleaseController) Get(ctx *gin.Context) {
 	artistId, err := strconv.Atoi(ctx.Param("artist-id"))
 	if err != nil {
-		BadRequest(ctx, err.Error())
+		base.BadRequest(ctx, err.Error())
 		return
 	}
 
 	result, err := t.releaseService.Get(artistId)
-	OkOrBadRequest(ctx, result, err)
+	base.OkOrBadRequest(ctx, result, err)
 }
