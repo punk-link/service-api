@@ -1,32 +1,32 @@
 package artists
 
 import (
-	"errors"
 	"fmt"
 	"main/models/artists"
 	"main/services/cache"
 	"main/services/common"
-	"strconv"
 	"strings"
 )
 
 type MvcReleaseService struct {
 	cache          *cache.MemoryCacheService
+	hashCoder      *common.HashCoder
 	logger         *common.Logger
 	releaseService *ReleaseService
 }
 
-func ConstructMvcReleaseService(cache *cache.MemoryCacheService, logger *common.Logger, releaseService *ReleaseService) *MvcReleaseService {
+func ConstructMvcReleaseService(cache *cache.MemoryCacheService, logger *common.Logger, releaseService *ReleaseService, hashCoder *common.HashCoder) *MvcReleaseService {
 	return &MvcReleaseService{
 		cache:          cache,
+		hashCoder:      hashCoder,
 		logger:         logger,
 		releaseService: releaseService,
 	}
 }
 
 func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
-	id, err := t.getIdFromHash(hash)
-	release, err := t.getRelease(err, id)
+	id := t.hashCoder.Encode(hash)
+	release, err := t.releaseService.GetOne(id)
 	artistNames, err := t.buildArtistNames(err, release.ReleaseArtists)
 	tracks, err := t.buildTracks(err, release.Tracks)
 	if err != nil {
@@ -34,13 +34,13 @@ func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
 	}
 
 	return map[string]any{
-		"PageTitle":    fmt.Sprintf("%s – %s", release.Name, release.ReleaseArtists[0].Name),
-		"ArtistName":   artistNames,
-		"ReleaseName":  release.Name,
-		"ReleaseDate":  release.ReleaseDate.Year(),
-		"ImageDetails": release.ImageDetails,
-		"Tracks":       tracks,
-		"Services":     []string{"Apple Music", "Deezer"},
+		"PageTitle":         fmt.Sprintf("%s – %s", release.Name, release.ReleaseArtists[0].Name),
+		"ArtistName":        artistNames,
+		"ReleaseName":       release.Name,
+		"ReleaseDate":       release.ReleaseDate.Year(),
+		"ImageDetails":      release.ImageDetails,
+		"Tracks":            tracks,
+		"StreamingServices": []string{"Apple Music", "Deezer"},
 	}, err
 }
 
@@ -72,20 +72,4 @@ func (t *MvcReleaseService) buildTracks(err error, tracks []artists.Track) ([]ar
 	}
 
 	return slimTracks, err
-}
-
-func (t *MvcReleaseService) getIdFromHash(hash string) (int, error) {
-	if hash == "" {
-		return 0, errors.New("")
-	}
-
-	return strconv.Atoi(hash)
-}
-
-func (t *MvcReleaseService) getRelease(err error, id int) (artists.Release, error) {
-	if err != nil {
-		return artists.Release{}, err
-	}
-
-	return t.releaseService.GetOne(id)
 }

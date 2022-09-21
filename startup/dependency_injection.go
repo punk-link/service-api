@@ -16,6 +16,7 @@ func buildDependencies() *dig.Container {
 	container := dig.New()
 
 	container.Provide(common.ConstructLogger)
+	container.Provide(common.ConstructHashCoder)
 	container.Provide(cache.ConstructMemoryCacheService)
 
 	container.Provide(labelServices.ConstructLabelService)
