@@ -25,6 +25,12 @@ func ConstructMvcReleaseService(cache *cache.MemoryCacheService, logger *common.
 }
 
 func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
+	cacheKey := t.buildReleaseCacheKey(hash)
+	value, isCached := t.cache.TryGet(cacheKey)
+	if isCached {
+		return value.(map[string]any), nil
+	}
+
 	id := t.hashCoder.Encode(hash)
 	release, err := t.releaseService.GetOne(id)
 	artistNames, err := t.buildArtistNames(err, release.ReleaseArtists)
@@ -33,7 +39,7 @@ func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
 		return make(map[string]any), err
 	}
 
-	return map[string]any{
+	result := map[string]any{
 		"PageTitle":         fmt.Sprintf("%s – %s", release.Name, release.ReleaseArtists[0].Name),
 		"ArtistName":        artistNames,
 		"ReleaseName":       release.Name,
@@ -41,7 +47,15 @@ func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
 		"ImageDetails":      release.ImageDetails,
 		"Tracks":            tracks,
 		"StreamingServices": []string{"Apple Music", "Deezer"},
-	}, err
+	}
+
+	t.cache.Set(cacheKey, result, RELEASE_CACHE_DURATION)
+
+	return result, err
+}
+
+func (t *MvcReleaseService) buildReleaseCacheKey(hash string) string {
+	return fmt.Sprintf("ArtistMvcRelease::%s", hash)
 }
 
 func (t *MvcReleaseService) buildArtistNames(err error, artists []artists.Artist) (string, error) {

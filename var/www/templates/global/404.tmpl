@@ -1,0 +1,11 @@
+{{ define "global/404.tmpl" }}
+<html lang="en">
+    {{ template "global/head.tmpl" . }}
+    <body>
+	    <div>
+            {{ .Error }}
+        </div>
+        {{ template "global/footer.tmpl" }}
+    </body>
+</html>   
+{{ end }}

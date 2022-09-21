@@ -20,7 +20,6 @@ func ConstructMvcReleaseController(service *artists.MvcReleaseService) *MvcRelea
 func (t *MvcReleaseController) Get(ctx *gin.Context) {
 	hash := ctx.Param("hash")
 
-	result, _ := t.service.Get(hash)
-
-	base.OkTemplate(ctx, "release.tmpl", result)
+	result, err := t.service.Get(hash)
+	base.OkOrNotFoundTemplate(ctx, "release.tmpl", result, err)
 }
