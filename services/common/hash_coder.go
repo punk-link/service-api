@@ -19,7 +19,7 @@ func ConstructHashCoder() *HashCoder {
 	return &HashCoder{}
 }
 
-func (t *HashCoder) Decode(target int) string {
+func (t *HashCoder) Encode(target int) string {
 	hash := ""
 
 	denominator := len(decodingTable)
@@ -42,7 +42,7 @@ func (t *HashCoder) Decode(target int) string {
 	return fmt.Sprintf("%0*s", MINIMAL_HASH_LENGTH, hash)
 }
 
-func (t *HashCoder) Encode(target string) int {
+func (t *HashCoder) Decode(target string) int {
 	hash := strings.TrimLeft(target, "0")
 	if hash == "" {
 		return 0

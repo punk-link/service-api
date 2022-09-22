@@ -31,7 +31,7 @@ func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
 		return value.(map[string]any), nil
 	}
 
-	id := t.hashCoder.Encode(hash)
+	id := t.hashCoder.Decode(hash)
 	release, err := t.releaseService.GetOne(id)
 	artistNames, err := t.buildArtistNames(err, release.ReleaseArtists)
 	tracks, err := t.buildTracks(err, release.Tracks)

@@ -11,17 +11,22 @@ import (
 )
 
 func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logger) {
-	registerRoutes(logger, diContainer, apiControllers.StatusController{}, func(controller *apiControllers.StatusController) {
+	registerRoutes(logger, diContainer, func(controller *apiControllers.StatusController) {
 		app.GET("/health", controller.CheckHealth)
 	})
 
-	registerRoutes(logger, diContainer, mvcControllers.MvcReleaseController{}, func(controller *mvcControllers.MvcReleaseController) {
+	registerRoutes(logger, diContainer, func(controller *mvcControllers.MvcReleaseController) {
 		app.GET("/releases/:hash", controller.Get)
 	})
 
 	v1 := app.Group("/v1")
 
-	registerRoutes(logger, diContainer, apiControllers.ManagerController{}, func(controller *apiControllers.ManagerController) {
+	registerRoutes(logger, diContainer, func(controller *apiControllers.HashController) {
+		v1.GET("/hashes/:target/decode", controller.Decode)
+		v1.GET("/hashes/:target/encode", controller.Encode)
+	})
+
+	registerRoutes(logger, diContainer, func(controller *apiControllers.ManagerController) {
 		v1.POST("/managers", controller.Add)
 		v1.POST("/managers/master", controller.AddMaster)
 		v1.GET("/managers", controller.Get)
@@ -29,24 +34,24 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 		v1.POST("/managers/:id", controller.Modify)
 	})
 
-	registerRoutes(logger, diContainer, apiControllers.LabelController{}, func(controller *apiControllers.LabelController) {
+	registerRoutes(logger, diContainer, func(controller *apiControllers.LabelController) {
 		subroutes := v1.Group("/labels")
 		{
 			subroutes.GET("/:id", controller.Get)
 			subroutes.POST("/:id", controller.Modify)
-			registerRoutes(logger, diContainer, apiControllers.ArtistController{}, func(controller *apiControllers.ArtistController) {
+			registerRoutes(logger, diContainer, func(controller *apiControllers.ArtistController) {
 				subroutes.GET("/:id/artists/", controller.Get)
 			})
 		}
 	})
 
-	registerRoutes(logger, diContainer, apiControllers.ArtistController{}, func(controller *apiControllers.ArtistController) {
+	registerRoutes(logger, diContainer, func(controller *apiControllers.ArtistController) {
 		v1.POST("/artists/:spotify-id", controller.Add)
 		v1.GET("/artists/search", controller.Search)
 		subroutes := v1.Group("/artists")
 		{
 			subroutes.GET("/:artist-id", controller.GetOne)
-			registerRoutes(logger, diContainer, apiControllers.ReleaseController{}, func(controller *apiControllers.ReleaseController) {
+			registerRoutes(logger, diContainer, func(controller *apiControllers.ReleaseController) {
 				subroutes.GET("/:artist-id/releases/", controller.Get)
 				subroutes.GET("/:artist-id/releases/:id/", controller.GetOne)
 			})
@@ -54,9 +59,10 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 	})
 }
 
-func registerRoutes[T any](logger *common.Logger, diContainer *dig.Container, target T, function func(*T)) {
+func registerRoutes[T any](logger *common.Logger, diContainer *dig.Container, function func(*T)) {
 	err := diContainer.Invoke(function)
 	if err != nil {
+		target := new(T)
 		structName := helpers.GetStructNameAsString(target)
 		logger.LogFatal(err, "Can't resolve a dependency '%s': %v", structName, err.Error())
 		panic(err.Error())
