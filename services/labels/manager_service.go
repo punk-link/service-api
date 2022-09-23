@@ -5,7 +5,7 @@ import (
 	labelData "main/data/labels"
 	"main/helpers"
 	"main/models/labels"
-	requests "main/requests/labels"
+
 	"main/services/common"
 	"main/services/labels/converters"
 	"main/services/labels/validators"
@@ -32,7 +32,7 @@ func (t *ManagerService) Add(currentManager labels.ManagerContext, manager label
 	return t.addInternal(err, currentManager, trimmedName)
 }
 
-func (t *ManagerService) AddMaster(request requests.AddMasterManagerRequest) (labels.Manager, error) {
+func (t *ManagerService) AddMaster(request labels.AddMasterManagerRequest) (labels.Manager, error) {
 	trimmedName := strings.TrimSpace(request.Name)
 	err := validators.NameNotEmpty(trimmedName)
 	if err != nil {

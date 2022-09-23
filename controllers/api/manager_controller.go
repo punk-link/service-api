@@ -3,7 +3,6 @@ package api
 import (
 	base "main/controllers"
 	"main/models/labels"
-	requests "main/requests/labels"
 	service "main/services/labels"
 	"strconv"
 
@@ -38,7 +37,7 @@ func (controller *ManagerController) Add(ctx *gin.Context) {
 }
 
 func (controller *ManagerController) AddMaster(ctx *gin.Context) {
-	var request requests.AddMasterManagerRequest
+	var request labels.AddMasterManagerRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		base.UnprocessableEntity(ctx, err)
 		return
