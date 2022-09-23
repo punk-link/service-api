@@ -6,10 +6,41 @@ import (
 	data "main/data/artists"
 	"main/helpers"
 	models "main/models/artists"
+	"main/models/artists/enums"
 	spotifyReleases "main/models/spotify/releases"
+	commonServices "main/services/common"
 	commonConverters "main/services/common/converters"
 	"time"
 )
+
+func ToDbReleaseFromSpotify(release spotifyReleases.Release, artists map[string]data.Artist, timeStamp time.Time) (data.Release, error) {
+	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(release.ImageDetails, release.Name)
+
+	tracks := ToTracksFromSpotify(release.Tracks.Items, artists)
+	tracksJson, err := getTracksJson(err, tracks)
+	releaseDate, err := getReleaseDate(err, release)
+	releaseArtistIdsJson, err := getReleaseArtistIdsJson(err, release, artists)
+	featuringArtistIdsJson, err := getFeaturingArtistIdsJson(err, release, artists)
+	releaseType, err := getReleaseType(err, release.Type)
+	if err != nil {
+		return data.Release{}, err
+	}
+
+	return data.Release{
+		Created:            timeStamp,
+		FeaturingArtistIds: featuringArtistIdsJson,
+		ImageDetails:       imageDetailsJson,
+		Label:              getLabelName(release),
+		Name:               release.Name,
+		ReleaseArtistIds:   releaseArtistIdsJson,
+		ReleaseDate:        releaseDate,
+		SpotifyId:          release.Id,
+		TrackNumber:        release.TrackNumber,
+		Tracks:             tracksJson,
+		Type:               releaseType,
+		Updated:            timeStamp,
+	}, nil
+}
 
 func ToReleases(dbReleases []data.Release, artists map[int]models.Artist) ([]models.Release, error) {
 	var err error
@@ -40,49 +71,19 @@ func ToReleases(dbReleases []data.Release, artists map[int]models.Artist) ([]mod
 	return results, err
 }
 
-func toArtists(artistIdJson string, artists map[int]models.Artist) ([]models.Artist, error) {
-	var artistIds []int
-	err := json.Unmarshal([]byte(artistIdJson), &artistIds)
-	if err != nil {
-		return make([]models.Artist, 0), err
-	}
-
-	results := make([]models.Artist, 0)
-	for _, id := range artistIds {
-		if artist, isExists := artists[id]; isExists {
-			results = append(results, artist)
+func ToSlimRelease(hashCoder *commonServices.HashCoder, source []models.Release) []models.SlimRelease {
+	results := make([]models.SlimRelease, len(source))
+	for i, release := range source {
+		results[i] = models.SlimRelease{
+			Slug:         hashCoder.Encode(release.Id),
+			ImageDetails: release.ImageDetails,
+			Name:         release.Name,
+			ReleaseDate:  release.ReleaseDate,
+			Type:         release.Type,
 		}
 	}
 
-	return results, err
-}
-
-func ToDbReleaseFromSpotify(release spotifyReleases.Release, artists map[string]data.Artist, timeStamp time.Time) (data.Release, error) {
-	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(release.ImageDetails, release.Name)
-
-	tracks := ToTracksFromSpotify(release.Tracks.Items, artists)
-	tracksJson, err := getTracksJson(err, tracks)
-	releaseDate, err := getReleaseDate(err, release)
-	releaseArtistIdsJson, err := getReleaseArtistIdsJson(err, release, artists)
-	featuringArtistIdsJson, err := getFeaturingArtistIdsJson(err, release, artists)
-	if err != nil {
-		return data.Release{}, err
-	}
-
-	return data.Release{
-		Created:            timeStamp,
-		FeaturingArtistIds: featuringArtistIdsJson,
-		ImageDetails:       imageDetailsJson,
-		Label:              getLabelName(release),
-		Name:               release.Name,
-		ReleaseArtistIds:   releaseArtistIdsJson,
-		ReleaseDate:        releaseDate,
-		SpotifyId:          release.Id,
-		TrackNumber:        release.TrackNumber,
-		Tracks:             tracksJson,
-		Type:               release.Type,
-		Updated:            timeStamp,
-	}, nil
+	return results
 }
 
 func getFeaturingArtistIds(release spotifyReleases.Release, artists map[string]data.Artist) []int {
@@ -181,6 +182,26 @@ func getReleaseDate(err error, release spotifyReleases.Release) (time.Time, erro
 	return releaseDate, nil
 }
 
+func getReleaseType(err error, target string) (string, error) {
+	if err != nil {
+		return "", err
+	}
+
+	var result string
+	switch target {
+	case enums.Album:
+		result = enums.Album
+	case enums.Compilation:
+		result = enums.Compilation
+	case enums.Single:
+		result = enums.Single
+	default:
+		result = enums.Unknown
+	}
+
+	return result, err
+}
+
 func getTracks(tracksJson string) ([]models.Track, error) {
 	var tracks []models.Track
 	err := json.Unmarshal([]byte(tracksJson), &tracks)
@@ -202,4 +223,21 @@ func getTracksJson(err error, tracks []models.Track) (string, error) {
 	}
 
 	return string(tracksBytes), nil
+}
+
+func toArtists(artistIdJson string, artists map[int]models.Artist) ([]models.Artist, error) {
+	var artistIds []int
+	err := json.Unmarshal([]byte(artistIdJson), &artistIds)
+	if err != nil {
+		return make([]models.Artist, 0), err
+	}
+
+	results := make([]models.Artist, 0)
+	for _, id := range artistIds {
+		if artist, isExists := artists[id]; isExists {
+			results = append(results, artist)
+		}
+	}
+
+	return results, err
 }

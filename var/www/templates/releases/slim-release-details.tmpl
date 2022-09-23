@@ -1,0 +1,7 @@
+{{ define "slim-release-details.tmpl" }}
+<div>
+    <img src="{{ .ImageDetails.Url }}" alt="{{ .ImageDetails.AltText }}" width="200" height="200">
+    <h1>{{ .Name }}</h1>
+    <h2>{{ .ReleaseDate }}</h2>
+</div>
+{{ end }}

@@ -1,0 +1,17 @@
+{{ define "artist.tmpl" }}
+<html lang="en">
+    {{ template "global/head.tmpl" . }}
+    <body>
+	    <h1>{{ .ArtistName }}</h1>
+        {{ template "global/footer.tmpl" }}
+        <div>
+            {{ template "release-number.tmpl" . }}
+        </div>
+        <div>
+            {{ range .Releases }}
+                {{ template "slim-release-details.tmpl" . }}
+            {{ end }}
+        </div>
+    </body>
+</html>   
+{{ end }}

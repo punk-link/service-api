@@ -36,6 +36,6 @@ func (t *ReleaseController) Get(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.releaseService.Get(artistId)
+	result, err := t.releaseService.GetByArtistId(artistId)
 	base.OkOrBadRequest(ctx, result, err)
 }

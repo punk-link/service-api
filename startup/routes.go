@@ -15,6 +15,10 @@ func setupRouts(app *gin.Engine, diContainer *dig.Container, logger *common.Logg
 		app.GET("/health", controller.CheckHealth)
 	})
 
+	registerRoutes(logger, diContainer, func(controller *mvcControllers.MvcArtistController) {
+		app.GET("/artists/:hash", controller.Get)
+	})
+
 	registerRoutes(logger, diContainer, func(controller *mvcControllers.MvcReleaseController) {
 		app.GET("/releases/:hash", controller.Get)
 	})

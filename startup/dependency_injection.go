@@ -27,6 +27,7 @@ func buildDependencies() *dig.Container {
 	container.Provide(artistServices.ConstructReleaseService)
 	container.Provide(artistServices.ConstructMvcReleaseService)
 	container.Provide(artistServices.ConstructArtistService)
+	container.Provide(artistServices.ConstructMvcArtistService)
 
 	container.Provide(apiControllers.ConstructArtistController)
 	container.Provide(apiControllers.ConstructHashController)
@@ -35,6 +36,7 @@ func buildDependencies() *dig.Container {
 	container.Provide(apiControllers.ConstructReleaseController)
 	container.Provide(apiControllers.ConstructStatusController)
 
+	container.Provide(mvcControllers.ConstructMvcArtistController)
 	container.Provide(mvcControllers.ConstructMvcReleaseController)
 
 	return container

@@ -1,0 +1,18 @@
+{{ define "release-number.tmpl" }}
+<div>
+    <div>
+        {{ if gt .SoleReleaseNumber 1 }}
+        {{ .SoleReleaseNumber }} releases
+        {{ else if eq .SoleReleaseNumber 1 }}
+        1 release
+        {{ end }}
+    </div>
+    <div>
+        {{ if gt .CompilationNumber 1 }}
+        {{ .CompilationNumber }} compilations
+        {{ else if eq .CompilationNumber 1 }}
+        1 compilation
+        {{ end }}
+    </div>
+</div>
+{{ end }}

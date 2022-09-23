@@ -35,7 +35,7 @@ func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[s
 	return createDbReleasesInBatches(t.logger, nil, &dbReleases)
 }
 
-func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
+func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, error) {
 	cacheKey := t.buildArtistReleasesCacheKey(artistId)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
