@@ -6,16 +6,19 @@ import (
 	"main/services/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type StatusController struct {
 	logger *common.Logger
 }
 
-func ConstructStatusController(logger *common.Logger) *StatusController {
+func ConstructStatusController(injector *do.Injector) (*StatusController, error) {
+	logger := do.MustInvoke[*common.Logger](injector)
+
 	return &StatusController{
 		logger: logger,
-	}
+	}, nil
 }
 
 func (controller *StatusController) CheckHealth(ctx *gin.Context) {

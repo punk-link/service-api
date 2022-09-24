@@ -10,6 +10,8 @@ import (
 	"main/services/spotify"
 	"strings"
 	"time"
+
+	"github.com/samber/do"
 )
 
 type LabelService struct {
@@ -17,11 +19,14 @@ type LabelService struct {
 	spotifyService *spotify.SpotifyService
 }
 
-func ConstructLabelService(logger *common.Logger, spotifyService *spotify.SpotifyService) *LabelService {
+func ConstructLabelService(injector *do.Injector) (*LabelService, error) {
+	logger := do.MustInvoke[*common.Logger](injector)
+	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
+
 	return &LabelService{
 		logger:         logger,
 		spotifyService: spotifyService,
-	}
+	}, nil
 }
 
 func (t *LabelService) AddLabel(labelName string) (labels.Label, error) {

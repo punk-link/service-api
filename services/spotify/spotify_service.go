@@ -9,16 +9,20 @@ import (
 	"main/services/common"
 	"net/url"
 	"strings"
+
+	"github.com/samber/do"
 )
 
 type SpotifyService struct {
 	logger *common.Logger
 }
 
-func ConstructSpotifyService(logger *common.Logger) *SpotifyService {
+func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
+	logger := do.MustInvoke[*common.Logger](injector)
+
 	return &SpotifyService{
 		logger: logger,
-	}
+	}, nil
 }
 
 func (t *SpotifyService) GetArtist(spotifyId string) (spotifyArtists.Artist, error) {

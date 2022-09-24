@@ -9,35 +9,35 @@ import (
 	labelServices "main/services/labels"
 	spotifyServices "main/services/spotify"
 
-	"go.uber.org/dig"
+	"github.com/samber/do"
 )
 
-func buildDependencies() *dig.Container {
-	container := dig.New()
+func buildDependencies() *do.Injector {
+	container := do.New()
 
-	container.Provide(common.ConstructLogger)
-	container.Provide(common.ConstructHashCoder)
-	container.Provide(cache.ConstructMemoryCacheService)
+	do.Provide(container, common.ConstructLogger)
+	do.Provide(container, common.ConstructHashCoder)
+	do.Provide(container, cache.ConstructMemoryCacheService)
 
-	container.Provide(labelServices.ConstructLabelService)
-	container.Provide(labelServices.ConstructManagerService)
+	do.Provide(container, labelServices.ConstructLabelService)
+	do.Provide(container, labelServices.ConstructManagerService)
 
-	container.Provide(spotifyServices.ConstructSpotifyService)
+	do.Provide(container, spotifyServices.ConstructSpotifyService)
 
-	container.Provide(artistServices.ConstructReleaseService)
-	container.Provide(artistServices.ConstructMvcReleaseService)
-	container.Provide(artistServices.ConstructArtistService)
-	container.Provide(artistServices.ConstructMvcArtistService)
+	do.Provide(container, artistServices.ConstructReleaseService)
+	do.Provide(container, artistServices.ConstructMvcReleaseService)
+	do.Provide(container, artistServices.ConstructArtistService)
+	do.Provide(container, artistServices.ConstructMvcArtistService)
 
-	container.Provide(apiControllers.ConstructArtistController)
-	container.Provide(apiControllers.ConstructHashController)
-	container.Provide(apiControllers.ConstructLabelController)
-	container.Provide(apiControllers.ConstructManagerController)
-	container.Provide(apiControllers.ConstructReleaseController)
-	container.Provide(apiControllers.ConstructStatusController)
+	do.Provide(container, apiControllers.ConstructArtistController)
+	do.Provide(container, apiControllers.ConstructHashController)
+	do.Provide(container, apiControllers.ConstructLabelController)
+	do.Provide(container, apiControllers.ConstructManagerController)
+	do.Provide(container, apiControllers.ConstructReleaseController)
+	do.Provide(container, apiControllers.ConstructStatusController)
 
-	container.Provide(mvcControllers.ConstructMvcArtistController)
-	container.Provide(mvcControllers.ConstructMvcReleaseController)
+	do.Provide(container, mvcControllers.ConstructMvcArtistController)
+	do.Provide(container, mvcControllers.ConstructMvcReleaseController)
 
 	return container
 }

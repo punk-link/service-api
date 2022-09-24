@@ -6,16 +6,19 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type ReleaseController struct {
 	releaseService *artists.ReleaseService
 }
 
-func ConstructReleaseController(releaseService *artists.ReleaseService) *ReleaseController {
+func ConstructReleaseController(injector *do.Injector) (*ReleaseController, error) {
+	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
+
 	return &ReleaseController{
 		releaseService: releaseService,
-	}
+	}, nil
 }
 
 func (t *ReleaseController) GetOne(ctx *gin.Context) {

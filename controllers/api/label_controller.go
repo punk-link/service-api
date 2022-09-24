@@ -7,16 +7,22 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type LabelController struct {
-	labelService *service.LabelService
+	labelService   *service.LabelService
+	managerService *service.ManagerService
 }
 
-func ConstructLabelController(labelService *service.LabelService) *LabelController {
+func ConstructLabelController(injector *do.Injector) (*LabelController, error) {
+	labelService := do.MustInvoke[*service.LabelService](injector)
+	managerService := do.MustInvoke[*service.ManagerService](injector)
+
 	return &LabelController{
-		labelService: labelService,
-	}
+		labelService:   labelService,
+		managerService: managerService,
+	}, nil
 }
 
 func (t *LabelController) Get(ctx *gin.Context) {
@@ -26,7 +32,7 @@ func (t *LabelController) Get(ctx *gin.Context) {
 		return
 	}
 
-	currentManager, err := base.GetCurrentManagerContext(ctx)
+	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
 		base.NotFound(ctx, err.Error())
 		return
@@ -49,7 +55,7 @@ func (t *LabelController) Modify(ctx *gin.Context) {
 		return
 	}
 
-	currentManager, err := base.GetCurrentManagerContext(ctx)
+	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
 		base.NotFound(ctx, err.Error())
 		return

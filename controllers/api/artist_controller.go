@@ -3,25 +3,32 @@ package api
 import (
 	base "main/controllers"
 	"main/services/artists"
+	"main/services/labels"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type ArtistController struct {
-	artistService *artists.ArtistService
+	artistService  *artists.ArtistService
+	managerService *labels.ManagerService
 }
 
-func ConstructArtistController(artistService *artists.ArtistService) *ArtistController {
+func ConstructArtistController(injector *do.Injector) (*ArtistController, error) {
+	artistService := do.MustInvoke[*artists.ArtistService](injector)
+	managerService := do.MustInvoke[*labels.ManagerService](injector)
+
 	return &ArtistController{
-		artistService: artistService,
-	}
+		artistService:  artistService,
+		managerService: managerService,
+	}, nil
 }
 
 func (t *ArtistController) Add(ctx *gin.Context) {
 	spotifyId := ctx.Param("spotify-id")
 
-	currentManager, err := base.GetCurrentManagerContext(ctx)
+	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
 		base.NotFound(ctx, err.Error())
 		return

@@ -5,16 +5,19 @@ import (
 	"main/services/artists"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type MvcReleaseController struct {
 	service *artists.MvcReleaseService
 }
 
-func ConstructMvcReleaseController(service *artists.MvcReleaseService) *MvcReleaseController {
+func ConstructMvcReleaseController(injector *do.Injector) (*MvcReleaseController, error) {
+	service := do.MustInvoke[*artists.MvcReleaseService](injector)
+
 	return &MvcReleaseController{
 		service: service,
-	}
+	}, nil
 }
 
 func (t *MvcReleaseController) Get(ctx *gin.Context) {

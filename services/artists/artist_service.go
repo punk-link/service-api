@@ -14,22 +14,29 @@ import (
 	"main/services/common"
 	"main/services/spotify"
 	"time"
+
+	"github.com/samber/do"
 )
 
 type ArtistService struct {
 	cache          *cache.MemoryCacheService
 	logger         *common.Logger
-	spotifyService *spotify.SpotifyService
 	releaseService *ReleaseService
+	spotifyService *spotify.SpotifyService
 }
 
-func ConstructArtistService(cache *cache.MemoryCacheService, logger *common.Logger, releaseService *ReleaseService, spotifyService *spotify.SpotifyService) *ArtistService {
+func ConstructArtistService(injector *do.Injector) (*ArtistService, error) {
+	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+	logger := do.MustInvoke[*common.Logger](injector)
+	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
+	spotifyService := do.MustInvoke[*ReleaseService](injector)
+
 	return &ArtistService{
 		cache:          cache,
 		logger:         logger,
-		releaseService: releaseService,
-		spotifyService: spotifyService,
-	}
+		releaseService: spotifyService,
+		spotifyService: releaseService,
+	}, nil
 }
 
 func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId string) (artistModels.Artist, error) {

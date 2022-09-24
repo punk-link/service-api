@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"main/models/cache"
+
+	"github.com/samber/do"
 )
 
 type MemoryCacheService struct {
@@ -12,7 +14,7 @@ type MemoryCacheService struct {
 	mutex sync.Mutex
 }
 
-func ConstructMemoryCacheService() *MemoryCacheService {
+func ConstructMemoryCacheService(injector *do.Injector) (*MemoryCacheService, error) {
 	cache := make(map[string]cache.CacheEntry)
 
 	service := MemoryCacheService{
@@ -21,7 +23,7 @@ func ConstructMemoryCacheService() *MemoryCacheService {
 
 	go service.watch()
 
-	return &service
+	return &service, nil
 }
 
 func (t *MemoryCacheService) Remove(key string) {

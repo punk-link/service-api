@@ -8,6 +8,8 @@ import (
 	"main/services/cache"
 	"main/services/common"
 	"sort"
+
+	"github.com/samber/do"
 )
 
 type MvcArtistService struct {
@@ -18,14 +20,20 @@ type MvcArtistService struct {
 	releaseService *ReleaseService
 }
 
-func ConstructMvcArtistService(cache *cache.MemoryCacheService, logger *common.Logger, artistService *ArtistService, releaseService *ReleaseService, hashCoder *common.HashCoder) *MvcArtistService {
+func ConstructMvcArtistService(injector *do.Injector) (*MvcArtistService, error) {
+	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+	hashCoder := do.MustInvoke[*common.HashCoder](injector)
+	logger := do.MustInvoke[*common.Logger](injector)
+	artistService := do.MustInvoke[*ArtistService](injector)
+	releaseService := do.MustInvoke[*ReleaseService](injector)
+
 	return &MvcArtistService{
 		cache:          cache,
 		hashCoder:      hashCoder,
 		logger:         logger,
 		artistService:  artistService,
 		releaseService: releaseService,
-	}
+	}, nil
 }
 
 func (t *MvcArtistService) Get(hash string) (map[string]any, error) {

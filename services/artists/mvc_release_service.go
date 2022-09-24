@@ -6,6 +6,8 @@ import (
 	"main/services/cache"
 	"main/services/common"
 	"strings"
+
+	"github.com/samber/do"
 )
 
 type MvcReleaseService struct {
@@ -15,13 +17,18 @@ type MvcReleaseService struct {
 	releaseService *ReleaseService
 }
 
-func ConstructMvcReleaseService(cache *cache.MemoryCacheService, logger *common.Logger, releaseService *ReleaseService, hashCoder *common.HashCoder) *MvcReleaseService {
+func ConstructMvcReleaseService(injector *do.Injector) (*MvcReleaseService, error) {
+	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+	hashCoder := do.MustInvoke[*common.HashCoder](injector)
+	logger := do.MustInvoke[*common.Logger](injector)
+	releaseService := do.MustInvoke[*ReleaseService](injector)
+
 	return &MvcReleaseService{
 		cache:          cache,
 		hashCoder:      hashCoder,
 		logger:         logger,
 		releaseService: releaseService,
-	}
+	}, nil
 }
 
 func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {

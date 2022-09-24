@@ -6,16 +6,19 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
 )
 
 type HashController struct {
 	coder *common.HashCoder
 }
 
-func ConstructHashController(coder *common.HashCoder) *HashController {
+func ConstructHashController(injector *do.Injector) (*HashController, error) {
+	coder := do.MustInvoke[*common.HashCoder](injector)
+
 	return &HashController{
 		coder: coder,
-	}
+	}, nil
 }
 
 func (t *HashController) Decode(ctx *gin.Context) {

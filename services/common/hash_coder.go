@@ -4,19 +4,21 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/samber/do"
 )
 
 type HashCoder struct {
 }
 
-func ConstructHashCoder() *HashCoder {
+func ConstructHashCoder(injector *do.Injector) (*HashCoder, error) {
 	encodingTable = make(map[string]int, len(decodingTable))
 
 	for key, value := range decodingTable {
 		encodingTable[value] = key
 	}
 
-	return &HashCoder{}
+	return &HashCoder{}, nil
 }
 
 func (t *HashCoder) Encode(target int) string {

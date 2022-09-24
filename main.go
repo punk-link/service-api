@@ -20,7 +20,7 @@ import (
 //"syscall"
 
 func main() {
-	logger := common.ConstructLogger()
+	logger := common.ConstructLoggerWithoutInjection()
 
 	environmentName := infrastructure.GetEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)

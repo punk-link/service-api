@@ -1,10 +1,17 @@
 package common
 
-import "github.com/rs/zerolog/log"
+import (
+	"github.com/rs/zerolog/log"
+	"github.com/samber/do"
+)
 
 type Logger struct{}
 
-func ConstructLogger() *Logger {
+func ConstructLogger(injector *do.Injector) (*Logger, error) {
+	return ConstructLoggerWithoutInjection(), nil
+}
+
+func ConstructLoggerWithoutInjection() *Logger {
 	return &Logger{}
 }
 

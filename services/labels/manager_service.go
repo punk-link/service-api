@@ -11,6 +11,8 @@ import (
 	"main/services/labels/validators"
 	"strings"
 	"time"
+
+	"github.com/samber/do"
 )
 
 type ManagerService struct {
@@ -18,11 +20,14 @@ type ManagerService struct {
 	logger       *common.Logger
 }
 
-func ConstructManagerService(labelService *LabelService, logger *common.Logger) *ManagerService {
+func ConstructManagerService(injector *do.Injector) (*ManagerService, error) {
+	labelService := do.MustInvoke[*LabelService](injector)
+	logger := do.MustInvoke[*common.Logger](injector)
+
 	return &ManagerService{
 		labelService: labelService,
 		logger:       logger,
-	}
+	}, nil
 }
 
 func (t *ManagerService) Add(currentManager labels.ManagerContext, manager labels.Manager) (labels.Manager, error) {
