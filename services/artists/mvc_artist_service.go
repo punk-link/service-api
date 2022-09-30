@@ -56,7 +56,7 @@ func (t *MvcArtistService) Get(hash string) (map[string]any, error) {
 		"Releases":          converters.ToSlimRelease(t.hashCoder, append(soleReleases, compilations...)),
 	}
 
-	//t.cache.Set(cacheKey, result, RELEASE_CACHE_DURATION)
+	t.cache.Set(cacheKey, result, RELEASE_CACHE_DURATION)
 
 	return result, err
 }

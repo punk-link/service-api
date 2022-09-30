@@ -41,10 +41,6 @@ func (t *PlatformSynchronisationService) Sync() {
 
 		skip += ITERATION_STEP
 	}
-
-	// for _, platform := range platforms.AvailablePlatforms {
-
-	// }
 }
 
 const ITERATION_STEP = 40
