@@ -17,5 +17,6 @@ type Release struct {
 	TrackNumber        int       `gorm:"not null"`
 	Tracks             string    `gorm:"type:jsonb;default:'[]';not null"`
 	Type               string    `gorm:"not null"`
+	Upc                string    `gorm:"not null"`
 	Updated            time.Time `gorm:"not null"`
 }

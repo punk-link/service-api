@@ -4,35 +4,36 @@ import (
 	"encoding/json"
 	"io"
 	"main/helpers"
+	commonModels "main/models/common"
 	"main/services/common"
 	"math/rand"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 )
 
-func makeBatchRequest[T any](logger *common.Logger, method string, urls []string) []T {
-	const iterationStep int = 4
-	const requestBatchTimeoutDuration time.Duration = time.Millisecond * 100
+func makeBatchRequestWithSync[T any](logger *common.Logger, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult {
+	iterationStep := runtime.NumCPU()
 
-	mainLoop, reducedLoop := helpers.DivideChunkToLoops(urls, iterationStep)
+	mainLoop, reducedLoop := helpers.DivideChunkToLoops(syncedUrls, iterationStep)
 
 	var wg sync.WaitGroup
-	chanResults := make(chan T)
+	chanResults := make(chan commonModels.SyncedResult)
 
 	for i := 0; i < len(mainLoop); i = i + iterationStep {
 		wg.Add(iterationStep)
 
 		for j := 0; j < iterationStep; j++ {
-			go makeBatchRequestInternal(&wg, chanResults, logger, method, mainLoop[i+j])
+			go makeBatchRequestInternal[T](&wg, chanResults, logger, method, mainLoop[i+j])
 		}
 
-		time.Sleep(requestBatchTimeoutDuration)
+		time.Sleep(REQUEST_BATCH_TIMEOUT_DURATION_MILLISECONDS)
 	}
 
 	for _, chunk := range reducedLoop {
 		wg.Add(1)
-		go makeBatchRequestInternal(&wg, chanResults, logger, method, chunk)
+		go makeBatchRequestInternal[T](&wg, chanResults, logger, method, chunk)
 	}
 
 	go func() {
@@ -40,9 +41,26 @@ func makeBatchRequest[T any](logger *common.Logger, method string, urls []string
 		close(chanResults)
 	}()
 
-	results := make([]T, 0)
+	syncedResults := make([]commonModels.SyncedResult, 0)
 	for result := range chanResults {
-		results = append(results, result)
+		syncedResults = append(syncedResults, result)
+	}
+
+	return syncedResults
+}
+
+func makeBatchRequest[T any](logger *common.Logger, method string, urls []string) []T {
+	syncedUrls := make([]commonModels.SyncedUrl, len(urls))
+	for i, url := range urls {
+		syncedUrls[i] = commonModels.SyncedUrl{
+			Url: url,
+		}
+	}
+
+	syncedResults := makeBatchRequestWithSync[T](logger, method, syncedUrls)
+	results := make([]T, len(syncedResults))
+	for i, result := range syncedResults {
+		results[i] = result.Result.(T)
 	}
 
 	return results
@@ -121,24 +139,28 @@ func getResponseContent[T any](logger *common.Logger, response *http.Response, r
 
 func getTimeout(attemptNumber int) time.Duration {
 	base := timeouts[attemptNumber]
-	jit := rand.Intn(jitInterval)
+	jit := rand.Intn(JITTER_INTERVAL_MILLISECONDS)
 
 	return time.Duration(time.Millisecond * time.Duration(base+jit))
 }
 
-func makeBatchRequestInternal[T any](wg *sync.WaitGroup, results chan<- T, logger *common.Logger, method string, url string) {
+func makeBatchRequestInternal[T any](wg *sync.WaitGroup, results chan<- commonModels.SyncedResult, logger *common.Logger, method string, syncedUrls commonModels.SyncedUrl) {
 	defer wg.Done()
 
 	var responseContent T
-	_ = makeRequest(logger, method, url, &responseContent)
+	_ = makeRequest(logger, method, syncedUrls.Url, &responseContent)
 
-	results <- responseContent
+	results <- commonModels.SyncedResult{
+		Result: responseContent,
+		Sync:   syncedUrls.Sync,
+	}
 }
-
-const jitInterval = 500
 
 var timeouts = map[int]int{
 	3: 500,
 	2: 1000,
 	1: 5000,
 }
+
+const JITTER_INTERVAL_MILLISECONDS = 300
+const REQUEST_BATCH_TIMEOUT_DURATION_MILLISECONDS = time.Millisecond * 100

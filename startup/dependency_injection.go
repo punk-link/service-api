@@ -1,12 +1,16 @@
 package startup
 
 import (
+	"fmt"
 	apiControllers "main/controllers/api"
 	mvcControllers "main/controllers/mvc"
+	platformConstants "main/models/platforms/constants"
+	platformEnums "main/models/platforms/enums"
 	artistServices "main/services/artists"
 	"main/services/cache"
 	"main/services/common"
 	labelServices "main/services/labels"
+	platformServices "main/services/platforms"
 	spotifyServices "main/services/spotify"
 
 	"github.com/samber/do"
@@ -23,16 +27,20 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, labelServices.ConstructManagerService)
 
 	do.Provide(container, spotifyServices.ConstructSpotifyService)
+	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
 	do.Provide(container, artistServices.ConstructReleaseService)
 	do.Provide(container, artistServices.ConstructMvcReleaseService)
 	do.Provide(container, artistServices.ConstructArtistService)
 	do.Provide(container, artistServices.ConstructMvcArtistService)
 
+	do.Provide(container, platformServices.ConstructPlatformSynchronisationService)
+
 	do.Provide(container, apiControllers.ConstructArtistController)
 	do.Provide(container, apiControllers.ConstructHashController)
 	do.Provide(container, apiControllers.ConstructLabelController)
 	do.Provide(container, apiControllers.ConstructManagerController)
+	do.Provide(container, apiControllers.ConstructPlatformSynchronisationController)
 	do.Provide(container, apiControllers.ConstructReleaseController)
 	do.Provide(container, apiControllers.ConstructStatusController)
 
@@ -40,4 +48,8 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, mvcControllers.ConstructMvcReleaseController)
 
 	return container
+}
+
+func buildPlatformServiceName(serviceName string) string {
+	return fmt.Sprintf("%s%s", serviceName, platformConstants.PLATFORM_SERVICE_TOKEN)
 }

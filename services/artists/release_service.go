@@ -5,6 +5,7 @@ import (
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	"main/models/labels"
+	"main/models/platforms"
 	"main/models/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/cache"
@@ -41,6 +42,11 @@ func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[s
 	return createDbReleasesInBatches(t.logger, nil, &dbReleases)
 }
 
+func (t *ReleaseService) GetCount() int {
+	count, _ := getDbReleaseCount(t.logger, nil)
+	return int(count)
+}
+
 func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, error) {
 	cacheKey := t.buildArtistReleasesCacheKey(artistId)
 	value, isCached := t.cache.TryGet(cacheKey)
@@ -50,31 +56,19 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 
 	dbReleases, err := getDbReleasesByArtistId(t.logger, nil, artistId)
 	artists, err := t.getReleasesArtists(err, dbReleases)
-	if err != nil {
-		return make([]artistModels.Release, 0), err
+	releases, err := t.toReleases(err, dbReleases, artists)
+	if err == nil {
+		t.cache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 	}
-
-	releases, err := converters.ToReleases(dbReleases, artists)
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-		return releases, err
-	}
-
-	t.cache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 
 	return releases, err
 }
 
-func (t *ReleaseService) GetMissingReleases(artistId int, artistSpotifyId string) ([]releases.Release, error) {
+func (t *ReleaseService) GetMissing(artistId int, artistSpotifyId string) ([]releases.Release, error) {
 	dbReleases, err := getDbReleasesByArtistId(t.logger, nil, artistId)
 	missingReleaseSpotifyIds, err := t.getMissingReleasesSpotifyIds(err, dbReleases, artistSpotifyId)
-	if err != nil {
-		return make([]releases.Release, 0), err
-	}
 
-	details, err := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds), nil
-
-	return details, err
+	return t.getReleaseDetails(err, missingReleaseSpotifyIds)
 }
 
 func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
@@ -88,19 +82,26 @@ func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
 	dbReleasesOfOne := []artistData.Release{dbRelease}
 
 	artists, err := t.getReleasesArtists(err, dbReleasesOfOne)
-	if err != nil {
-		return artistModels.Release{}, err
+	releases, err := t.toReleases(err, dbReleasesOfOne, artists)
+	if err == nil {
+		t.cache.Set(cacheKey, releases[0], RELEASE_CACHE_DURATION)
 	}
-
-	releases, err := converters.ToReleases(dbReleasesOfOne, artists)
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-		return artistModels.Release{}, err
-	}
-
-	t.cache.Set(cacheKey, releases[0], RELEASE_CACHE_DURATION)
 
 	return releases[0], nil
+}
+
+func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTreshold time.Time) []platforms.UpcContainer {
+	releases, _ := getUpcContainers(t.logger, nil, top, skip, updateTreshold)
+
+	results := make([]platforms.UpcContainer, len(releases))
+	for i, release := range releases {
+		results[i] = platforms.UpcContainer{
+			Id:  release.Id,
+			Upc: release.Upc,
+		}
+	}
+
+	return results
 }
 
 func (t *ReleaseService) buildCacheKey(id int) string {
@@ -165,6 +166,15 @@ func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []ar
 	return missingReleaseSpotifyIds, nil
 }
 
+func (t *ReleaseService) getReleaseDetails(err error, missingReleaseSpotifyIds []string) ([]releases.Release, error) {
+	if err != nil {
+		return make([]releases.Release, 0), err
+	}
+
+	details := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
+	return details, err
+}
+
 func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Release) (map[int]artistModels.Artist, error) {
 	if err != nil {
 		return make(map[int]artistModels.Artist, 0), err
@@ -179,6 +189,19 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 		if err == nil {
 			results[artist.Id] = artist
 		}
+	}
+
+	return results, err
+}
+
+func (t *ReleaseService) toReleases(err error, releases []artistData.Release, artists map[int]artistModels.Artist) ([]artistModels.Release, error) {
+	if err != nil {
+		return make([]artistModels.Release, 0), err
+	}
+
+	results, err := converters.ToReleases(releases, artists)
+	if err != nil {
+		t.logger.LogError(err, err.Error())
 	}
 
 	return results, err

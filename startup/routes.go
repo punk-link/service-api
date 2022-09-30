@@ -59,6 +59,10 @@ func setupRouts(app *gin.Engine, diContainer *do.Injector) {
 			})
 		}
 	})
+
+	registerRoutes(diContainer, func(controller *apiControllers.PlatformSynchronisationController) {
+		v1.POST("/platforms/sync", controller.Sync)
+	})
 }
 
 func registerRoutes[T any](diContainer *do.Injector, function func(*T)) {

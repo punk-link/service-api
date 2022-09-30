@@ -3,10 +3,13 @@ package spotify
 import (
 	"fmt"
 	"main/helpers"
+	commonModels "main/models/common"
+	platforms "main/models/platforms"
 	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
 	"main/services/common"
+	platformServices "main/services/platforms/base"
 	"net/url"
 	"strings"
 
@@ -23,6 +26,14 @@ func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 	return &SpotifyService{
 		logger: logger,
 	}, nil
+}
+
+func ConstructSpotifyServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
+	logger := do.MustInvoke[*common.Logger](injector)
+
+	return platformServices.Platformer(&SpotifyService{
+		logger: logger,
+	}), nil
 }
 
 func (t *SpotifyService) GetArtist(spotifyId string) (spotifyArtists.Artist, error) {
@@ -56,13 +67,13 @@ func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist
 }
 
 func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release {
-	var spotifyResponse releases.ReleaseContainer
+	var spotifyResponse releases.ArtistReleasesContainer
 	offset := 0
 	for {
 		urlPattern := fmt.Sprintf("artists/%s/albums?limit=%d&offset=%d", spotifyId, QUERY_LIMIT, offset)
 		offset = offset + QUERY_LIMIT
 
-		var tmpResponse releases.ReleaseContainer
+		var tmpResponse releases.ArtistReleasesContainer
 		if err := makeRequest(t.logger, "GET", urlPattern, &tmpResponse); err != nil {
 			t.logger.LogWarn(err.Error())
 			continue
@@ -93,6 +104,45 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 	}
 
 	return spotifyReleases
+}
+
+func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UpcContainer {
+	urlsWithSync := make([]commonModels.SyncedUrl, len(upcContainers))
+	for i, container := range upcContainers {
+		urlsWithSync[i] = commonModels.SyncedUrl{
+			Sync: container.Upc,
+			Url:  fmt.Sprintf("search?type=album&q=upc:%s", container.Upc),
+		}
+	}
+
+	upcMap := make(map[string]int)
+	for _, container := range upcContainers {
+		upcMap[container.Upc] = container.Id
+	}
+
+	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, "GET", urlsWithSync)
+
+	results := make([]platforms.UpcContainer, 0)
+	for _, syncedContainer := range syncedReleaseContainers {
+		container := syncedContainer.Result.(releases.UpcArtistReleasesContainer)
+
+		if len(container.Albums.Items) == 0 {
+			continue
+		}
+
+		release := container.Albums.Items[0]
+		id := upcMap[syncedContainer.Sync]
+
+		result := platforms.UpcContainer{
+			Id:  id,
+			Upc: syncedContainer.Sync,
+			Url: release.ExternalUrls.Spotify,
+		}
+
+		results = append(results, result)
+	}
+
+	return results
 }
 
 func (t *SpotifyService) SearchArtist(query string) []spotifyArtists.SlimArtist {
