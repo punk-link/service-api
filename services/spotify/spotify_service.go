@@ -5,6 +5,7 @@ import (
 	"main/helpers"
 	commonModels "main/models/common"
 	platforms "main/models/platforms"
+	platformEnums "main/models/platforms/enums"
 	spotifyArtists "main/models/spotify/artists"
 	"main/models/spotify/releases"
 	"main/models/spotify/search"
@@ -88,6 +89,10 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	return spotifyResponse.Items
 }
 
+func (t *SpotifyService) GetPlatformName() string {
+	return platformEnums.Spotify
+}
+
 func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
 	chunkedIds := helpers.Chunk(spotifyIds, QUERY_LIMIT)
 	urls := make([]string, len(chunkedIds))
@@ -106,7 +111,7 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 	return spotifyReleases
 }
 
-func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UpcContainer {
+func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
 	urlsWithSync := make([]commonModels.SyncedUrl, len(upcContainers))
 	for i, container := range upcContainers {
 		urlsWithSync[i] = commonModels.SyncedUrl{
@@ -122,7 +127,7 @@ func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContai
 
 	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, "GET", urlsWithSync)
 
-	results := make([]platforms.UpcContainer, 0)
+	results := make([]platforms.UrlResultContainer, 0)
 	for _, syncedContainer := range syncedReleaseContainers {
 		container := syncedContainer.Result.(releases.UpcArtistReleasesContainer)
 
@@ -133,10 +138,11 @@ func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContai
 		release := container.Albums.Items[0]
 		id := upcMap[syncedContainer.Sync]
 
-		result := platforms.UpcContainer{
-			Id:  id,
-			Upc: syncedContainer.Sync,
-			Url: release.ExternalUrls.Spotify,
+		result := platforms.UrlResultContainer{
+			Id:           id,
+			PlatformName: t.GetPlatformName(),
+			Upc:          syncedContainer.Sync,
+			Url:          release.ExternalUrls.Spotify,
 		}
 
 		results = append(results, result)
