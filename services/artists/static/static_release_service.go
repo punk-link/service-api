@@ -1,4 +1,4 @@
-package mvc
+package static
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"github.com/samber/do"
 )
 
-type MvcReleaseService struct {
+type StaticReleaseService struct {
 	cache           *cache.MemoryCacheService
 	hashCoder       *common.HashCoder
 	logger          *common.Logger
@@ -22,14 +22,14 @@ type MvcReleaseService struct {
 	releaseService  *artistServices.ReleaseService
 }
 
-func ConstructMvcReleaseService(injector *do.Injector) (*MvcReleaseService, error) {
+func ConstructStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[*common.Logger](injector)
 	platformService := do.MustInvoke[*platformServices.PlatformSynchronisationService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 
-	return &MvcReleaseService{
+	return &StaticReleaseService{
 		cache:           cache,
 		hashCoder:       hashCoder,
 		logger:          logger,
@@ -38,7 +38,7 @@ func ConstructMvcReleaseService(injector *do.Injector) (*MvcReleaseService, erro
 	}, nil
 }
 
-func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
+func (t *StaticReleaseService) Get(hash string) (map[string]any, error) {
 	cacheKey := buildReleaseCacheKey(hash)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
@@ -59,7 +59,7 @@ func (t *MvcReleaseService) Get(hash string) (map[string]any, error) {
 	return result, err
 }
 
-func (t *MvcReleaseService) buildArtistNames(err error, artists []artists.Artist) (string, error) {
+func (t *StaticReleaseService) buildArtistNames(err error, artists []artists.Artist) (string, error) {
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +72,7 @@ func (t *MvcReleaseService) buildArtistNames(err error, artists []artists.Artist
 	return strings.Join(names, ", "), err
 }
 
-func (t *MvcReleaseService) buildTracks(err error, tracks []artists.Track) ([]artists.SlimTrack, error) {
+func (t *StaticReleaseService) buildTracks(err error, tracks []artists.Track) ([]artists.SlimTrack, error) {
 	if err != nil {
 		return make([]artists.SlimTrack, 0), err
 	}
@@ -89,7 +89,7 @@ func (t *MvcReleaseService) buildTracks(err error, tracks []artists.Track) ([]ar
 	return slimTracks, err
 }
 
-func (t *MvcReleaseService) getPlatformReleaseUrls(err error, id int) ([]platforms.PlatformReleaseUrl, error) {
+func (t *StaticReleaseService) getPlatformReleaseUrls(err error, id int) ([]platforms.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platforms.PlatformReleaseUrl, 0), err
 	}
@@ -98,7 +98,7 @@ func (t *MvcReleaseService) getPlatformReleaseUrls(err error, id int) ([]platfor
 }
 
 func buildReleaseCacheKey(hash string) string {
-	return fmt.Sprintf("ArtistMvcRelease::%s", hash)
+	return fmt.Sprintf("ArtistStaticRelease::%s", hash)
 }
 
 func buildReleaseResult(err error, artistNames string, release artists.Release, tracks []artists.SlimTrack, platformUrls []platforms.PlatformReleaseUrl) (map[string]any, error) {

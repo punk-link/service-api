@@ -1,4 +1,4 @@
-package mvc
+package static
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"github.com/samber/do"
 )
 
-type MvcArtistService struct {
+type StaticArtistService struct {
 	cache          *cache.MemoryCacheService
 	hashCoder      *common.HashCoder
 	logger         *common.Logger
@@ -22,14 +22,14 @@ type MvcArtistService struct {
 	releaseService *artistServices.ReleaseService
 }
 
-func ConstructMvcArtistService(injector *do.Injector) (*MvcArtistService, error) {
+func ConstructStaticArtistService(injector *do.Injector) (*StaticArtistService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[*common.Logger](injector)
 	artistService := do.MustInvoke[*artistServices.ArtistService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 
-	return &MvcArtistService{
+	return &StaticArtistService{
 		cache:          cache,
 		hashCoder:      hashCoder,
 		logger:         logger,
@@ -38,7 +38,7 @@ func ConstructMvcArtistService(injector *do.Injector) (*MvcArtistService, error)
 	}, nil
 }
 
-func (t *MvcArtistService) Get(hash string) (map[string]any, error) {
+func (t *StaticArtistService) Get(hash string) (map[string]any, error) {
 	cacheKey := buildArtistCacheKey(hash)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
@@ -58,7 +58,7 @@ func (t *MvcArtistService) Get(hash string) (map[string]any, error) {
 	return result, err
 }
 
-func (t *MvcArtistService) getReleases(err error, artistId int) ([]artists.Release, error) {
+func (t *StaticArtistService) getReleases(err error, artistId int) ([]artists.Release, error) {
 	if err != nil {
 		return make([]artists.Release, 0), err
 	}
@@ -66,7 +66,7 @@ func (t *MvcArtistService) getReleases(err error, artistId int) ([]artists.Relea
 	return t.releaseService.GetByArtistId(artistId)
 }
 
-func (t *MvcArtistService) sortReleases(err error, releases []artists.Release) ([]artists.Release, []artists.Release, error) {
+func (t *StaticArtistService) sortReleases(err error, releases []artists.Release) ([]artists.Release, []artists.Release, error) {
 	if err != nil {
 		return make([]artists.Release, 0), make([]artists.Release, 0), err
 	}
@@ -88,7 +88,7 @@ func (t *MvcArtistService) sortReleases(err error, releases []artists.Release) (
 }
 
 func buildArtistCacheKey(hash string) string {
-	return fmt.Sprintf("MvcArtist::%s", hash)
+	return fmt.Sprintf("StaticArtist::%s", hash)
 }
 
 func buildArtistResult(err error, hashCoder *common.HashCoder, artist artists.Artist, soleReleases []artists.Release, compilations []artists.Release) (map[string]any, error) {

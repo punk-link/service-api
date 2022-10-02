@@ -2,7 +2,7 @@ package startup
 
 import (
 	apiControllers "main/controllers/api"
-	mvcControllers "main/controllers/mvc"
+	staticControllers "main/controllers/static"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
@@ -13,11 +13,11 @@ func setupRouts(app *gin.Engine, diContainer *do.Injector) {
 		app.GET("/health", controller.CheckHealth)
 	})
 
-	registerRoutes(diContainer, func(controller *mvcControllers.MvcArtistController) {
+	registerRoutes(diContainer, func(controller *staticControllers.StaticArtistController) {
 		app.GET("/artists/:hash", controller.Get)
 	})
 
-	registerRoutes(diContainer, func(controller *mvcControllers.MvcReleaseController) {
+	registerRoutes(diContainer, func(controller *staticControllers.StaticReleaseController) {
 		app.GET("/releases/:hash", controller.Get)
 	})
 

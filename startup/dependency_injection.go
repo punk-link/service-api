@@ -3,11 +3,11 @@ package startup
 import (
 	"fmt"
 	apiControllers "main/controllers/api"
-	mvcControllers "main/controllers/mvc"
+	staticControllers "main/controllers/static"
 	platformConstants "main/models/platforms/constants"
 	platformEnums "main/models/platforms/enums"
 	artistServices "main/services/artists"
-	artistMvcServices "main/services/artists/mvc"
+	artistStaticServices "main/services/artists/static"
 	"main/services/cache"
 	"main/services/common"
 	labelServices "main/services/labels"
@@ -31,9 +31,9 @@ func buildDependencies() *do.Injector {
 	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
 	do.Provide(container, artistServices.ConstructReleaseService)
-	do.Provide(container, artistMvcServices.ConstructMvcReleaseService)
+	do.Provide(container, artistStaticServices.ConstructStaticReleaseService)
 	do.Provide(container, artistServices.ConstructArtistService)
-	do.Provide(container, artistMvcServices.ConstructMvcArtistService)
+	do.Provide(container, artistStaticServices.ConstructStaticArtistService)
 
 	do.Provide(container, platformServices.ConstructPlatformSynchronisationService)
 
@@ -45,8 +45,8 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, apiControllers.ConstructReleaseController)
 	do.Provide(container, apiControllers.ConstructStatusController)
 
-	do.Provide(container, mvcControllers.ConstructMvcArtistController)
-	do.Provide(container, mvcControllers.ConstructMvcReleaseController)
+	do.Provide(container, staticControllers.ConstructStaticArtistController)
+	do.Provide(container, staticControllers.ConstructStaticReleaseController)
 
 	return container
 }
