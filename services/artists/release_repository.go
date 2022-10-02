@@ -100,7 +100,7 @@ func getUpcContainers(logger *common.Logger, err error, top int, skip int, updat
 		Error
 
 	if err != nil {
-		logger.LogFatal(err, err.Error())
+		logger.LogError(err, err.Error())
 	}
 
 	return releases, err
@@ -116,6 +116,23 @@ func getDbReleaseCount(logger *common.Logger, err error) (int64, error) {
 		Count(&count)
 
 	return count, err
+}
+
+func markDbReleasesAsUpdated(logger *common.Logger, err error, ids []int, timestamp time.Time) error {
+	if err != nil {
+		return err
+	}
+
+	err = data.DB.Model(&artistData.Release{}).
+		Where("id in (?)", ids).
+		Update("updated", timestamp).
+		Error
+
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	return err
 }
 
 const CREATE_RELEASES_BATCH_SIZE int = 100

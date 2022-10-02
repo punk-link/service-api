@@ -104,6 +104,10 @@ func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTresh
 	return results
 }
 
+func (t *ReleaseService) MarkAsUpdated(ids []int, timestamp time.Time) error {
+	return markDbReleasesAsUpdated(t.logger, nil, ids, timestamp)
+}
+
 func (t *ReleaseService) buildCacheKey(id int) string {
 	return fmt.Sprintf("Release::%v", id)
 }

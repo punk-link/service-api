@@ -13,19 +13,19 @@ import (
 	"time"
 )
 
-func makeBatchRequestWithSync[T any](logger *common.Logger, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult {
+func makeBatchRequestWithSync[T any](logger *common.Logger, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
 	iterationStep := runtime.NumCPU()
 
 	mainLoop, reducedLoop := helpers.DivideChunkToLoops(syncedUrls, iterationStep)
 
 	var wg sync.WaitGroup
-	chanResults := make(chan commonModels.SyncedResult)
+	chanResults := make(chan commonModels.SyncedResult[T])
 
 	for i := 0; i < len(mainLoop); i = i + iterationStep {
 		wg.Add(iterationStep)
 
 		for j := 0; j < iterationStep; j++ {
-			go makeBatchRequestInternal[T](&wg, chanResults, logger, method, mainLoop[i+j])
+			go makeBatchRequestInternal(&wg, chanResults, logger, method, mainLoop[i+j])
 		}
 
 		time.Sleep(REQUEST_BATCH_TIMEOUT_DURATION_MILLISECONDS)
@@ -33,7 +33,7 @@ func makeBatchRequestWithSync[T any](logger *common.Logger, method string, synce
 
 	for _, chunk := range reducedLoop {
 		wg.Add(1)
-		go makeBatchRequestInternal[T](&wg, chanResults, logger, method, chunk)
+		go makeBatchRequestInternal(&wg, chanResults, logger, method, chunk)
 	}
 
 	go func() {
@@ -41,7 +41,7 @@ func makeBatchRequestWithSync[T any](logger *common.Logger, method string, synce
 		close(chanResults)
 	}()
 
-	syncedResults := make([]commonModels.SyncedResult, 0)
+	syncedResults := make([]commonModels.SyncedResult[T], 0)
 	for result := range chanResults {
 		syncedResults = append(syncedResults, result)
 	}
@@ -60,7 +60,7 @@ func makeBatchRequest[T any](logger *common.Logger, method string, urls []string
 	syncedResults := makeBatchRequestWithSync[T](logger, method, syncedUrls)
 	results := make([]T, len(syncedResults))
 	for i, result := range syncedResults {
-		results[i] = result.Result.(T)
+		results[i] = result.Result
 	}
 
 	return results
@@ -144,13 +144,13 @@ func getTimeout(attemptNumber int) time.Duration {
 	return time.Duration(time.Millisecond * time.Duration(base+jit))
 }
 
-func makeBatchRequestInternal[T any](wg *sync.WaitGroup, results chan<- commonModels.SyncedResult, logger *common.Logger, method string, syncedUrls commonModels.SyncedUrl) {
+func makeBatchRequestInternal[T any](wg *sync.WaitGroup, results chan<- commonModels.SyncedResult[T], logger *common.Logger, method string, syncedUrls commonModels.SyncedUrl) {
 	defer wg.Done()
 
 	var responseContent T
 	_ = makeRequest(logger, method, syncedUrls.Url, &responseContent)
 
-	results <- commonModels.SyncedResult{
+	results <- commonModels.SyncedResult[T]{
 		Result: responseContent,
 		Sync:   syncedUrls.Sync,
 	}

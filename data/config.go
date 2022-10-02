@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"main/data/artists"
 	"main/data/labels"
+	"main/data/platforms"
 	"main/infrastructure/consul"
 	"main/services/common"
 	"time"
@@ -49,7 +50,8 @@ func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
 
 func AutoMigrate(logger *common.Logger) {
 	err := migrate(logger, nil, &labels.Label{}, &labels.Manager{})
-	_ = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
+	err = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
+	_ = migrate(logger, err, &platforms.PlatformReleaseUrl{})
 }
 
 func migrate(logger *common.Logger, err error, dst ...interface{}) error {

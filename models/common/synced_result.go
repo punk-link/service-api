@@ -1,6 +1,6 @@
 package common
 
-type SyncedResult struct {
-	Result interface{}
+type SyncedResult[T any] struct {
+	Result T
 	Sync   string
 }

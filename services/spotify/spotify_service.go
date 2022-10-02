@@ -112,9 +112,9 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 }
 
 func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
-	urlsWithSync := make([]commonModels.SyncedUrl, len(upcContainers))
+	syncedUrls := make([]commonModels.SyncedUrl, len(upcContainers))
 	for i, container := range upcContainers {
-		urlsWithSync[i] = commonModels.SyncedUrl{
+		syncedUrls[i] = commonModels.SyncedUrl{
 			Sync: container.Upc,
 			Url:  fmt.Sprintf("search?type=album&q=upc:%s", container.Upc),
 		}
@@ -125,11 +125,11 @@ func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContai
 		upcMap[container.Upc] = container.Id
 	}
 
-	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, "GET", urlsWithSync)
+	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, "GET", syncedUrls)
 
 	results := make([]platforms.UrlResultContainer, 0)
 	for _, syncedContainer := range syncedReleaseContainers {
-		container := syncedContainer.Result.(releases.UpcArtistReleasesContainer)
+		container := syncedContainer.Result
 
 		if len(container.Albums.Items) == 0 {
 			continue
