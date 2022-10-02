@@ -1,13 +1,15 @@
-package artists
+package mvc
 
 import (
 	"fmt"
 	"main/models/artists"
 	"main/models/artists/enums"
+	artistServices "main/services/artists"
 	"main/services/artists/converters"
 	"main/services/cache"
 	"main/services/common"
 	"sort"
+	"time"
 
 	"github.com/samber/do"
 )
@@ -16,16 +18,16 @@ type MvcArtistService struct {
 	cache          *cache.MemoryCacheService
 	hashCoder      *common.HashCoder
 	logger         *common.Logger
-	artistService  *ArtistService
-	releaseService *ReleaseService
+	artistService  *artistServices.ArtistService
+	releaseService *artistServices.ReleaseService
 }
 
 func ConstructMvcArtistService(injector *do.Injector) (*MvcArtistService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[*common.Logger](injector)
-	artistService := do.MustInvoke[*ArtistService](injector)
-	releaseService := do.MustInvoke[*ReleaseService](injector)
+	artistService := do.MustInvoke[*artistServices.ArtistService](injector)
+	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 
 	return &MvcArtistService{
 		cache:          cache,
@@ -37,7 +39,7 @@ func ConstructMvcArtistService(injector *do.Injector) (*MvcArtistService, error)
 }
 
 func (t *MvcArtistService) Get(hash string) (map[string]any, error) {
-	cacheKey := t.buildArtistCacheKey(hash)
+	cacheKey := buildArtistCacheKey(hash)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
 		return value.(map[string]any), nil
@@ -47,22 +49,13 @@ func (t *MvcArtistService) Get(hash string) (map[string]any, error) {
 	artist, err := t.artistService.GetOne(id)
 	releases, err := t.getReleases(err, id)
 	soleReleases, compilations, err := t.sortReleases(err, releases)
+	result, err := buildArtistResult(err, t.hashCoder, artist, soleReleases, compilations)
 
-	result := map[string]any{
-		"PageTitle":         artist.Name,
-		"ArtistName":        artist.Name,
-		"SoleReleaseNumber": len(soleReleases),
-		"CompilationNumber": len(compilations),
-		"Releases":          converters.ToSlimRelease(t.hashCoder, append(soleReleases, compilations...)),
+	if err == nil {
+		t.cache.Set(cacheKey, result, ARTIST_CACHE_DURATION)
 	}
 
-	t.cache.Set(cacheKey, result, RELEASE_CACHE_DURATION)
-
 	return result, err
-}
-
-func (t *MvcArtistService) buildArtistCacheKey(hash string) string {
-	return fmt.Sprintf("MvcArtist::%s", hash)
 }
 
 func (t *MvcArtistService) getReleases(err error, artistId int) ([]artists.Release, error) {
@@ -94,8 +87,28 @@ func (t *MvcArtistService) sortReleases(err error, releases []artists.Release) (
 	return soleReleases, compilations, err
 }
 
+func buildArtistCacheKey(hash string) string {
+	return fmt.Sprintf("MvcArtist::%s", hash)
+}
+
+func buildArtistResult(err error, hashCoder *common.HashCoder, artist artists.Artist, soleReleases []artists.Release, compilations []artists.Release) (map[string]any, error) {
+	if err != nil {
+		return make(map[string]any), err
+	}
+
+	return map[string]any{
+		"PageTitle":         artist.Name,
+		"ArtistName":        artist.Name,
+		"SoleReleaseNumber": len(soleReleases),
+		"CompilationNumber": len(compilations),
+		"Releases":          converters.ToSlimRelease(hashCoder, append(soleReleases, compilations...)),
+	}, err
+}
+
 func sortReleasesInternal(releases []artists.Release) {
 	sort.SliceStable(releases, func(i, j int) bool {
 		return releases[i].ReleaseDate.After(releases[j].ReleaseDate)
 	})
 }
+
+const ARTIST_CACHE_DURATION = time.Hour * 24

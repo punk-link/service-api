@@ -20,6 +20,10 @@ func createDbPlatformReleaseUrlsInBatches(logger *common.Logger, err error, urls
 	return err
 }
 
+func getDbPlatformReleaseUrlsByReleaseId(logger *common.Logger, err error, id int) ([]platformData.PlatformReleaseUrl, error) {
+	return getDbPlatformReleaseUrlsByReleaseIds(logger, err, []int{id})
+}
+
 func getDbPlatformReleaseUrlsByReleaseIds(logger *common.Logger, err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err

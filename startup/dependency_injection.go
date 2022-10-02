@@ -7,6 +7,7 @@ import (
 	platformConstants "main/models/platforms/constants"
 	platformEnums "main/models/platforms/enums"
 	artistServices "main/services/artists"
+	artistMvcServices "main/services/artists/mvc"
 	"main/services/cache"
 	"main/services/common"
 	labelServices "main/services/labels"
@@ -30,9 +31,9 @@ func buildDependencies() *do.Injector {
 	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
 	do.Provide(container, artistServices.ConstructReleaseService)
-	do.Provide(container, artistServices.ConstructMvcReleaseService)
+	do.Provide(container, artistMvcServices.ConstructMvcReleaseService)
 	do.Provide(container, artistServices.ConstructArtistService)
-	do.Provide(container, artistServices.ConstructMvcArtistService)
+	do.Provide(container, artistMvcServices.ConstructMvcArtistService)
 
 	do.Provide(container, platformServices.ConstructPlatformSynchronisationService)
 

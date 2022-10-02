@@ -2,18 +2,18 @@ package mvc
 
 import (
 	base "main/controllers"
-	"main/services/artists"
+	"main/services/artists/mvc"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
 )
 
 type MvcArtistController struct {
-	service *artists.MvcArtistService
+	service *mvc.MvcArtistService
 }
 
 func ConstructMvcArtistController(injector *do.Injector) (*MvcArtistController, error) {
-	service := do.MustInvoke[*artists.MvcArtistService](injector)
+	service := do.MustInvoke[*mvc.MvcArtistService](injector)
 
 	return &MvcArtistController{
 		service: service,

@@ -32,6 +32,25 @@ func ConstructPlatformSynchronisationService(injector *do.Injector) (*PlatformSy
 	}, nil
 }
 
+func (t *PlatformSynchronisationService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
+	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.logger, nil, releaseId)
+	if err != nil {
+		return make([]platforms.PlatformReleaseUrl, 0), err
+	}
+
+	results := make([]platforms.PlatformReleaseUrl, len(urls))
+	for i, url := range urls {
+		results[i] = platforms.PlatformReleaseUrl{
+			Id:           url.Id,
+			PlatformName: url.PlatformName,
+			ReleaseId:    url.ReleaseId,
+			Url:          url.Url,
+		}
+	}
+
+	return results, err
+}
+
 func (t *PlatformSynchronisationService) Sync() {
 	now := time.Now().UTC()
 
@@ -98,19 +117,28 @@ func (t *PlatformSynchronisationService) getPlatformReleaseUrlsToSync(timestamp 
 	releaseCount := t.releaseService.GetCount()
 	updateTreshold := time.Now().UTC().Add(-UPDATE_TRESHOLD_MINUTES)
 
+	t0 := time.Now()
 	platformerContainers := t.getPlatformerContainers()
+	t1 := time.Since(t0)
+	fmt.Printf("getPlatformerContainers: %v\n", t1)
 
 	var wg sync.WaitGroup
 	chanResults := make(chan []platformData.PlatformReleaseUrl)
 
 	skip := 0
 	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
+		t01 := time.Now()
 		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
+		t11 := time.Since(t01)
+		fmt.Printf("GetUpcContainersToUpdate: %v\n", t11)
 
 		wg.Add(1)
 		go t.getUrlsToResync(&wg, chanResults, platformerContainers, upcContainers, timestamp)
+		t12 := time.Since(t01)
+		fmt.Printf("getUrlsToResync: %v\n", t12)
 
 		skip += ITERATION_STEP
+		fmt.Printf("iteration: \n\n")
 	}
 
 	go func() {
@@ -205,4 +233,4 @@ func distinctNewUrlsFromChanged(platformReleaseUrls []platformData.PlatformRelea
 }
 
 const ITERATION_STEP = 40
-const UPDATE_TRESHOLD_MINUTES = time.Minute * 0
+const UPDATE_TRESHOLD_MINUTES = time.Minute * 15

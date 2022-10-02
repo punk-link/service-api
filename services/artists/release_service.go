@@ -211,4 +211,4 @@ func (t *ReleaseService) toReleases(err error, releases []artistData.Release, ar
 	return results, err
 }
 
-const RELEASE_CACHE_DURATION time.Duration = time.Hour * 24
+const RELEASE_CACHE_DURATION = time.Hour * 24
