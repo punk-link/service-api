@@ -1,12 +1,17 @@
 package startup
 
 import (
+	"fmt"
 	apiControllers "main/controllers/api"
-	mvcControllers "main/controllers/mvc"
+	staticControllers "main/controllers/static"
+	platformConstants "main/models/platforms/constants"
+	platformEnums "main/models/platforms/enums"
 	artistServices "main/services/artists"
+	artistStaticServices "main/services/artists/static"
 	"main/services/cache"
 	"main/services/common"
 	labelServices "main/services/labels"
+	platformServices "main/services/platforms"
 	spotifyServices "main/services/spotify"
 
 	"github.com/samber/do"
@@ -23,21 +28,29 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, labelServices.ConstructManagerService)
 
 	do.Provide(container, spotifyServices.ConstructSpotifyService)
+	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
 	do.Provide(container, artistServices.ConstructReleaseService)
-	do.Provide(container, artistServices.ConstructMvcReleaseService)
+	do.Provide(container, artistStaticServices.ConstructStaticReleaseService)
 	do.Provide(container, artistServices.ConstructArtistService)
-	do.Provide(container, artistServices.ConstructMvcArtistService)
+	do.Provide(container, artistStaticServices.ConstructStaticArtistService)
+
+	do.Provide(container, platformServices.ConstructPlatformSynchronisationService)
 
 	do.Provide(container, apiControllers.ConstructArtistController)
 	do.Provide(container, apiControllers.ConstructHashController)
 	do.Provide(container, apiControllers.ConstructLabelController)
 	do.Provide(container, apiControllers.ConstructManagerController)
+	do.Provide(container, apiControllers.ConstructPlatformSynchronisationController)
 	do.Provide(container, apiControllers.ConstructReleaseController)
 	do.Provide(container, apiControllers.ConstructStatusController)
 
-	do.Provide(container, mvcControllers.ConstructMvcArtistController)
-	do.Provide(container, mvcControllers.ConstructMvcReleaseController)
+	do.Provide(container, staticControllers.ConstructStaticArtistController)
+	do.Provide(container, staticControllers.ConstructStaticReleaseController)
 
 	return container
+}
+
+func buildPlatformServiceName(serviceName string) string {
+	return fmt.Sprintf("%s%s", serviceName, platformConstants.PLATFORM_SERVICE_TOKEN)
 }

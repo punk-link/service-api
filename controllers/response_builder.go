@@ -46,6 +46,10 @@ func OkOrNotFoundTemplate(ctx *gin.Context, templateName string, data map[string
 	OkTemplate(ctx, templateName, data)
 }
 
+func NoContent(ctx *gin.Context) {
+	ctx.Status(http.StatusNoContent)
+}
+
 func NotFound(ctx *gin.Context, reason string) {
 	ctx.JSON(http.StatusNotFound, gin.H{
 		"message": reason,

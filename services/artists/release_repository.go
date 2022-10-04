@@ -4,6 +4,7 @@ import (
 	"main/data"
 	artistData "main/data/artists"
 	"main/services/common"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -82,6 +83,56 @@ func getDbReleasesByArtistId(logger *common.Logger, err error, artistId int) ([]
 	}
 
 	return releases, err
+}
+
+func getUpcContainers(logger *common.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
+	if err != nil {
+		return make([]artistData.Release, 0), err
+	}
+
+	var releases []artistData.Release
+	err = data.DB.Select("id", "upc").
+		Where("updated < ?", updateTreshold).
+		Order("id").
+		Offset(skip).
+		Limit(top).
+		Find(&releases).
+		Error
+
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	return releases, err
+}
+
+func getDbReleaseCount(logger *common.Logger, err error) (int64, error) {
+	if err != nil {
+		return 0, err
+	}
+
+	var count int64
+	data.DB.Model(&artistData.Release{}).
+		Count(&count)
+
+	return count, err
+}
+
+func markDbReleasesAsUpdated(logger *common.Logger, err error, ids []int, timestamp time.Time) error {
+	if err != nil {
+		return err
+	}
+
+	err = data.DB.Model(&artistData.Release{}).
+		Where("id in (?)", ids).
+		Update("updated", timestamp).
+		Error
+
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	return err
 }
 
 const CREATE_RELEASES_BATCH_SIZE int = 100

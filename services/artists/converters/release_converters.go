@@ -38,6 +38,7 @@ func ToDbReleaseFromSpotify(release spotifyReleases.Release, artists map[string]
 		TrackNumber:        release.TrackNumber,
 		Tracks:             tracksJson,
 		Type:               releaseType,
+		Upc:                release.ExternalIds.Upc,
 		Updated:            timeStamp,
 	}, nil
 }
