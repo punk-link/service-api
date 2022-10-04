@@ -9,11 +9,11 @@ import (
 )
 
 type PlatformSynchronisationController struct {
-	platformSynchronisationService *platforms.PlatformSynchronisationService
+	platformSynchronisationService *platforms.StrimingPlatformService
 }
 
 func ConstructPlatformSynchronisationController(injector *do.Injector) (*PlatformSynchronisationController, error) {
-	platformSynchronisationService := do.MustInvoke[*platforms.PlatformSynchronisationService](injector)
+	platformSynchronisationService := do.MustInvoke[*platforms.StrimingPlatformService](injector)
 
 	return &PlatformSynchronisationController{
 		platformSynchronisationService: platformSynchronisationService,
@@ -21,7 +21,7 @@ func ConstructPlatformSynchronisationController(injector *do.Injector) (*Platfor
 }
 
 func (t *PlatformSynchronisationController) Sync(ctx *gin.Context) {
-	t.platformSynchronisationService.Sync()
+	t.platformSynchronisationService.SyncUrls()
 
 	base.NoContent(ctx)
 }

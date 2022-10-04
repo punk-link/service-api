@@ -1,0 +1,17 @@
+{{ define "artist.go.tmpl" }}
+<html lang="en">
+    {{ template "global/head.go.tmpl" . }}
+    <body>
+	    <h1>{{ .ArtistName }}</h1>
+        {{ template "global/footer.go.tmpl" }}
+        <div>
+            {{ template "release-number.go.tmpl" . }}
+        </div>
+        <div>
+            {{ range .Releases }}
+                {{ template "slim-release-details.go.tmpl" . }}
+            {{ end }}
+        </div>
+    </body>
+</html>   
+{{ end }}

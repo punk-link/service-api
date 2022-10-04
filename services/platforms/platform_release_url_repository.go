@@ -30,7 +30,7 @@ func getDbPlatformReleaseUrlsByReleaseIds(logger *common.Logger, err error, ids 
 	}
 
 	var results []platformData.PlatformReleaseUrl
-	err = data.DB.Select("id", "release_id", "url").
+	err = data.DB.
 		Where("release_id in (?)", ids).
 		Find(&results).
 		Error

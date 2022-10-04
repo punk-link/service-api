@@ -24,5 +24,5 @@ func (t *StaticArtistController) Get(ctx *gin.Context) {
 	hash := ctx.Param("hash")
 
 	result, err := t.service.Get(hash)
-	base.OkOrNotFoundTemplate(ctx, "artist.tmpl", result, err)
+	base.OkOrNotFoundTemplate(ctx, "artist.go.tmpl", result, err)
 }

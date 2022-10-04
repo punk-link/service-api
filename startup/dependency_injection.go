@@ -35,7 +35,7 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, artistServices.ConstructArtistService)
 	do.Provide(container, artistStaticServices.ConstructStaticArtistService)
 
-	do.Provide(container, platformServices.ConstructPlatformSynchronisationService)
+	do.Provide(container, platformServices.ConstructStreamingPlatformService)
 
 	do.Provide(container, apiControllers.ConstructArtistController)
 	do.Provide(container, apiControllers.ConstructHashController)

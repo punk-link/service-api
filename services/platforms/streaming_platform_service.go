@@ -15,24 +15,24 @@ import (
 	"github.com/samber/do"
 )
 
-type PlatformSynchronisationService struct {
+type StrimingPlatformService struct {
 	injector       *do.Injector
 	logger         *common.Logger
 	releaseService *artists.ReleaseService
 }
 
-func ConstructPlatformSynchronisationService(injector *do.Injector) (*PlatformSynchronisationService, error) {
+func ConstructStreamingPlatformService(injector *do.Injector) (*StrimingPlatformService, error) {
 	logger := do.MustInvoke[*common.Logger](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
-	return &PlatformSynchronisationService{
+	return &StrimingPlatformService{
 		injector:       injector.Clone(),
 		logger:         logger,
 		releaseService: releaseService,
 	}, nil
 }
 
-func (t *PlatformSynchronisationService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
+func (t *StrimingPlatformService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
 	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.logger, nil, releaseId)
 	if err != nil {
 		return make([]platforms.PlatformReleaseUrl, 0), err
@@ -51,14 +51,14 @@ func (t *PlatformSynchronisationService) Get(releaseId int) ([]platforms.Platfor
 	return results, err
 }
 
-func (t *PlatformSynchronisationService) Sync() {
+func (t *StrimingPlatformService) SyncUrls() {
 	now := time.Now().UTC()
 
 	urls := t.getPlatformReleaseUrlsToSync(now)
 	t.resync(urls, now)
 }
 
-func (t *PlatformSynchronisationService) getExistedUrls(logger *common.Logger, upcContainers []platforms.UpcContainer, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+func (t *StrimingPlatformService) getExistedUrls(logger *common.Logger, upcContainers []platforms.UpcContainer, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
 	ids := make([]int, len(upcContainers))
 	for i, result := range upcResults {
 		ids[i] = result.Id
@@ -77,7 +77,7 @@ func (t *PlatformSynchronisationService) getExistedUrls(logger *common.Logger, u
 	return existedUrlsMap, err
 }
 
-func (t *PlatformSynchronisationService) getPlatformerContainers() []basePlatforms.PlatformerContainer {
+func (t *StrimingPlatformService) getPlatformerContainers() []basePlatforms.PlatformerContainer {
 	platformerContainers := make([]basePlatforms.PlatformerContainer, len(platforms.AvailablePlatforms))
 	for i, platformName := range platforms.AvailablePlatforms {
 		fullPlatformName := fmt.Sprintf("%s%s", platformName, platformConstants.PLATFORM_SERVICE_TOKEN)
@@ -92,7 +92,7 @@ func (t *PlatformSynchronisationService) getPlatformerContainers() []basePlatfor
 	return platformerContainers
 }
 
-func (t *PlatformSynchronisationService) getPlatformReleaseUrls(err error, existedUrls map[int]platformData.PlatformReleaseUrl, upcResults []platforms.UrlResultContainer, timestamp time.Time) ([]platformData.PlatformReleaseUrl, error) {
+func (t *StrimingPlatformService) getPlatformReleaseUrls(err error, existedUrls map[int]platformData.PlatformReleaseUrl, upcResults []platforms.UrlResultContainer, timestamp time.Time) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -113,32 +113,23 @@ func (t *PlatformSynchronisationService) getPlatformReleaseUrls(err error, exist
 	return platformReleaseUrls, err
 }
 
-func (t *PlatformSynchronisationService) getPlatformReleaseUrlsToSync(timestamp time.Time) []platformData.PlatformReleaseUrl {
+func (t *StrimingPlatformService) getPlatformReleaseUrlsToSync(timestamp time.Time) []platformData.PlatformReleaseUrl {
 	releaseCount := t.releaseService.GetCount()
 	updateTreshold := time.Now().UTC().Add(-UPDATE_TRESHOLD_MINUTES)
 
-	t0 := time.Now()
 	platformerContainers := t.getPlatformerContainers()
-	t1 := time.Since(t0)
-	fmt.Printf("getPlatformerContainers: %v\n", t1)
 
 	var wg sync.WaitGroup
 	chanResults := make(chan []platformData.PlatformReleaseUrl)
 
 	skip := 0
 	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
-		t01 := time.Now()
 		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
-		t11 := time.Since(t01)
-		fmt.Printf("GetUpcContainersToUpdate: %v\n", t11)
 
 		wg.Add(1)
 		go t.getUrlsToResync(&wg, chanResults, platformerContainers, upcContainers, timestamp)
-		t12 := time.Since(t01)
-		fmt.Printf("getUrlsToResync: %v\n", t12)
 
 		skip += ITERATION_STEP
-		fmt.Printf("iteration: \n\n")
 	}
 
 	go func() {
@@ -154,7 +145,7 @@ func (t *PlatformSynchronisationService) getPlatformReleaseUrlsToSync(timestamp 
 	return urls
 }
 
-func (t *PlatformSynchronisationService) getUpcResultsFromPlatformers(platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
+func (t *StrimingPlatformService) getUpcResultsFromPlatformers(platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
 	upcResults := make([]platforms.UrlResultContainer, 0)
 	for _, container := range platformerContainers {
 		platformer := container.Instance
@@ -166,7 +157,7 @@ func (t *PlatformSynchronisationService) getUpcResultsFromPlatformers(platformer
 	return upcResults
 }
 
-func (t *PlatformSynchronisationService) getUrlsToResync(wg *sync.WaitGroup, results chan<- []platformData.PlatformReleaseUrl, platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer, timestamp time.Time) {
+func (t *StrimingPlatformService) getUrlsToResync(wg *sync.WaitGroup, results chan<- []platformData.PlatformReleaseUrl, platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer, timestamp time.Time) {
 	defer wg.Done()
 
 	upcResults := t.getUpcResultsFromPlatformers(platformerContainers, upcContainers)
@@ -179,7 +170,7 @@ func (t *PlatformSynchronisationService) getUrlsToResync(wg *sync.WaitGroup, res
 	results <- platformReleaseUrls
 }
 
-func (t *PlatformSynchronisationService) markReleasesAsUpdated(err error, platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) error {
+func (t *StrimingPlatformService) markReleasesAsUpdated(err error, platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) error {
 	if err != nil {
 		return err
 	}
@@ -192,7 +183,7 @@ func (t *PlatformSynchronisationService) markReleasesAsUpdated(err error, platfo
 	return t.releaseService.MarkAsUpdated(releaseIds, timestamp)
 }
 
-func (t *PlatformSynchronisationService) resync(platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) {
+func (t *StrimingPlatformService) resync(platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) {
 	newUrls, changedUrls := distinctNewUrlsFromChanged(platformReleaseUrls)
 
 	err := createDbPlatformReleaseUrlsInBatches(t.logger, nil, newUrls)

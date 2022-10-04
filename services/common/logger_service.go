@@ -16,11 +16,11 @@ func ConstructLoggerWithoutInjection() *Logger {
 }
 
 func (logger *Logger) LogError(err error, format string, args ...interface{}) {
-	log.Error().Err(err).Msgf(format, args...)
+	log.Error().Stack().Err(err).Msgf(format, args...)
 }
 
 func (logger *Logger) LogFatal(err error, format string, args ...interface{}) {
-	log.Fatal().Err(err).Msgf(format, args...)
+	log.Fatal().Stack().Err(err).Msgf(format, args...)
 }
 
 func (logger *Logger) LogInfo(format string, args ...interface{}) {

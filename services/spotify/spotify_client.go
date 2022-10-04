@@ -83,6 +83,7 @@ func makeRequest[T any](logger *common.Logger, method string, url string, result
 
 		response, err = client.Do(request)
 		if err != nil {
+			logger.LogError(err, err.Error())
 			return err
 		}
 
@@ -91,6 +92,8 @@ func makeRequest[T any](logger *common.Logger, method string, url string, result
 		}
 
 		if response.StatusCode == http.StatusTooManyRequests {
+			logger.LogWarn("Spotify request ends with a status code %v", response.StatusCode)
+
 			timeout := getTimeout(attemptsLeft)
 			time.Sleep(timeout)
 		}
@@ -162,5 +165,5 @@ var timeouts = map[int]int{
 	1: 5000,
 }
 
-const JITTER_INTERVAL_MILLISECONDS = 300
+const JITTER_INTERVAL_MILLISECONDS = 500
 const REQUEST_BATCH_TIMEOUT_DURATION_MILLISECONDS = time.Millisecond * 100
