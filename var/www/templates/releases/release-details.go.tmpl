@@ -1,0 +1,11 @@
+{{ define "release-details.go.tmpl" }}
+<div class="album">
+    <div class="album__img">
+        <picture>
+            <img src="{{ .ImageDetails.Url }}" alt="{{ .ImageDetails.AltText }}">
+            <source srcset="/assets/img/cover.webp" type="image/webp">
+        </picture>
+    </div>
+    {{ template "track-details.go.tmpl" . }}
+</div>
+{{ end }}

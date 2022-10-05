@@ -1,7 +1,7 @@
 {{ define "release.go.tmpl" }}
 <html lang="en">
-    {{ template "global/head.go.tmpl" . }}
-    <body class="_icon-bg" style="position:relative ;">
+{{ template "global/head.go.tmpl" . }}
+<body class="_icon-bg" style="position:relative ;">
     <div class="bg">
         <picture>
             <source srcset="/assets/img/logosback.webp" type="image/webp">
@@ -19,21 +19,14 @@
 				<span class="title__year">{{ .ReleaseDate }}</span>
 			</div>
 			<div class="section-columns">
-				<div class="album">
-					<a href="#" class="album__img">
-						<picture>
-							<img src="{{ .ImageDetails.Url }}" alt="{{ .ImageDetails.AltText }}">
-							<source srcset="/assets/img/cover.webp" type="image/webp">
-						</picture>
-					</a>
-					{{ template "track-details.go.tmpl" . }}
-				</div>
+				{{ template "release-details.go.tmpl" . }}
 				{{ template "streaming-platforms.go.tmpl" . }}
 			</div>
 			<a href="#" class="copy-link _icon-copy-link">copy link</a>
 		</main>
 		{{ template "global/footer.go.tmpl" }}
     </div>
-    </body>
+	<script src="js/app.min.js?_v=20221004202951"></script>
+</body>
 </html>   
 {{ end }}
