@@ -215,9 +215,10 @@ h6 {
 }
 
 body {
-  background: -webkit-gradient(linear, left top, right top, color-stop(50%, #ffffff), color-stop(50%, #F2FFE1));
-  background: -o-linear-gradient(left, #ffffff 50%, #F2FFE1 50%);
-  background: linear-gradient(to right, #ffffff 50%, #F2FFE1 50%);
+  line-height: 1.1;
+  background: -webkit-gradient(linear, left top, right top, color-stop(50%, #ffffff), color-stop(50%, #f2ffe1));
+  background: -o-linear-gradient(left, #ffffff 50%, #f2ffe1 50%);
+  background: linear-gradient(to right, #ffffff 50%, #f2ffe1 50%);
 }
 
 .lock body {
@@ -360,7 +361,7 @@ body {
 
 .footer {
   width: 50%;
-  padding: 3.125rem 0 8.75rem 0;
+  padding: 3.125rem 1.875rem 8.75rem 0;
 }
 
 .footer__social {
@@ -412,14 +413,15 @@ body {
 .title {
   font-size: 1.75rem;
   font-weight: 400;
+  width: 50%;
 }
 
 .title__sub-title {
-  padding-bottom: 1.4375rem;
+  padding: 0 1.875rem 1.4375rem 0;
 }
 
 .title__title {
-  padding-bottom: 1.875rem;
+  padding: 0 1.875rem 1.875rem 0;
 }
 
 .section-columns {
@@ -449,17 +451,17 @@ body {
 }
 
 .album__list-item {
-  padding-bottom: 1.5625rem;
+  padding: 0 1.875rem 1.5625rem 0;
 }
 
 .album__list-item small {
   font-size: 1.125rem;
   display: block;
-  color: #9F9F9F;
+  color: #9f9f9f;
 }
 
 .album__list-item span {
-  color: #9F9F9F;
+  color: #9f9f9f;
   padding-left: 0.625rem;
 }
 
@@ -475,7 +477,7 @@ body {
 
 .lable-music__title {
   font-size: 1.5rem;
-  padding: 4.375rem 0 5.9375rem 0;
+  padding: 4.375rem 1.875rem 5.9375rem 0;
 }
 
 .lable-music__list-item {
@@ -512,7 +514,7 @@ body {
 }
 
 .copy-link {
-  color: #A762FF;
+  color: #a762ff;
   font-weight: bold;
   font-size: 1.75rem;
   display: -webkit-inline-box;
@@ -522,7 +524,7 @@ body {
       -ms-flex-align: center;
           align-items: center;
   border-radius: 5px;
-  border: 2px solid #A762FF;
+  border: 2px solid #a762ff;
   padding: 1.25rem 3.75rem;
   margin-bottom: 6.25rem;
 }
