@@ -3,7 +3,6 @@ package spotify
 import (
 	"fmt"
 	"main/helpers"
-	commonModels "main/models/common"
 	platforms "main/models/platforms"
 	platformEnums "main/models/platforms/enums"
 	spotifyArtists "main/models/platforms/spotify/artists"
@@ -112,39 +111,20 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 }
 
 func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
-	syncedUrls := make([]commonModels.SyncedUrl, len(upcContainers))
-	for i, container := range upcContainers {
-		syncedUrls[i] = commonModels.SyncedUrl{
-			Sync: container.Upc,
-			Url:  fmt.Sprintf("search?type=album&q=upc:%s", container.Upc),
-		}
-	}
-
-	upcMap := make(map[string]int)
-	for _, container := range upcContainers {
-		upcMap[container.Upc] = container.Id
-	}
+	syncedUrls := platformServices.GetSyncedUrls("search?type=album&q=upc:%s", upcContainers)
+	upcMap := platformServices.GetUpcMap(upcContainers)
 
 	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, "GET", syncedUrls)
 
 	results := make([]platforms.UrlResultContainer, 0)
 	for _, syncedContainer := range syncedReleaseContainers {
 		container := syncedContainer.Result
-
 		if len(container.Albums.Items) == 0 {
 			continue
 		}
 
-		release := container.Albums.Items[0]
 		id := upcMap[syncedContainer.Sync]
-
-		result := platforms.UrlResultContainer{
-			Id:           id,
-			PlatformName: t.GetPlatformName(),
-			Upc:          syncedContainer.Sync,
-			Url:          release.ExternalUrls.Spotify,
-		}
-
+		result := platformServices.BuildUrlResultContainer(id, t.GetPlatformName(), syncedContainer.Sync, container.Albums.Items[0].ExternalUrls.Spotify)
 		results = append(results, result)
 	}
 
