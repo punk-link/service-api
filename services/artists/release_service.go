@@ -6,11 +6,11 @@ import (
 	artistModels "main/models/artists"
 	"main/models/labels"
 	"main/models/platforms"
-	"main/models/spotify/releases"
+	"main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/cache"
 	"main/services/common"
-	"main/services/spotify"
+	"main/services/platforms/spotify"
 	"sync"
 	"time"
 

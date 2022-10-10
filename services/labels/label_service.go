@@ -7,7 +7,7 @@ import (
 	"main/models/labels"
 	"main/services/common"
 	validator "main/services/labels/validators"
-	"main/services/spotify"
+	"main/services/platforms/spotify"
 	"strings"
 	"time"
 

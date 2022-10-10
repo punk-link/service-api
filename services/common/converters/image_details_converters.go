@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"main/helpers"
 	"main/models/common"
-	"main/models/spotify"
+	"main/models/platforms/spotify"
 )
 
 func FromJson(detailsJson string) (common.ImageDetails, error) {

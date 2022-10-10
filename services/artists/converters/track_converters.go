@@ -3,7 +3,7 @@ package converters
 import (
 	data "main/data/artists"
 	models "main/models/artists"
-	spotifyReleases "main/models/spotify/releases"
+	spotifyReleases "main/models/platforms/spotify/releases"
 	"sort"
 )
 

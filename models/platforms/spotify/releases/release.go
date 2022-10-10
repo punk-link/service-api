@@ -1,8 +1,8 @@
 package releases
 
 import (
-	"main/models/spotify"
-	"main/models/spotify/artists"
+	"main/models/platforms/spotify"
+	"main/models/platforms/spotify/artists"
 )
 
 type Release struct {

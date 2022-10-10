@@ -7,7 +7,7 @@ import (
 	"main/helpers"
 	models "main/models/artists"
 	"main/models/artists/enums"
-	spotifyReleases "main/models/spotify/releases"
+	spotifyReleases "main/models/platforms/spotify/releases"
 	commonServices "main/services/common"
 	commonConverters "main/services/common/converters"
 	"time"

@@ -17,7 +17,7 @@ type StaticReleaseService struct {
 	cache           *cache.MemoryCacheService
 	hashCoder       *common.HashCoder
 	logger          *common.Logger
-	platformService *platformServices.StrimingPlatformService
+	platformService *platformServices.StreamingPlatformService
 	releaseService  *artistServices.ReleaseService
 }
 
@@ -25,7 +25,7 @@ func ConstructStaticReleaseService(injector *do.Injector) (*StaticReleaseService
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[*common.Logger](injector)
-	platformService := do.MustInvoke[*platformServices.StrimingPlatformService](injector)
+	platformService := do.MustInvoke[*platformServices.StreamingPlatformService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 
 	return &StaticReleaseService{

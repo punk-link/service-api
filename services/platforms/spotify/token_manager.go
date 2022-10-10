@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"main/infrastructure/consul"
-	"main/models/spotify/accessToken"
+	"main/models/platforms/spotify/accessToken"
 	"main/services/common"
 	"net/http"
 	"net/url"

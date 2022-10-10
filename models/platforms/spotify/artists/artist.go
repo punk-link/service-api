@@ -1,6 +1,6 @@
 package artists
 
-import "main/models/spotify"
+import "main/models/platforms/spotify"
 
 type Artist struct {
 	Id           string                 `json:"id"`

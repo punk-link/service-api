@@ -12,7 +12,7 @@ import (
 	"main/services/common"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
-	spotifyServices "main/services/spotify"
+	spotifyServices "main/services/platforms/spotify"
 
 	"github.com/samber/do"
 )
@@ -41,7 +41,7 @@ func buildDependencies() *do.Injector {
 	do.Provide(container, apiControllers.ConstructHashController)
 	do.Provide(container, apiControllers.ConstructLabelController)
 	do.Provide(container, apiControllers.ConstructManagerController)
-	do.Provide(container, apiControllers.ConstructPlatformSynchronisationController)
+	do.Provide(container, apiControllers.ConstructStreamingPlatformController)
 	do.Provide(container, apiControllers.ConstructReleaseController)
 	do.Provide(container, apiControllers.ConstructStatusController)
 
