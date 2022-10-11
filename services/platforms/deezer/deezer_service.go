@@ -1,11 +1,13 @@
 package deezer
 
 import (
+	"fmt"
 	platforms "main/models/platforms"
 	deezerModels "main/models/platforms/deezer"
 	platformEnums "main/models/platforms/enums"
 	"main/services/common"
 	platformServices "main/services/platforms/base"
+	"time"
 
 	"github.com/samber/do"
 )
@@ -22,21 +24,37 @@ func ConstructDeezerService(injector *do.Injector) (*DeezerService, error) {
 	}, nil
 }
 
+func ConstructDeezerServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
+	logger := do.MustInvoke[*common.Logger](injector)
+
+	return platformServices.Platformer(&DeezerService{
+		logger: logger,
+	}), nil
+}
+
 func (t *DeezerService) GetPlatformName() string {
 	return platformEnums.Deezer
 }
 
 func (t *DeezerService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
-	syncedUrls := platformServices.GetSyncedUrls("album/upc:%s", upcContainers)
-	upcMap := platformServices.GetUpcMap(upcContainers)
+	results := make([]platforms.UrlResultContainer, 0)
+	for _, container := range upcContainers {
+		var response deezerModels.UpcResponse
+		err := makeRequest(t.logger, "GET", fmt.Sprintf("album/upc:%s", container.Upc), &response)
+		if err != nil {
+			continue
+		}
 
-	syncedUpcResults := makeBatchRequestWithSync[deezerModels.UpcResponse](t.logger, "GET", syncedUrls)
+		if response.Error.Code != 0 {
+			continue
+		}
 
-	results := make([]platforms.UrlResultContainer, len(syncedUpcResults))
-	for i, syncedResult := range syncedUpcResults {
-		id := upcMap[syncedResult.Sync]
-		results[i] = platformServices.BuildUrlResultContainer(id, t.GetPlatformName(), syncedResult.Sync, syncedResult.Result.Url)
+		results = append(results, platformServices.BuildUrlResultContainer(container.Id, t.GetPlatformName(), container.Upc, response.Url))
+
+		time.Sleep(REQUEST_TIMEOUT_DURATION_MILLISECONDS)
 	}
 
 	return results
 }
+
+const REQUEST_TIMEOUT_DURATION_MILLISECONDS = time.Millisecond * 100

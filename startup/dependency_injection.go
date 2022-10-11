@@ -12,6 +12,7 @@ import (
 	"main/services/common"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
+	deezerServices "main/services/platforms/deezer"
 	spotifyServices "main/services/platforms/spotify"
 
 	"github.com/samber/do"
@@ -26,6 +27,9 @@ func buildDependencies() *do.Injector {
 
 	do.Provide(container, labelServices.ConstructLabelService)
 	do.Provide(container, labelServices.ConstructManagerService)
+
+	do.Provide(container, deezerServices.ConstructDeezerService)
+	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Deezer), deezerServices.ConstructDeezerServiceAsPlatformer)
 
 	do.Provide(container, spotifyServices.ConstructSpotifyService)
 	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)

@@ -58,8 +58,8 @@ func (t *StreamingPlatformService) SyncUrls() {
 	t.resync(urls, now)
 }
 
-func (t *StreamingPlatformService) getExistedUrls(logger *common.Logger, upcContainers []platforms.UpcContainer, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
-	ids := make([]int, len(upcContainers))
+func (t *StreamingPlatformService) getExistedUrls(logger *common.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+	ids := make([]int, len(upcResults))
 	for i, result := range upcResults {
 		ids[i] = result.Id
 	}
@@ -161,7 +161,7 @@ func (t *StreamingPlatformService) getUrlsToResync(wg *sync.WaitGroup, results c
 	defer wg.Done()
 
 	upcResults := t.getUpcResultsFromPlatformers(platformerContainers, upcContainers)
-	existedUrls, err := t.getExistedUrls(t.logger, upcContainers, upcResults)
+	existedUrls, err := t.getExistedUrls(t.logger, upcResults)
 	platformReleaseUrls, err := t.getPlatformReleaseUrls(err, existedUrls, upcResults, timestamp)
 	if err != nil {
 		return
