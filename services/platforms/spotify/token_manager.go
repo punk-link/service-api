@@ -6,14 +6,15 @@ import (
 	"io"
 	"main/infrastructure/consul"
 	"main/models/platforms/spotify/accessToken"
-	"main/services/common"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/punk-link/logger"
 )
 
-func getAccessToken(logger *common.Logger) (string, error) {
+func getAccessToken(logger *logger.Logger) (string, error) {
 	if len(tokenContainer.Token) != 0 && time.Now().UTC().Before(tokenContainer.Expired) {
 		return tokenContainer.Token, nil
 	}
@@ -41,7 +42,7 @@ func getAccessToken(logger *common.Logger) (string, error) {
 	return tokenContainer.Token, nil
 }
 
-func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
+func getAccessTokenRequest(logger *logger.Logger) (*http.Request, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
@@ -51,7 +52,7 @@ func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 		return nil, err
 	}
 
-	consul := consul.BuildConsulClient(logger, "service-api")
+	consul := consul.New(logger, "service-api")
 	spotifySettings := consul.GetOrSet("SpotifySettings", 0).(map[string]interface{})
 
 	clientId := spotifySettings["ClientId"].(string)
@@ -64,7 +65,7 @@ func getAccessTokenRequest(logger *common.Logger) (*http.Request, error) {
 	return request, nil
 }
 
-func parseToken(logger *common.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
+func parseToken(logger *logger.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		logger.LogError(err, err.Error())

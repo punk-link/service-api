@@ -2,14 +2,14 @@ package startup
 
 import (
 	"main/infrastructure/consul"
-	"main/services/common"
 
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/punk-link/logger"
 )
 
-func initSentry(app *gin.Engine, logger *common.Logger, consul *consul.ConsulClient) {
+func initSentry(app *gin.Engine, logger *logger.Logger, consul *consul.ConsulClient) {
 	app.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))

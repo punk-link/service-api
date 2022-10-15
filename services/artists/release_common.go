@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	artistData "main/data/artists"
 	"main/helpers"
-	"main/services/common"
 	"sort"
+
+	"github.com/punk-link/logger"
 )
 
-func getArtistsIdsFromDbRelease(logger *common.Logger, release artistData.Release) []int {
+func getArtistsIdsFromDbRelease(logger *logger.Logger, release artistData.Release) []int {
 	artistIds := make([]int, 0)
 
 	var featuringArtistIds []int
@@ -27,7 +28,7 @@ func getArtistsIdsFromDbRelease(logger *common.Logger, release artistData.Releas
 	return artistIds
 }
 
-func getArtistsIdsFromDbReleases(logger *common.Logger, releases []artistData.Release) []int {
+func getArtistsIdsFromDbReleases(logger *logger.Logger, releases []artistData.Release) []int {
 	artistIds := make([]int, 0)
 	for _, release := range releases {
 		releaseArtistIds := getArtistsIdsFromDbRelease(logger, release)

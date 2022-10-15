@@ -6,15 +6,15 @@ import (
 	"main/data/labels"
 	"main/data/platforms"
 	"main/infrastructure/consul"
-	"main/services/common"
 	"time"
 
+	"github.com/punk-link/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
+func ConfigureDatabase(logger *logger.Logger, consul *consul.ConsulClient) {
 	dbSettings := consul.Get("DatabaseSettings").(map[string]interface{})
 
 	host := dbSettings["Host"].(string)
@@ -48,13 +48,13 @@ func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
 	AutoMigrate(logger)
 }
 
-func AutoMigrate(logger *common.Logger) {
+func AutoMigrate(logger *logger.Logger) {
 	err := migrate(logger, nil, &labels.Label{}, &labels.Manager{})
 	err = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
 	_ = migrate(logger, err, &platforms.PlatformReleaseUrl{})
 }
 
-func migrate(logger *common.Logger, err error, dst ...interface{}) error {
+func migrate(logger *logger.Logger, err error, dst ...interface{}) error {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
 		return err

@@ -3,12 +3,12 @@ package startup
 import (
 	"main/data"
 	"main/infrastructure/consul"
-	"main/services/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/punk-link/logger"
 )
 
-func Configure(logger *common.Logger, consul *consul.ConsulClient, ginMode string) *gin.Engine {
+func Configure(logger *logger.Logger, consul *consul.ConsulClient, ginMode string) *gin.Engine {
 	diContainer := buildDependencies()
 
 	gin.SetMode(ginMode)

@@ -10,6 +10,7 @@ import (
 	artistStaticServices "main/services/artists/static"
 	"main/services/cache"
 	"main/services/common"
+	"main/services/common/logger"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
 	deezerServices "main/services/platforms/deezer"
@@ -21,7 +22,7 @@ import (
 func buildDependencies() *do.Injector {
 	container := do.New()
 
-	do.Provide(container, common.ConstructLogger)
+	do.Provide(container, logger.New)
 	do.Provide(container, common.ConstructHashCoder)
 	do.Provide(container, cache.ConstructMemoryCacheService)
 

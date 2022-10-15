@@ -6,23 +6,23 @@ import (
 	"main/helpers"
 	"main/models/labels"
 
-	"main/services/common"
 	"main/services/labels/converters"
 	"main/services/labels/validators"
 	"strings"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type ManagerService struct {
 	labelService *LabelService
-	logger       *common.Logger
+	logger       *logger.Logger
 }
 
 func ConstructManagerService(injector *do.Injector) (*ManagerService, error) {
 	labelService := do.MustInvoke[*LabelService](injector)
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return &ManagerService{
 		labelService: labelService,

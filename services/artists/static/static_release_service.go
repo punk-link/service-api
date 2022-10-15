@@ -10,13 +10,14 @@ import (
 	platformServices "main/services/platforms"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type StaticReleaseService struct {
 	cache           *cache.MemoryCacheService
 	hashCoder       *common.HashCoder
-	logger          *common.Logger
+	logger          *logger.Logger
 	platformService *platformServices.StreamingPlatformService
 	releaseService  *artistServices.ReleaseService
 }
@@ -24,7 +25,7 @@ type StaticReleaseService struct {
 func ConstructStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 	platformService := do.MustInvoke[*platformServices.StreamingPlatformService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 

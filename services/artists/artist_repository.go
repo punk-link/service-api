@@ -3,10 +3,11 @@ package artists
 import (
 	"main/data"
 	artistData "main/data/artists"
-	"main/services/common"
+
+	"github.com/punk-link/logger"
 )
 
-func createDbArtist(logger *common.Logger, err error, artist *artistData.Artist) error {
+func createDbArtist(logger *logger.Logger, err error, artist *artistData.Artist) error {
 	if err != nil {
 		return err
 	}
@@ -19,7 +20,7 @@ func createDbArtist(logger *common.Logger, err error, artist *artistData.Artist)
 	return err
 }
 
-func createDbArtistsInBatches(logger *common.Logger, err error, artists *[]artistData.Artist) error {
+func createDbArtistsInBatches(logger *logger.Logger, err error, artists *[]artistData.Artist) error {
 	if err != nil || len(*artists) == 0 {
 		return err
 	}
@@ -32,7 +33,7 @@ func createDbArtistsInBatches(logger *common.Logger, err error, artists *[]artis
 	return err
 }
 
-func getDbArtist(logger *common.Logger, err error, id int) (artistData.Artist, error) {
+func getDbArtist(logger *logger.Logger, err error, id int) (artistData.Artist, error) {
 	if err != nil {
 		return artistData.Artist{}, err
 	}
@@ -49,7 +50,7 @@ func getDbArtist(logger *common.Logger, err error, id int) (artistData.Artist, e
 	return artist, err
 }
 
-func getDbArtistIdsByLabelId(logger *common.Logger, err error, labelId int) ([]int, error) {
+func getDbArtistIdsByLabelId(logger *logger.Logger, err error, labelId int) ([]int, error) {
 	if err != nil {
 		return make([]int, 0), err
 	}
@@ -68,7 +69,7 @@ func getDbArtistIdsByLabelId(logger *common.Logger, err error, labelId int) ([]i
 	return artistIds, err
 }
 
-func getDbArtists(logger *common.Logger, err error, ids []int) ([]artistData.Artist, error) {
+func getDbArtists(logger *logger.Logger, err error, ids []int) ([]artistData.Artist, error) {
 	if err != nil {
 		return make([]artistData.Artist, 0), err
 	}
@@ -85,7 +86,7 @@ func getDbArtists(logger *common.Logger, err error, ids []int) ([]artistData.Art
 	return artists, err
 }
 
-func getDbArtistBySpotifyId(logger *common.Logger, err error, spotifyId string) (artistData.Artist, error) {
+func getDbArtistBySpotifyId(logger *logger.Logger, err error, spotifyId string) (artistData.Artist, error) {
 	if err != nil {
 		return artistData.Artist{}, err
 	}
@@ -103,7 +104,7 @@ func getDbArtistBySpotifyId(logger *common.Logger, err error, spotifyId string) 
 	return artist, err
 }
 
-func getDbArtistsBySpotifyIds(logger *common.Logger, err error, spotifyIds []string) ([]artistData.Artist, error) {
+func getDbArtistsBySpotifyIds(logger *logger.Logger, err error, spotifyIds []string) ([]artistData.Artist, error) {
 	if err != nil {
 		return make([]artistData.Artist, 0), err
 	}
@@ -120,7 +121,7 @@ func getDbArtistsBySpotifyIds(logger *common.Logger, err error, spotifyIds []str
 	return artists, err
 }
 
-func updateDbArtist(logger *common.Logger, err error, artist *artistData.Artist) error {
+func updateDbArtist(logger *logger.Logger, err error, artist *artistData.Artist) error {
 	if err != nil {
 		return err
 	}

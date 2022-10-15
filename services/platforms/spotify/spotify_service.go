@@ -8,20 +8,20 @@ import (
 	spotifyArtists "main/models/platforms/spotify/artists"
 	"main/models/platforms/spotify/releases"
 	"main/models/platforms/spotify/search"
-	"main/services/common"
 	platformServices "main/services/platforms/base"
 	"net/url"
 	"strings"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type SpotifyService struct {
-	logger *common.Logger
+	logger *logger.Logger
 }
 
 func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return &SpotifyService{
 		logger: logger,
@@ -29,7 +29,7 @@ func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 }
 
 func ConstructSpotifyServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return platformServices.Platformer(&SpotifyService{
 		logger: logger,

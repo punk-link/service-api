@@ -7,22 +7,22 @@ import (
 	basePlatforms "main/models/platforms/base"
 	platformConstants "main/models/platforms/constants"
 	"main/services/artists"
-	"main/services/common"
 	"main/services/platforms/base"
 	"sync"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type StreamingPlatformService struct {
 	injector       *do.Injector
-	logger         *common.Logger
+	logger         *logger.Logger
 	releaseService *artists.ReleaseService
 }
 
 func ConstructStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
 	return &StreamingPlatformService{
@@ -58,7 +58,7 @@ func (t *StreamingPlatformService) SyncUrls() {
 	t.resync(urls, now)
 }
 
-func (t *StreamingPlatformService) getExistedUrls(logger *common.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+func (t *StreamingPlatformService) getExistedUrls(logger *logger.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
 	ids := make([]int, len(upcResults))
 	for i, result := range upcResults {
 		ids[i] = result.Id

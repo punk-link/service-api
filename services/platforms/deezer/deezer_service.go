@@ -5,19 +5,20 @@ import (
 	platforms "main/models/platforms"
 	deezerModels "main/models/platforms/deezer"
 	platformEnums "main/models/platforms/enums"
-	"main/services/common"
 	platformServices "main/services/platforms/base"
 	"time"
+
+	"github.com/punk-link/logger"
 
 	"github.com/samber/do"
 )
 
 type DeezerService struct {
-	logger *common.Logger
+	logger *logger.Logger
 }
 
 func ConstructDeezerService(injector *do.Injector) (*DeezerService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return &DeezerService{
 		logger: logger,
@@ -25,7 +26,7 @@ func ConstructDeezerService(injector *do.Injector) (*DeezerService, error) {
 }
 
 func ConstructDeezerServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return platformServices.Platformer(&DeezerService{
 		logger: logger,

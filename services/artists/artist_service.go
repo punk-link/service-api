@@ -11,23 +11,23 @@ import (
 	"main/services/artists/converters"
 	"main/services/artists/validators"
 	"main/services/cache"
-	"main/services/common"
 	"main/services/platforms/spotify"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type ArtistService struct {
 	cache          *cache.MemoryCacheService
-	logger         *common.Logger
+	logger         *logger.Logger
 	releaseService *ReleaseService
 	spotifyService *spotify.SpotifyService
 }
 
 func ConstructArtistService(injector *do.Injector) (*ArtistService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
 	spotifyService := do.MustInvoke[*ReleaseService](injector)
 

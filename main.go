@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"main/infrastructure"
 	"main/infrastructure/consul"
-	"main/services/common"
+	"main/services/common/logger"
 	"main/startup"
 	"net/http"
 	"os"
@@ -15,17 +15,13 @@ import (
 	"time"
 )
 
-//"os"
-//"os/signal"
-//"syscall"
-
 func main() {
-	logger := common.ConstructLoggerWithoutInjection()
+	logger := logger.NewWithoutInjection()
 
 	environmentName := infrastructure.GetEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	consul := consul.BuildConsulClient(logger, "service-api")
+	consul := consul.New(logger, "service-api")
 
 	hostSettings := consul.Get("HostSettings").(map[string]interface{})
 	hostAddress := hostSettings["Address"]

@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"main/infrastructure"
-	"main/services/common"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/consul/api"
+	"github.com/punk-link/logger"
 )
 
 type ConsulClient struct {
-	logger *common.Logger
+	logger *logger.Logger
 }
 
-func BuildConsulClient(logger *common.Logger, storageName string) *ConsulClient {
+func New(logger *logger.Logger, storageName string) *ConsulClient {
 	result := &ConsulClient{
 		logger: logger,
 	}

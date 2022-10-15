@@ -5,22 +5,22 @@ import (
 	labelData "main/data/labels"
 	"main/helpers"
 	"main/models/labels"
-	"main/services/common"
 	validator "main/services/labels/validators"
 	"main/services/platforms/spotify"
 	"strings"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type LabelService struct {
-	logger         *common.Logger
+	logger         *logger.Logger
 	spotifyService *spotify.SpotifyService
 }
 
 func ConstructLabelService(injector *do.Injector) (*LabelService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
 
 	return &LabelService{

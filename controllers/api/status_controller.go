@@ -3,18 +3,18 @@ package api
 import (
 	base "main/controllers"
 	"main/data"
-	"main/services/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type StatusController struct {
-	logger *common.Logger
+	logger *logger.Logger
 }
 
 func ConstructStatusController(injector *do.Injector) (*StatusController, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 
 	return &StatusController{
 		logger: logger,

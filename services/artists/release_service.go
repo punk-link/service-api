@@ -9,23 +9,23 @@ import (
 	"main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/cache"
-	"main/services/common"
 	"main/services/platforms/spotify"
 	"sync"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type ReleaseService struct {
 	cache          *cache.MemoryCacheService
-	logger         *common.Logger
+	logger         *logger.Logger
 	spotifyService *spotify.SpotifyService
 }
 
 func ConstructReleaseService(injector *do.Injector) (*ReleaseService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
-	logger := do.MustInvoke[*common.Logger](injector)
+	logger := do.MustInvoke[*logger.Logger](injector)
 	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
 
 	return &ReleaseService{
