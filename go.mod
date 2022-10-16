@@ -6,7 +6,8 @@ require github.com/gin-gonic/gin v1.8.1 // direct
 
 require (
 	github.com/getsentry/sentry-go v0.14.0
-	github.com/hashicorp/consul/api v1.15.2
+	github.com/punk-link/consul-client v1.0.1
+	github.com/punk-link/environment-variable-manager v1.0.0
 	github.com/punk-link/logger v1.0.1
 	github.com/rs/zerolog v1.28.0
 	github.com/samber/do v1.4.1
@@ -22,6 +23,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/hashicorp/consul/api v1.15.2 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -48,7 +50,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/punk-link/environment-variable-manager v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a // indirect
 	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect

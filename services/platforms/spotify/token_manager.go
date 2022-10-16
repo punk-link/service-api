@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"main/infrastructure/consul"
 	"main/models/platforms/spotify/accessToken"
 	"net/http"
 	"net/url"
@@ -14,12 +13,12 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func getAccessToken(logger *logger.Logger) (string, error) {
+func getAccessToken(logger *logger.Logger, config *accessToken.SpotifyClientConfig) (string, error) {
 	if len(tokenContainer.Token) != 0 && time.Now().UTC().Before(tokenContainer.Expired) {
 		return tokenContainer.Token, nil
 	}
 
-	request, err := getAccessTokenRequest(logger)
+	request, err := getAccessTokenRequest(logger, config)
 	if err != nil {
 		logger.LogError(err, err.Error())
 		return "", err
@@ -42,7 +41,7 @@ func getAccessToken(logger *logger.Logger) (string, error) {
 	return tokenContainer.Token, nil
 }
 
-func getAccessTokenRequest(logger *logger.Logger) (*http.Request, error) {
+func getAccessTokenRequest(logger *logger.Logger, config *accessToken.SpotifyClientConfig) (*http.Request, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
@@ -52,12 +51,7 @@ func getAccessTokenRequest(logger *logger.Logger) (*http.Request, error) {
 		return nil, err
 	}
 
-	consul := consul.New(logger, "service-api")
-	spotifySettings := consul.GetOrSet("SpotifySettings", 0).(map[string]interface{})
-
-	clientId := spotifySettings["ClientId"].(string)
-	clientSecret := spotifySettings["ClientSecret"].(string)
-	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
+	credentials := "Basic " + base64.StdEncoding.EncodeToString([]byte(config.ClientId+":"+config.ClientSecret))
 
 	request.Header.Add("Authorization", credentials)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")

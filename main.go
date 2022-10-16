@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"main/infrastructure"
-	"main/infrastructure/consul"
 	"main/services/common/logger"
 	"main/startup"
 	"net/http"
@@ -13,6 +12,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	consulClient "github.com/punk-link/consul-client"
+	envManager "github.com/punk-link/environment-variable-manager"
 )
 
 func main() {
@@ -21,16 +23,25 @@ func main() {
 	environmentName := infrastructure.GetEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	consul := consul.New(logger, "service-api")
+	consul, err := getConsulClient("service-api")
+	if err != nil {
+		logger.LogFatal(err, "Can't initialize the consul client: '%s'", err.Error())
+		return
+	}
 
-	hostSettings := consul.Get("HostSettings").(map[string]interface{})
-	hostAddress := hostSettings["Address"]
-	hostPort := hostSettings["Port"]
+	hostSettingsValues, err := consul.Get("HostSettings")
+	if err != nil {
+		logger.LogFatal(err, "Can't obtain host settings from Consul: '%s'", err.Error())
+		return
+	}
+	hostSettings := hostSettingsValues.(map[string]interface{})
+
 	ginMode := hostSettings["Mode"].(string)
-
 	app := startup.Configure(logger, consul, ginMode)
 	app.Run()
 
+	hostAddress := hostSettings["Address"]
+	hostPort := hostSettings["Port"]
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", hostAddress, hostPort),
 		Handler: app,
@@ -58,4 +69,24 @@ func main() {
 	}
 
 	logger.LogInfo("Exiting")
+}
+
+func getConsulClient(storageName string) (*consulClient.ConsulClient, error) {
+	isExist, consulAddress := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_ADDR")
+	if !isExist {
+		return nil, fmt.Errorf("can't find value of the '%s' environment variable", "PNKL_CONSUL_ADDR")
+	}
+
+	isExist, consulToken := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_TOKEN")
+	if !isExist {
+		return nil, fmt.Errorf("can't find value of the '%s' environment variable", "PNKL_CONSUL_TOKEN")
+	}
+
+	consul, err := consulClient.New(&consulClient.ConsulConfig{
+		Address:     consulAddress,
+		StorageName: storageName,
+		Token:       consulToken,
+	})
+
+	return consul, err
 }

@@ -6,23 +6,38 @@ import (
 	staticControllers "main/controllers/static"
 	platformConstants "main/models/platforms/constants"
 	platformEnums "main/models/platforms/enums"
+	"main/models/platforms/spotify/accessToken"
 	artistServices "main/services/artists"
 	artistStaticServices "main/services/artists/static"
 	"main/services/cache"
 	"main/services/common"
-	"main/services/common/logger"
+	loggerServices "main/services/common/logger"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
 	deezerServices "main/services/platforms/deezer"
 	spotifyServices "main/services/platforms/spotify"
 
+	consulClient "github.com/punk-link/consul-client"
+
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
-func buildDependencies() *do.Injector {
+func buildDependencies(logger *logger.Logger, consul *consulClient.ConsulClient) *do.Injector {
 	container := do.New()
 
-	do.Provide(container, logger.New)
+	spotifySettingsValue, err := consul.GetOrSet("SpotifySettings", 0)
+	if err != nil {
+		logger.LogFatal(err, "Can't obtain Spotify settings from Consul: %s", err.Error())
+	}
+
+	spotifySettings := spotifySettingsValue.(map[string]interface{})
+	do.ProvideValue(container, &accessToken.SpotifyClientConfig{
+		ClientId:     spotifySettings["ClientId"].(string),
+		ClientSecret: spotifySettings["ClientSecret"].(string),
+	})
+
+	do.Provide(container, loggerServices.New)
 	do.Provide(container, common.ConstructHashCoder)
 	do.Provide(container, cache.ConstructMemoryCacheService)
 

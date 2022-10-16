@@ -2,16 +2,17 @@ package spotify
 
 import (
 	commonModels "main/models/common"
+	"main/models/platforms/spotify/accessToken"
 	platformServices "main/services/platforms/base"
 	"net/http"
 
 	"github.com/punk-link/logger"
 )
 
-func makeBatchRequestWithSync[T any](logger *logger.Logger, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
+func makeBatchRequestWithSync[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
 	syncedHttpRequests := make([]commonModels.SyncedHttpRequest, len(syncedUrls))
 	for i, syncedUrl := range syncedUrls {
-		request, err := getRequest(logger, method, syncedUrl.Url)
+		request, err := getRequest(logger, config, method, syncedUrl.Url)
 		if err != nil {
 			logger.LogWarn("can't build an http request: %s", err.Error())
 			continue
@@ -26,7 +27,7 @@ func makeBatchRequestWithSync[T any](logger *logger.Logger, method string, synce
 	return platformServices.MakeBatchRequestWithSync[T](logger, syncedHttpRequests)
 }
 
-func makeBatchRequest[T any](logger *logger.Logger, method string, urls []string) []T {
+func makeBatchRequest[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, urls []string) []T {
 	syncedUrls := make([]commonModels.SyncedUrl, len(urls))
 	for i, url := range urls {
 		syncedUrls[i] = commonModels.SyncedUrl{
@@ -34,7 +35,7 @@ func makeBatchRequest[T any](logger *logger.Logger, method string, urls []string
 		}
 	}
 
-	syncedResults := makeBatchRequestWithSync[T](logger, method, syncedUrls)
+	syncedResults := makeBatchRequestWithSync[T](logger, config, method, syncedUrls)
 	results := make([]T, len(syncedResults))
 	for i, result := range syncedResults {
 		results[i] = result.Result
@@ -43,8 +44,8 @@ func makeBatchRequest[T any](logger *logger.Logger, method string, urls []string
 	return results
 }
 
-func makeRequest[T any](logger *logger.Logger, method string, url string, response *T) error {
-	request, err := getRequest(logger, method, url)
+func makeRequest[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string, response *T) error {
+	request, err := getRequest(logger, config, method, url)
 	if err != nil {
 		logger.LogWarn("can't build an http request: %s", err.Error())
 		return err
@@ -53,13 +54,13 @@ func makeRequest[T any](logger *logger.Logger, method string, url string, respon
 	return platformServices.MakeRequest(logger, request, response)
 }
 
-func getRequest(logger *logger.Logger, method string, url string) (*http.Request, error) {
+func getRequest(logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string) (*http.Request, error) {
 	request, err := http.NewRequest(method, "https://api.spotify.com/v1/"+url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	accessToken, err := getAccessToken(logger)
+	accessToken, err := getAccessToken(logger, config)
 	if err != nil {
 		return nil, err
 	}

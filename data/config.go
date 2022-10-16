@@ -5,17 +5,22 @@ import (
 	"main/data/artists"
 	"main/data/labels"
 	"main/data/platforms"
-	"main/infrastructure/consul"
 	"time"
 
+	consulClient "github.com/punk-link/consul-client"
 	"github.com/punk-link/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func ConfigureDatabase(logger *logger.Logger, consul *consul.ConsulClient) {
-	dbSettings := consul.Get("DatabaseSettings").(map[string]interface{})
+func ConfigureDatabase(logger *logger.Logger, consul *consulClient.ConsulClient) {
+	dbSettingsValue, err := consul.Get("DatabaseSettings")
+	if err != nil {
+		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
+	}
+
+	dbSettings := dbSettingsValue.(map[string]interface{})
 
 	host := dbSettings["Host"].(string)
 	port := dbSettings["Port"].(string)
