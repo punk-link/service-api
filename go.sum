@@ -267,10 +267,8 @@ github.com/prometheus/common v0.9.1/go.mod h1:yhUN8i9wzaXS3w1O07YhxHEBxD+W35wd8b
 github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
 github.com/prometheus/procfs v0.0.2/go.mod h1:TjEm7ze935MbeOT/UhFTIMYKhuLP4wbCsTZCD3I8kEA=
 github.com/prometheus/procfs v0.0.8/go.mod h1:7Qr8sr6344vo1JqZ6HhLceV9o3AJ1Ff+GxbHq6oeK9A=
-github.com/punk-link/consul-client v1.0.0 h1:i1i8KLmog49+mTBROYfKlG5UVo9I2z0V3eUTAsditB4=
-github.com/punk-link/consul-client v1.0.0/go.mod h1:EGd9UdY1BnZxx6nZsa1szygLoOy7yzND5FqVYxjxuEE=
-github.com/punk-link/consul-client v1.0.1 h1:3iFBYbotOIzZshSQH54be1bAgCSvUK1EDlI41Zt45vw=
-github.com/punk-link/consul-client v1.0.1/go.mod h1:EGd9UdY1BnZxx6nZsa1szygLoOy7yzND5FqVYxjxuEE=
+github.com/punk-link/consul-client v1.0.2 h1:+tLKefEHqLTiz61jRjvVEub42vqdug54PxScj98GgoY=
+github.com/punk-link/consul-client v1.0.2/go.mod h1:pHNBrFWp1yii8mJLEfcNREwsiNDBZqNAsg8Sh6Szt0Y=
 github.com/punk-link/environment-variable-manager v1.0.0 h1:jtG05EbeTXJgGJpjB2kzCOSvoan1wV+6y698+In3JnU=
 github.com/punk-link/environment-variable-manager v1.0.0/go.mod h1:PfA0QpU1F5IfCUcp00S84PQ1I1BbES58P/rLabx8d4M=
 github.com/punk-link/logger v1.0.1 h1:Andn2YtfGy/g0xeFQgqfbVj8AWAY5KOgpiKRtwJMikA=

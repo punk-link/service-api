@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"main/infrastructure"
 	"main/services/common/logger"
 	"main/startup"
 	"net/http"
@@ -20,10 +19,10 @@ import (
 func main() {
 	logger := logger.NewWithoutInjection()
 
-	environmentName := infrastructure.GetEnvironmentName()
+	environmentName := getEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	consul, err := getConsulClient("service-api")
+	consul, err := getConsulClient("service-api", environmentName)
 	if err != nil {
 		logger.LogFatal(err, "Can't initialize the consul client: '%s'", err.Error())
 		return
@@ -71,7 +70,7 @@ func main() {
 	logger.LogInfo("Exiting")
 }
 
-func getConsulClient(storageName string) (*consulClient.ConsulClient, error) {
+func getConsulClient(storageName string, environmentName string) (*consulClient.ConsulClient, error) {
 	isExist, consulAddress := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_ADDR")
 	if !isExist {
 		return nil, fmt.Errorf("can't find value of the '%s' environment variable", "PNKL_CONSUL_ADDR")
@@ -83,10 +82,20 @@ func getConsulClient(storageName string) (*consulClient.ConsulClient, error) {
 	}
 
 	consul, err := consulClient.New(&consulClient.ConsulConfig{
-		Address:     consulAddress,
-		StorageName: storageName,
-		Token:       consulToken,
+		Address:         consulAddress,
+		EnvironmentName: environmentName,
+		StorageName:     storageName,
+		Token:           consulToken,
 	})
 
 	return consul, err
+}
+
+func getEnvironmentName() string {
+	isExist, name := envManager.TryGetEnvironmentVariable("GO_ENVIRONMENT")
+	if !isExist {
+		return "Development"
+	}
+
+	return name
 }
