@@ -19,12 +19,13 @@ import (
 
 	consulClient "github.com/punk-link/consul-client"
 
+	"github.com/nats-io/nats.go"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 func buildDependencies(logger *logger.Logger, consul *consulClient.ConsulClient) *do.Injector {
-	container := do.New()
+	injector := do.New()
 
 	spotifySettingsValue, err := consul.GetOrSet("SpotifySettings", 0)
 	if err != nil {
@@ -32,43 +33,50 @@ func buildDependencies(logger *logger.Logger, consul *consulClient.ConsulClient)
 	}
 
 	spotifySettings := spotifySettingsValue.(map[string]interface{})
-	do.ProvideValue(container, &accessToken.SpotifyClientConfig{
+	do.ProvideValue(injector, &accessToken.SpotifyClientConfig{
 		ClientId:     spotifySettings["ClientId"].(string),
 		ClientSecret: spotifySettings["ClientSecret"].(string),
 	})
 
-	do.Provide(container, loggerServices.New)
-	do.Provide(container, common.ConstructHashCoder)
-	do.Provide(container, cache.ConstructMemoryCacheService)
+	natsConnection, err := nats.Connect(nats.DefaultOptions.Url)
+	if err != nil {
+		logger.LogFatal(err, "Nats connection error: %s", err.Error())
+	}
 
-	do.Provide(container, labelServices.ConstructLabelService)
-	do.Provide(container, labelServices.ConstructManagerService)
+	do.ProvideValue(injector, natsConnection)
 
-	do.Provide(container, deezerServices.ConstructDeezerService)
-	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Deezer), deezerServices.ConstructDeezerServiceAsPlatformer)
+	do.Provide(injector, loggerServices.New)
+	do.Provide(injector, common.ConstructHashCoder)
+	do.Provide(injector, cache.ConstructMemoryCacheService)
 
-	do.Provide(container, spotifyServices.ConstructSpotifyService)
-	do.ProvideNamed(container, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
+	do.Provide(injector, labelServices.ConstructLabelService)
+	do.Provide(injector, labelServices.ConstructManagerService)
 
-	do.Provide(container, artistServices.ConstructReleaseService)
-	do.Provide(container, artistStaticServices.ConstructStaticReleaseService)
-	do.Provide(container, artistServices.ConstructArtistService)
-	do.Provide(container, artistStaticServices.ConstructStaticArtistService)
+	do.Provide(injector, deezerServices.ConstructDeezerService)
+	do.ProvideNamed(injector, buildPlatformServiceName(platformEnums.Deezer), deezerServices.ConstructDeezerServiceAsPlatformer)
 
-	do.Provide(container, platformServices.ConstructStreamingPlatformService)
+	do.Provide(injector, spotifyServices.ConstructSpotifyService)
+	do.ProvideNamed(injector, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
-	do.Provide(container, apiControllers.ConstructArtistController)
-	do.Provide(container, apiControllers.ConstructHashController)
-	do.Provide(container, apiControllers.ConstructLabelController)
-	do.Provide(container, apiControllers.ConstructManagerController)
-	do.Provide(container, apiControllers.ConstructStreamingPlatformController)
-	do.Provide(container, apiControllers.ConstructReleaseController)
-	do.Provide(container, apiControllers.ConstructStatusController)
+	do.Provide(injector, artistServices.ConstructReleaseService)
+	do.Provide(injector, artistStaticServices.ConstructStaticReleaseService)
+	do.Provide(injector, artistServices.ConstructArtistService)
+	do.Provide(injector, artistStaticServices.ConstructStaticArtistService)
 
-	do.Provide(container, staticControllers.ConstructStaticArtistController)
-	do.Provide(container, staticControllers.ConstructStaticReleaseController)
+	do.Provide(injector, platformServices.ConstructStreamingPlatformService)
 
-	return container
+	do.Provide(injector, apiControllers.ConstructArtistController)
+	do.Provide(injector, apiControllers.ConstructHashController)
+	do.Provide(injector, apiControllers.ConstructLabelController)
+	do.Provide(injector, apiControllers.ConstructManagerController)
+	do.Provide(injector, apiControllers.ConstructStreamingPlatformController)
+	do.Provide(injector, apiControllers.ConstructReleaseController)
+	do.Provide(injector, apiControllers.ConstructStatusController)
+
+	do.Provide(injector, staticControllers.ConstructStaticArtistController)
+	do.Provide(injector, staticControllers.ConstructStaticReleaseController)
+
+	return injector
 }
 
 func buildPlatformServiceName(serviceName string) string {

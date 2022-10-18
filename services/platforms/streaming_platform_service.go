@@ -1,6 +1,7 @@
 package platforms
 
 import (
+	"encoding/json"
 	"fmt"
 	platformData "main/data/platforms"
 	"main/models/platforms"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
@@ -18,16 +20,19 @@ import (
 type StreamingPlatformService struct {
 	injector       *do.Injector
 	logger         *logger.Logger
+	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
 }
 
 func ConstructStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
 	logger := do.MustInvoke[*logger.Logger](injector)
+	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
 	return &StreamingPlatformService{
 		injector:       injector.Clone(),
 		logger:         logger,
+		natsConnection: natsConnection,
 		releaseService: releaseService,
 	}, nil
 }
@@ -52,11 +57,60 @@ func (t *StreamingPlatformService) Get(releaseId int) ([]platforms.PlatformRelea
 }
 
 func (t *StreamingPlatformService) SyncUrls() {
-	now := time.Now().UTC()
+	jetStreamContext, err := t.natsConnection.JetStream()
+	if err != nil {
+		t.logger.LogError(err, "Nats JetStream error: %s", err.Error())
+		return
+	}
 
-	urls := t.getPlatformReleaseUrlsToSync(now)
-	t.resync(urls, now)
+	stream, err := jetStreamContext.StreamInfo(PLATFORM_URL_REQUESTS_STREAM_NAME)
+	if err != nil {
+		t.logger.LogError(err, "Nats JetStream stream error: %s", err.Error())
+		return
+	}
+
+	if stream == nil {
+		t.logger.LogInfo("Creating Nats stream %s and subjects %s", PLATFORM_URL_REQUESTS_STREAM_NAME, PLATFORM_URL_REQUESTS_STREAM_SUBJECTS)
+		_, err := jetStreamContext.AddStream(&nats.StreamConfig{
+			Name:     PLATFORM_URL_REQUESTS_STREAM_NAME,
+			Subjects: []string{PLATFORM_URL_REQUESTS_STREAM_SUBJECTS},
+		})
+
+		if err != nil {
+			t.logger.LogError(err, "Nats JetStream stream creation error: %s", err.Error())
+			return
+		}
+	}
+
+	now := time.Now().UTC()
+	releaseCount := t.releaseService.GetCount()
+	updateTreshold := now.Add(-UPDATE_TRESHOLD_MINUTES)
+
+	skip := 0
+	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
+		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
+		for _, platform := range platforms.AvailablePlatforms {
+			subjectName := fmt.Sprintf("%s.%s", PLATFORM_URL_REQUESTS_STREAM_NAME, platform)
+			for _, container := range upcContainers {
+				json, _ := json.Marshal(container)
+				_, err = jetStreamContext.Publish(subjectName, json)
+				if err != nil {
+					t.logger.LogWarn("Nats %s stream subject publishing error: %s", subjectName, err.Error())
+				}
+			}
+		}
+
+		skip += ITERATION_STEP
+	}
+
+	//now := time.Now().UTC()
+
+	//urls := t.getPlatformReleaseUrlsToSync(now)
+	//t.resync(urls, now)
 }
+
+const PLATFORM_URL_REQUESTS_STREAM_NAME = "PLATFORM-URL-REQUESTS"
+const PLATFORM_URL_REQUESTS_STREAM_SUBJECTS = "PLATFORM-URL-REQUESTS.*"
 
 func (t *StreamingPlatformService) getExistedUrls(logger *logger.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
 	ids := make([]int, len(upcResults))
