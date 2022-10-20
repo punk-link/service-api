@@ -21,7 +21,7 @@ func ConstructStreamingPlatformController(injector *do.Injector) (*StreamingPlat
 }
 
 func (t *StreamingPlatformController) Sync(ctx *gin.Context) {
-	t.streamingPlatformService.SyncUrls()
+	t.streamingPlatformService.PublishPlatforeUrlRequests()
 
 	base.NoContent(ctx)
 }

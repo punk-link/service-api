@@ -56,35 +56,43 @@ func (t *StreamingPlatformService) Get(releaseId int) ([]platforms.PlatformRelea
 	return results, err
 }
 
-func (t *StreamingPlatformService) SyncUrls() {
+func (t *StreamingPlatformService) PublishPlatforeUrlRequests() {
 	jetStreamContext, err := t.natsConnection.JetStream()
+	err = t.createJstStreamIfNotExist(err, jetStreamContext)
+	err = t.publishPlatforeUrlRequests(err, jetStreamContext)
 	if err != nil {
-		t.logger.LogError(err, "Nats JetStream error: %s", err.Error())
-		return
+		t.logger.LogError(err, err.Error())
+	}
+}
+
+func (t *StreamingPlatformService) createJstStreamIfNotExist(err error, jetStreamContext nats.JetStreamContext) error {
+	if err != nil {
+		return err
 	}
 
-	stream, err := jetStreamContext.StreamInfo(PLATFORM_URL_REQUESTS_STREAM_NAME)
-	if err != nil {
-		t.logger.LogError(err, "Nats JetStream stream error: %s", err.Error())
-		return
-	}
-
+	stream, _ := jetStreamContext.StreamInfo(PLATFORM_URL_REQUESTS_STREAM_NAME)
 	if stream == nil {
 		t.logger.LogInfo("Creating Nats stream %s and subjects %s", PLATFORM_URL_REQUESTS_STREAM_NAME, PLATFORM_URL_REQUESTS_STREAM_SUBJECTS)
-		_, err := jetStreamContext.AddStream(&nats.StreamConfig{
-			Name:     PLATFORM_URL_REQUESTS_STREAM_NAME,
-			Subjects: []string{PLATFORM_URL_REQUESTS_STREAM_SUBJECTS},
+		_, err = jetStreamContext.AddStream(&nats.StreamConfig{
+			Name:      PLATFORM_URL_REQUESTS_STREAM_NAME,
+			MaxAge:    time.Hour,
+			Retention: nats.WorkQueuePolicy,
+			Storage:   nats.MemoryStorage,
+			Subjects:  []string{PLATFORM_URL_REQUESTS_STREAM_SUBJECTS},
 		})
+	}
 
-		if err != nil {
-			t.logger.LogError(err, "Nats JetStream stream creation error: %s", err.Error())
-			return
-		}
+	return err
+}
+
+func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStreamContext nats.JetStreamContext) error {
+	if err != nil {
+		return err
 	}
 
 	now := time.Now().UTC()
 	releaseCount := t.releaseService.GetCount()
-	updateTreshold := now.Add(-UPDATE_TRESHOLD_MINUTES)
+	updateTreshold := now.Add(-UPDATE_TRESHOLD_INTERVAL)
 
 	skip := 0
 	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
@@ -93,20 +101,14 @@ func (t *StreamingPlatformService) SyncUrls() {
 			subjectName := fmt.Sprintf("%s.%s", PLATFORM_URL_REQUESTS_STREAM_NAME, platform)
 			for _, container := range upcContainers {
 				json, _ := json.Marshal(container)
-				_, err = jetStreamContext.Publish(subjectName, json)
-				if err != nil {
-					t.logger.LogWarn("Nats %s stream subject publishing error: %s", subjectName, err.Error())
-				}
+				jetStreamContext.Publish(subjectName, json)
 			}
 		}
 
 		skip += ITERATION_STEP
 	}
 
-	//now := time.Now().UTC()
-
-	//urls := t.getPlatformReleaseUrlsToSync(now)
-	//t.resync(urls, now)
+	return err
 }
 
 const PLATFORM_URL_REQUESTS_STREAM_NAME = "PLATFORM-URL-REQUESTS"
@@ -165,38 +167,6 @@ func (t *StreamingPlatformService) getPlatformReleaseUrls(err error, existedUrls
 	}
 
 	return platformReleaseUrls, err
-}
-
-func (t *StreamingPlatformService) getPlatformReleaseUrlsToSync(timestamp time.Time) []platformData.PlatformReleaseUrl {
-	releaseCount := t.releaseService.GetCount()
-	updateTreshold := time.Now().UTC().Add(-UPDATE_TRESHOLD_MINUTES)
-
-	platformerContainers := t.getPlatformerContainers()
-
-	var wg sync.WaitGroup
-	chanResults := make(chan []platformData.PlatformReleaseUrl)
-
-	skip := 0
-	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
-		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
-
-		wg.Add(1)
-		go t.getUrlsToResync(&wg, chanResults, platformerContainers, upcContainers, timestamp)
-
-		skip += ITERATION_STEP
-	}
-
-	go func() {
-		wg.Wait()
-		close(chanResults)
-	}()
-
-	urls := make([]platformData.PlatformReleaseUrl, 0)
-	for result := range chanResults {
-		urls = append(urls, result...)
-	}
-
-	return urls
 }
 
 func (t *StreamingPlatformService) getUpcResultsFromPlatformers(platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
@@ -278,4 +248,4 @@ func distinctNewUrlsFromChanged(platformReleaseUrls []platformData.PlatformRelea
 }
 
 const ITERATION_STEP = 40
-const UPDATE_TRESHOLD_MINUTES = time.Minute * 15
+const UPDATE_TRESHOLD_INTERVAL = time.Hour
