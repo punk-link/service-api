@@ -20,14 +20,14 @@ import (
 
 type ArtistService struct {
 	cache          *cache.MemoryCacheService
-	logger         *logger.Logger
+	logger         logger.Logger
 	releaseService *ReleaseService
 	spotifyService *spotify.SpotifyService
 }
 
 func ConstructArtistService(injector *do.Injector) (*ArtistService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
 	spotifyService := do.MustInvoke[*ReleaseService](injector)
 

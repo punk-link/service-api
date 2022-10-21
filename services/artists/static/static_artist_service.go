@@ -18,7 +18,7 @@ import (
 type StaticArtistService struct {
 	cache          *cache.MemoryCacheService
 	hashCoder      *common.HashCoder
-	logger         *logger.Logger
+	logger         logger.Logger
 	artistService  *artistServices.ArtistService
 	releaseService *artistServices.ReleaseService
 }
@@ -26,7 +26,7 @@ type StaticArtistService struct {
 func ConstructStaticArtistService(injector *do.Injector) (*StaticArtistService, error) {
 	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 	artistService := do.MustInvoke[*artistServices.ArtistService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 

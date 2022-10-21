@@ -17,12 +17,12 @@ import (
 
 type ManagerService struct {
 	labelService *LabelService
-	logger       *logger.Logger
+	logger       logger.Logger
 }
 
 func ConstructManagerService(injector *do.Injector) (*ManagerService, error) {
 	labelService := do.MustInvoke[*LabelService](injector)
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &ManagerService{
 		labelService: labelService,

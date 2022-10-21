@@ -5,12 +5,10 @@ import (
 	"github.com/samber/do"
 )
 
-type Logger struct{}
-
-func New(injector *do.Injector) (*logger.Logger, error) {
+func New(injector *do.Injector) (logger.Logger, error) {
 	return NewWithoutInjection(), nil
 }
 
-func NewWithoutInjection() *logger.Logger {
-	return &logger.Logger{}
+func NewWithoutInjection() logger.Logger {
+	return logger.New()
 }

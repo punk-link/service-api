@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func createDbReleasesInBatches(logger *logger.Logger, err error, releases *[]artistData.Release) error {
+func createDbReleasesInBatches(logger logger.Logger, err error, releases *[]artistData.Release) error {
 	if err != nil || len(*releases) == 0 {
 		return err
 	}
@@ -46,7 +46,7 @@ func createDbReleasesInBatches(logger *logger.Logger, err error, releases *[]art
 	})
 }
 
-func getDbRelease(logger *logger.Logger, err error, id int) (artistData.Release, error) {
+func getDbRelease(logger logger.Logger, err error, id int) (artistData.Release, error) {
 	if err != nil {
 		return artistData.Release{}, err
 	}
@@ -63,7 +63,7 @@ func getDbRelease(logger *logger.Logger, err error, id int) (artistData.Release,
 	return release, err
 }
 
-func getDbReleasesByArtistId(logger *logger.Logger, err error, artistId int) ([]artistData.Release, error) {
+func getDbReleasesByArtistId(logger logger.Logger, err error, artistId int) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
@@ -85,7 +85,7 @@ func getDbReleasesByArtistId(logger *logger.Logger, err error, artistId int) ([]
 	return releases, err
 }
 
-func getUpcContainers(logger *logger.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
+func getUpcContainers(logger logger.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
@@ -106,7 +106,7 @@ func getUpcContainers(logger *logger.Logger, err error, top int, skip int, updat
 	return releases, err
 }
 
-func getDbReleaseCount(logger *logger.Logger, err error) (int64, error) {
+func getDbReleaseCount(logger logger.Logger, err error) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
@@ -118,7 +118,7 @@ func getDbReleaseCount(logger *logger.Logger, err error) (int64, error) {
 	return count, err
 }
 
-func markDbReleasesAsUpdated(logger *logger.Logger, err error, ids []int, timestamp time.Time) error {
+func markDbReleasesAsUpdated(logger logger.Logger, err error, ids []int, timestamp time.Time) error {
 	if err != nil {
 		return err
 	}

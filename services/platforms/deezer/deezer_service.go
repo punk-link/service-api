@@ -14,11 +14,11 @@ import (
 )
 
 type DeezerService struct {
-	logger *logger.Logger
+	logger logger.Logger
 }
 
 func ConstructDeezerService(injector *do.Injector) (*DeezerService, error) {
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &DeezerService{
 		logger: logger,
@@ -26,7 +26,7 @@ func ConstructDeezerService(injector *do.Injector) (*DeezerService, error) {
 }
 
 func ConstructDeezerServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return platformServices.Platformer(&DeezerService{
 		logger: logger,

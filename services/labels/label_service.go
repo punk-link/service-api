@@ -15,12 +15,12 @@ import (
 )
 
 type LabelService struct {
-	logger         *logger.Logger
+	logger         logger.Logger
 	spotifyService *spotify.SpotifyService
 }
 
 func ConstructLabelService(injector *do.Injector) (*LabelService, error) {
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
 
 	return &LabelService{

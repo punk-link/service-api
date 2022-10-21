@@ -9,7 +9,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func makeBatchRequestWithSync[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
+func makeBatchRequestWithSync[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
 	syncedHttpRequests := make([]commonModels.SyncedHttpRequest, len(syncedUrls))
 	for i, syncedUrl := range syncedUrls {
 		request, err := getRequest(logger, config, method, syncedUrl.Url)
@@ -27,7 +27,7 @@ func makeBatchRequestWithSync[T any](logger *logger.Logger, config *accessToken.
 	return platformServices.MakeBatchRequestWithSync[T](logger, syncedHttpRequests)
 }
 
-func makeBatchRequest[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, urls []string) []T {
+func makeBatchRequest[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, urls []string) []T {
 	syncedUrls := make([]commonModels.SyncedUrl, len(urls))
 	for i, url := range urls {
 		syncedUrls[i] = commonModels.SyncedUrl{
@@ -44,7 +44,7 @@ func makeBatchRequest[T any](logger *logger.Logger, config *accessToken.SpotifyC
 	return results
 }
 
-func makeRequest[T any](logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string, response *T) error {
+func makeRequest[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string, response *T) error {
 	request, err := getRequest(logger, config, method, url)
 	if err != nil {
 		logger.LogWarn("can't build an http request: %s", err.Error())
@@ -54,7 +54,7 @@ func makeRequest[T any](logger *logger.Logger, config *accessToken.SpotifyClient
 	return platformServices.MakeRequest(logger, request, response)
 }
 
-func getRequest(logger *logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string) (*http.Request, error) {
+func getRequest(logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string) (*http.Request, error) {
 	request, err := http.NewRequest(method, "https://api.spotify.com/v1/"+url, nil)
 	if err != nil {
 		return nil, err

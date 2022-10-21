@@ -24,7 +24,7 @@ import (
 	"github.com/samber/do"
 )
 
-func buildDependencies(logger *logger.Logger, consul *consulClient.ConsulClient) *do.Injector {
+func buildDependencies(logger logger.Logger, consul *consulClient.ConsulClient) *do.Injector {
 	injector := do.New()
 
 	spotifySettingsValue, err := consul.GetOrSet("SpotifySettings", 0)

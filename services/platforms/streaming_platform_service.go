@@ -19,13 +19,13 @@ import (
 
 type StreamingPlatformService struct {
 	injector       *do.Injector
-	logger         *logger.Logger
+	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
 }
 
 func ConstructStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
@@ -114,7 +114,7 @@ func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStre
 const PLATFORM_URL_REQUESTS_STREAM_NAME = "PLATFORM-URL-REQUESTS"
 const PLATFORM_URL_REQUESTS_STREAM_SUBJECTS = "PLATFORM-URL-REQUESTS.*"
 
-func (t *StreamingPlatformService) getExistedUrls(logger *logger.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+func (t *StreamingPlatformService) getExistedUrls(logger logger.Logger, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
 	ids := make([]int, len(upcResults))
 	for i, result := range upcResults {
 		ids[i] = result.Id

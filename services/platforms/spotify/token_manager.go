@@ -13,7 +13,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func getAccessToken(logger *logger.Logger, config *accessToken.SpotifyClientConfig) (string, error) {
+func getAccessToken(logger logger.Logger, config *accessToken.SpotifyClientConfig) (string, error) {
 	if len(tokenContainer.Token) != 0 && time.Now().UTC().Before(tokenContainer.Expired) {
 		return tokenContainer.Token, nil
 	}
@@ -41,7 +41,7 @@ func getAccessToken(logger *logger.Logger, config *accessToken.SpotifyClientConf
 	return tokenContainer.Token, nil
 }
 
-func getAccessTokenRequest(logger *logger.Logger, config *accessToken.SpotifyClientConfig) (*http.Request, error) {
+func getAccessTokenRequest(logger logger.Logger, config *accessToken.SpotifyClientConfig) (*http.Request, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
@@ -59,7 +59,7 @@ func getAccessTokenRequest(logger *logger.Logger, config *accessToken.SpotifyCli
 	return request, nil
 }
 
-func parseToken(logger *logger.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
+func parseToken(logger logger.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		logger.LogError(err, err.Error())

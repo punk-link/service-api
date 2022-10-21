@@ -8,7 +8,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func initSentry(app *gin.Engine, logger *logger.Logger, consul *consulClient.ConsulClient) {
+func initSentry(app *gin.Engine, logger logger.Logger, consul *consulClient.ConsulClient) {
 	app.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))

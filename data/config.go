@@ -14,7 +14,7 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func ConfigureDatabase(logger *logger.Logger, consul *consulClient.ConsulClient) {
+func ConfigureDatabase(logger logger.Logger, consul *consulClient.ConsulClient) {
 	dbSettingsValue, err := consul.Get("DatabaseSettings")
 	if err != nil {
 		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
@@ -53,13 +53,13 @@ func ConfigureDatabase(logger *logger.Logger, consul *consulClient.ConsulClient)
 	AutoMigrate(logger)
 }
 
-func AutoMigrate(logger *logger.Logger) {
+func AutoMigrate(logger logger.Logger) {
 	err := migrate(logger, nil, &labels.Label{}, &labels.Manager{})
 	err = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
 	_ = migrate(logger, err, &platforms.PlatformReleaseUrl{})
 }
 
-func migrate(logger *logger.Logger, err error, dst ...interface{}) error {
+func migrate(logger logger.Logger, err error, dst ...interface{}) error {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
 		return err

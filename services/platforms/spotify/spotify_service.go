@@ -19,12 +19,12 @@ import (
 
 type SpotifyService struct {
 	config *accessToken.SpotifyClientConfig
-	logger *logger.Logger
+	logger logger.Logger
 }
 
 func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 	config := do.MustInvoke[*accessToken.SpotifyClientConfig](injector)
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &SpotifyService{
 		config: config,
@@ -34,7 +34,7 @@ func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 
 func ConstructSpotifyServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
 	config := do.MustInvoke[*accessToken.SpotifyClientConfig](injector)
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return platformServices.Platformer(&SpotifyService{
 		config: config,

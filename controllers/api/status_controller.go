@@ -10,11 +10,11 @@ import (
 )
 
 type StatusController struct {
-	logger *logger.Logger
+	logger logger.Logger
 }
 
 func ConstructStatusController(injector *do.Injector) (*StatusController, error) {
-	logger := do.MustInvoke[*logger.Logger](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &StatusController{
 		logger: logger,

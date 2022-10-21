@@ -14,7 +14,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func MakeBatchRequestWithSync[T any](logger *logger.Logger, syncedHttpRequests []commonModels.SyncedHttpRequest) []commonModels.SyncedResult[T] {
+func MakeBatchRequestWithSync[T any](logger logger.Logger, syncedHttpRequests []commonModels.SyncedHttpRequest) []commonModels.SyncedResult[T] {
 	iterationStep := runtime.NumCPU()
 	alignedRequests, unalignedRequests := helpers.AlignSlice(syncedHttpRequests, iterationStep)
 
@@ -49,7 +49,7 @@ func MakeBatchRequestWithSync[T any](logger *logger.Logger, syncedHttpRequests [
 	return syncedResults
 }
 
-func MakeRequest[T any](logger *logger.Logger, request *http.Request, result *T) error {
+func MakeRequest[T any](logger logger.Logger, request *http.Request, result *T) error {
 	client := &http.Client{}
 	var response *http.Response
 
@@ -81,7 +81,7 @@ func MakeRequest[T any](logger *logger.Logger, request *http.Request, result *T)
 	return unmarshalResponseContent(logger, response, &result)
 }
 
-func processRequestAsync[T any](wg *sync.WaitGroup, results chan<- commonModels.SyncedResult[T], logger *logger.Logger, syncedHttpRequest commonModels.SyncedHttpRequest) {
+func processRequestAsync[T any](wg *sync.WaitGroup, results chan<- commonModels.SyncedResult[T], logger logger.Logger, syncedHttpRequest commonModels.SyncedHttpRequest) {
 	defer wg.Done()
 
 	var responseContent T
@@ -103,7 +103,7 @@ func getTimeoutDuration(attemptNumber int) time.Duration {
 	return time.Millisecond * time.Duration(base+jit)
 }
 
-func unmarshalResponseContent[T any](logger *logger.Logger, response *http.Response, result *T) error {
+func unmarshalResponseContent[T any](logger logger.Logger, response *http.Response, result *T) error {
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)

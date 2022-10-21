@@ -8,7 +8,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func createDbPlatformReleaseUrlsInBatches(logger *logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
+func createDbPlatformReleaseUrlsInBatches(logger logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil {
 		return err
 	}
@@ -21,11 +21,11 @@ func createDbPlatformReleaseUrlsInBatches(logger *logger.Logger, err error, urls
 	return err
 }
 
-func getDbPlatformReleaseUrlsByReleaseId(logger *logger.Logger, err error, id int) ([]platformData.PlatformReleaseUrl, error) {
+func getDbPlatformReleaseUrlsByReleaseId(logger logger.Logger, err error, id int) ([]platformData.PlatformReleaseUrl, error) {
 	return getDbPlatformReleaseUrlsByReleaseIds(logger, err, []int{id})
 }
 
-func getDbPlatformReleaseUrlsByReleaseIds(logger *logger.Logger, err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
+func getDbPlatformReleaseUrlsByReleaseIds(logger logger.Logger, err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -43,7 +43,7 @@ func getDbPlatformReleaseUrlsByReleaseIds(logger *logger.Logger, err error, ids 
 	return results, err
 }
 
-func updateDbPlatformReleaseUrlsInBatches(logger *logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
+func updateDbPlatformReleaseUrlsInBatches(logger logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil || len(urls) == 0 {
 		return err
 	}

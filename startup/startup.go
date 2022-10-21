@@ -8,7 +8,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func Configure(logger *logger.Logger, consul *consulClient.ConsulClient, ginMode string) *gin.Engine {
+func Configure(logger logger.Logger, consul *consulClient.ConsulClient, ginMode string) *gin.Engine {
 	diContainer := buildDependencies(logger, consul)
 
 	gin.SetMode(ginMode)

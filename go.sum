@@ -279,6 +279,10 @@ github.com/punk-link/environment-variable-manager v1.0.0 h1:jtG05EbeTXJgGJpjB2kz
 github.com/punk-link/environment-variable-manager v1.0.0/go.mod h1:PfA0QpU1F5IfCUcp00S84PQ1I1BbES58P/rLabx8d4M=
 github.com/punk-link/logger v1.0.1 h1:Andn2YtfGy/g0xeFQgqfbVj8AWAY5KOgpiKRtwJMikA=
 github.com/punk-link/logger v1.0.1/go.mod h1:BXZhP+dXBoGZ1L3RfTRA5aWP1DJFgivk9gkQD9mKejg=
+github.com/punk-link/logger v1.0.2 h1:wfrwLcMO7CIjXOx5774IZfFzlgpSimGz7+vs54izBeI=
+github.com/punk-link/logger v1.0.2/go.mod h1:VQqr9BVmgekOzKvV2QBSO5cqoyyvJ6kNalaxPPfpxyg=
+github.com/punk-link/logger v1.0.4 h1:9MJn/blHC4H2pYWJQhULPoBG5ZBeDKD6XWPchLI4lPw=
+github.com/punk-link/logger v1.0.4/go.mod h1:VQqr9BVmgekOzKvV2QBSO5cqoyyvJ6kNalaxPPfpxyg=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.0 h1:FCbCCtXNOY3UtUuHUYaghJg4y7Fd14rXifAYUAtL9R8=
@@ -400,6 +404,8 @@ golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20221013171732-95e765b1cc43 h1:OK7RB6t2WQX54srQQYSXMW8dF5C6/8+oA/s5QBmmto4=
 golang.org/x/sys v0.0.0-20221013171732-95e765b1cc43/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.1.0 h1:kunALQeHf1/185U1i0GOB/fy1IPRDDpuoOOqRReG57U=
+golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
