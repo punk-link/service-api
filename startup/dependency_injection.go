@@ -1,11 +1,8 @@
 package startup
 
 import (
-	"fmt"
 	apiControllers "main/controllers/api"
 	staticControllers "main/controllers/static"
-	platformConstants "main/models/platforms/constants"
-	platformEnums "main/models/platforms/enums"
 	"main/models/platforms/spotify/accessToken"
 	artistServices "main/services/artists"
 	artistStaticServices "main/services/artists/static"
@@ -14,7 +11,6 @@ import (
 	loggerServices "main/services/common/logger"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
-	deezerServices "main/services/platforms/deezer"
 	spotifyServices "main/services/platforms/spotify"
 
 	consulClient "github.com/punk-link/consul-client"
@@ -27,7 +23,7 @@ import (
 func buildDependencies(logger logger.Logger, consul *consulClient.ConsulClient) *do.Injector {
 	injector := do.New()
 
-	spotifySettingsValue, err := consul.GetOrSet("SpotifySettings", 0)
+	spotifySettingsValue, err := consul.Get("SpotifySettings")
 	if err != nil {
 		logger.LogFatal(err, "Can't obtain Spotify settings from Consul: %s", err.Error())
 	}
@@ -38,7 +34,14 @@ func buildDependencies(logger logger.Logger, consul *consulClient.ConsulClient) 
 		ClientSecret: spotifySettings["ClientSecret"].(string),
 	})
 
-	natsConnection, err := nats.Connect(nats.DefaultOptions.Url)
+	natsSettingsValues, err := consul.Get("NatsSettings")
+	if err != nil {
+		logger.LogFatal(err, "Can't obtain Nats settings from Consul: '%s'", err.Error())
+		return nil
+	}
+	natsSettings := natsSettingsValues.(map[string]interface{})
+
+	natsConnection, err := nats.Connect(natsSettings["Url"].(string))
 	if err != nil {
 		logger.LogFatal(err, "Nats connection error: %s", err.Error())
 	}
@@ -52,11 +55,7 @@ func buildDependencies(logger logger.Logger, consul *consulClient.ConsulClient) 
 	do.Provide(injector, labelServices.ConstructLabelService)
 	do.Provide(injector, labelServices.ConstructManagerService)
 
-	do.Provide(injector, deezerServices.ConstructDeezerService)
-	do.ProvideNamed(injector, buildPlatformServiceName(platformEnums.Deezer), deezerServices.ConstructDeezerServiceAsPlatformer)
-
 	do.Provide(injector, spotifyServices.ConstructSpotifyService)
-	do.ProvideNamed(injector, buildPlatformServiceName(platformEnums.Spotify), spotifyServices.ConstructSpotifyServiceAsPlatformer)
 
 	do.Provide(injector, artistServices.ConstructReleaseService)
 	do.Provide(injector, artistStaticServices.ConstructStaticReleaseService)
@@ -77,8 +76,4 @@ func buildDependencies(logger logger.Logger, consul *consulClient.ConsulClient) 
 	do.Provide(injector, staticControllers.ConstructStaticReleaseController)
 
 	return injector
-}
-
-func buildPlatformServiceName(serviceName string) string {
-	return fmt.Sprintf("%s%s", serviceName, platformConstants.PLATFORM_SERVICE_TOKEN)
 }

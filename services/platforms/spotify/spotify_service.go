@@ -3,8 +3,6 @@ package spotify
 import (
 	"fmt"
 	"main/helpers"
-	platforms "main/models/platforms"
-	platformEnums "main/models/platforms/enums"
 	"main/models/platforms/spotify/accessToken"
 	spotifyArtists "main/models/platforms/spotify/artists"
 	"main/models/platforms/spotify/releases"
@@ -14,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/punk-link/logger"
+	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
 )
 
@@ -32,11 +31,11 @@ func ConstructSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 	}, nil
 }
 
-func ConstructSpotifyServiceAsPlatformer(injector *do.Injector) (platformServices.Platformer, error) {
+func ConstructSpotifyServiceAsPlatformer(injector *do.Injector) (platformContracts.Platformer, error) {
 	config := do.MustInvoke[*accessToken.SpotifyClientConfig](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 
-	return platformServices.Platformer(&SpotifyService{
+	return platformContracts.Platformer(&SpotifyService{
 		config: config,
 		logger: logger,
 	}), nil
@@ -94,8 +93,12 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	return spotifyResponse.Items
 }
 
+func (t *SpotifyService) GetBatchSize() int {
+	return 40
+}
+
 func (t *SpotifyService) GetPlatformName() string {
-	return platformEnums.Spotify
+	return platformContracts.Spotify
 }
 
 func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
@@ -116,13 +119,13 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 	return spotifyReleases
 }
 
-func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
+func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platformContracts.UpcContainer) []platformContracts.UrlResultContainer {
 	syncedUrls := platformServices.GetSyncedUrls("search?type=album&q=upc:%s", upcContainers)
 	upcMap := platformServices.GetUpcMap(upcContainers)
 
 	syncedReleaseContainers := makeBatchRequestWithSync[releases.UpcArtistReleasesContainer](t.logger, t.config, "GET", syncedUrls)
 
-	results := make([]platforms.UrlResultContainer, 0)
+	results := make([]platformContracts.UrlResultContainer, 0)
 	for _, syncedContainer := range syncedReleaseContainers {
 		container := syncedContainer.Result
 		if len(container.Albums.Items) == 0 {

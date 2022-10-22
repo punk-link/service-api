@@ -3,11 +3,12 @@ package base
 import (
 	"fmt"
 	commonModels "main/models/common"
-	platforms "main/models/platforms"
+
+	platformContracts "github.com/punk-link/platform-contracts"
 )
 
-func BuildUrlResultContainer(id int, platformName string, upc string, url string) platforms.UrlResultContainer {
-	return platforms.UrlResultContainer{
+func BuildUrlResultContainer(id int, platformName string, upc string, url string) platformContracts.UrlResultContainer {
+	return platformContracts.UrlResultContainer{
 		Id:           id,
 		PlatformName: platformName,
 		Upc:          upc,
@@ -15,7 +16,7 @@ func BuildUrlResultContainer(id int, platformName string, upc string, url string
 	}
 }
 
-func GetSyncedUrls(format string, upcContainers []platforms.UpcContainer) []commonModels.SyncedUrl {
+func GetSyncedUrls(format string, upcContainers []platformContracts.UpcContainer) []commonModels.SyncedUrl {
 	results := make([]commonModels.SyncedUrl, len(upcContainers))
 	for i, container := range upcContainers {
 		results[i] = commonModels.SyncedUrl{
@@ -27,7 +28,7 @@ func GetSyncedUrls(format string, upcContainers []platforms.UpcContainer) []comm
 	return results
 }
 
-func GetUpcMap(upcContainers []platforms.UpcContainer) map[string]int {
+func GetUpcMap(upcContainers []platformContracts.UpcContainer) map[string]int {
 	results := make(map[string]int, len(upcContainers))
 	for _, container := range upcContainers {
 		results[container.Upc] = container.Id

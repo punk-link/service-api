@@ -5,7 +5,6 @@ import (
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	"main/models/labels"
-	"main/models/platforms"
 	"main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/cache"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/punk-link/logger"
+	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
 )
 
@@ -90,12 +90,12 @@ func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
 	return releases[0], nil
 }
 
-func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTreshold time.Time) []platforms.UpcContainer {
+func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTreshold time.Time) []platformContracts.UpcContainer {
 	releases, _ := getUpcContainers(t.logger, nil, top, skip, updateTreshold)
 
-	results := make([]platforms.UpcContainer, len(releases))
+	results := make([]platformContracts.UpcContainer, len(releases))
 	for i, release := range releases {
-		results[i] = platforms.UpcContainer{
+		results[i] = platformContracts.UpcContainer{
 			Id:  release.Id,
 			Upc: release.Upc,
 		}

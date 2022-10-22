@@ -283,6 +283,8 @@ github.com/punk-link/logger v1.0.2 h1:wfrwLcMO7CIjXOx5774IZfFzlgpSimGz7+vs54izBe
 github.com/punk-link/logger v1.0.2/go.mod h1:VQqr9BVmgekOzKvV2QBSO5cqoyyvJ6kNalaxPPfpxyg=
 github.com/punk-link/logger v1.0.4 h1:9MJn/blHC4H2pYWJQhULPoBG5ZBeDKD6XWPchLI4lPw=
 github.com/punk-link/logger v1.0.4/go.mod h1:VQqr9BVmgekOzKvV2QBSO5cqoyyvJ6kNalaxPPfpxyg=
+github.com/punk-link/platform-contracts v1.0.2 h1:CjqpSIvionPAzo2BICcK1MmDALbMix2+14hO5+nuGWU=
+github.com/punk-link/platform-contracts v1.0.2/go.mod h1:nd3vAUOGuU5HwL/V5VghniMSLkqunlMTbDGCZnGEAsA=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.0 h1:FCbCCtXNOY3UtUuHUYaghJg4y7Fd14rXifAYUAtL9R8=
