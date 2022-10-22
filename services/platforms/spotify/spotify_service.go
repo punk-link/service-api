@@ -132,8 +132,8 @@ func (t *SpotifyService) GetReleaseUrlsByUpc(upcContainers []platformContracts.U
 			continue
 		}
 
-		id := upcMap[syncedContainer.Sync]
-		result := platformServices.BuildUrlResultContainer(id, t.GetPlatformName(), syncedContainer.Sync, container.Albums.Items[0].ExternalUrls.Spotify)
+		id := upcMap[syncedContainer.SyncKey]
+		result := platformServices.BuildUrlResultContainer(id, t.GetPlatformName(), syncedContainer.SyncKey, container.Albums.Items[0].ExternalUrls.Spotify)
 		results = append(results, result)
 	}
 

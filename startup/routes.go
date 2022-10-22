@@ -61,7 +61,8 @@ func setupRouts(app *gin.Engine, diContainer *do.Injector) {
 	})
 
 	registerRoutes(diContainer, func(controller *apiControllers.StreamingPlatformController) {
-		v1.POST("/platforms/sync", controller.Sync)
+		v1.POST("/platforms/sync/process", controller.ProcessUrlSyncResults)
+		v1.GET("/platforms/sync/start", controller.RequestUrlSync)
 	})
 }
 

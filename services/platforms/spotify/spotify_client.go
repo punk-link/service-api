@@ -3,14 +3,14 @@ package spotify
 import (
 	commonModels "main/models/common"
 	"main/models/platforms/spotify/accessToken"
-	platformServices "main/services/platforms/base"
 	"net/http"
 
+	httpClient "github.com/punk-link/http-client"
 	"github.com/punk-link/logger"
 )
 
-func makeBatchRequestWithSync[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, syncedUrls []commonModels.SyncedUrl) []commonModels.SyncedResult[T] {
-	syncedHttpRequests := make([]commonModels.SyncedHttpRequest, len(syncedUrls))
+func makeBatchRequestWithSync[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, syncedUrls []commonModels.SyncedUrl) []httpClient.SyncedResult[T] {
+	syncedHttpRequests := make([]httpClient.SyncedRequest, len(syncedUrls))
 	for i, syncedUrl := range syncedUrls {
 		request, err := getRequest(logger, config, method, syncedUrl.Url)
 		if err != nil {
@@ -18,13 +18,13 @@ func makeBatchRequestWithSync[T any](logger logger.Logger, config *accessToken.S
 			continue
 		}
 
-		syncedHttpRequests[i] = commonModels.SyncedHttpRequest{
+		syncedHttpRequests[i] = httpClient.SyncedRequest{
 			HttpRequest: request,
-			Sync:        syncedUrl.Sync,
+			SyncKey:     syncedUrl.Sync,
 		}
 	}
 
-	return platformServices.MakeBatchRequestWithSync[T](logger, syncedHttpRequests)
+	return httpClient.MakeBatchRequestWithSyncKeys[T](httpClient.DefaultConfig(logger), syncedHttpRequests)
 }
 
 func makeBatchRequest[T any](logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, urls []string) []T {
@@ -51,7 +51,7 @@ func makeRequest[T any](logger logger.Logger, config *accessToken.SpotifyClientC
 		return err
 	}
 
-	return platformServices.MakeRequest(logger, request, response)
+	return httpClient.MakeRequest(httpClient.DefaultConfig(logger), request, response)
 }
 
 func getRequest(logger logger.Logger, config *accessToken.SpotifyClientConfig, method string, url string) (*http.Request, error) {
