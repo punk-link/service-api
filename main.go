@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"main/services/common/logger"
 	"main/startup"
 	"net/http"
 	"os"
@@ -14,10 +13,11 @@ import (
 
 	consulClient "github.com/punk-link/consul-client"
 	envManager "github.com/punk-link/environment-variable-manager"
+	"github.com/punk-link/logger"
 )
 
 func main() {
-	logger := logger.NewWithoutInjection()
+	logger := logger.New()
 
 	environmentName := getEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
@@ -33,7 +33,7 @@ func main() {
 		logger.LogFatal(err, "Can't obtain host settings from Consul: '%s'", err.Error())
 		return
 	}
-	hostSettings := hostSettingsValues.(map[string]interface{})
+	hostSettings := hostSettingsValues.(map[string]any)
 
 	ginMode := hostSettings["Mode"].(string)
 	app := startup.Configure(logger, consul, ginMode)

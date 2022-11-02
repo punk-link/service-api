@@ -1,4 +1,4 @@
-package search
+package searches
 
 type ArtistSearchResult struct {
 	Artists ArtistContainer `json:"artists"`

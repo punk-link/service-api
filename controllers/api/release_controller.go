@@ -13,7 +13,7 @@ type ReleaseController struct {
 	releaseService *artists.ReleaseService
 }
 
-func ConstructReleaseController(injector *do.Injector) (*ReleaseController, error) {
+func NewReleaseController(injector *do.Injector) (*ReleaseController, error) {
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
 	return &ReleaseController{

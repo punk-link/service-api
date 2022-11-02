@@ -10,29 +10,33 @@ import (
 	"main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/artists/validators"
-	"main/services/cache"
 	"main/services/platforms/spotify"
 	"time"
 
+	cacheManager "github.com/punk-link/cache-manager"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type ArtistService struct {
-	cache          *cache.MemoryCacheService
+	cache          cacheManager.CacheManager
+	db             *gorm.DB
 	logger         logger.Logger
 	releaseService *ReleaseService
 	spotifyService *spotify.SpotifyService
 }
 
-func ConstructArtistService(injector *do.Injector) (*ArtistService, error) {
-	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+func NewArtistService(injector *do.Injector) (*ArtistService, error) {
+	cache := do.MustInvoke[cacheManager.CacheManager](injector)
+	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
 	spotifyService := do.MustInvoke[*ReleaseService](injector)
 
 	return &ArtistService{
 		cache:          cache,
+		db:             db,
 		logger:         logger,
 		releaseService: spotifyService,
 		spotifyService: releaseService,
@@ -45,7 +49,7 @@ func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId stri
 		err = errors.New("artist's spotify ID is empty")
 	}
 
-	dbArtist, err := getDbArtistBySpotifyId(t.logger, err, spotifyId)
+	dbArtist, err := getDbArtistBySpotifyId(t.db, t.logger, err, spotifyId)
 
 	now := time.Now().UTC()
 	if dbArtist.Id != 0 {
@@ -87,7 +91,7 @@ func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labe
 }
 
 func (t *ArtistService) Get(labelId int) ([]artistModels.Artist, error) {
-	dbArtistIds, err := getDbArtistIdsByLabelId(t.logger, nil, labelId)
+	dbArtistIds, err := getDbArtistIdsByLabelId(t.db, t.logger, nil, labelId)
 	return t.getInternal(err, dbArtistIds)
 }
 
@@ -101,7 +105,7 @@ func (t *ArtistService) GetOne(id int) (artistModels.Artist, error) {
 }
 
 func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
-	const minimalQueryLength int = 3
+	const minimalQueryLength = 3
 	if len(query) < minimalQueryLength {
 		return make([]artistModels.ArtistSearchResult, 0)
 	}
@@ -121,7 +125,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 	}
 
 	dbArtist, err := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
-	err = createDbArtist(t.logger, err, &dbArtist)
+	err = createDbArtist(t.db, t.logger, err, &dbArtist)
 
 	return dbArtist, err
 }
@@ -145,7 +149,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 		t.logger.LogError(err, err.Error())
 	}
 
-	err = createDbArtistsInBatches(t.logger, err, &dbArtists)
+	err = createDbArtistsInBatches(t.db, t.logger, err, &dbArtists)
 
 	return dbArtists, err
 }
@@ -175,7 +179,7 @@ func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistDa
 		return make(map[string]artistData.Artist, 0), err
 	}
 
-	existedArtists, err := getDbArtistsBySpotifyIds(t.logger, err, spotifyIds)
+	existedArtists, err := getDbArtistsBySpotifyIds(t.db, t.logger, err, spotifyIds)
 
 	results := make(map[string]artistData.Artist, 0)
 	for _, artist := range existedArtists {
@@ -229,7 +233,7 @@ func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist
 			continue
 		}
 
-		dbArtist, dbArtistErr := getDbArtist(t.logger, err, id)
+		dbArtist, dbArtistErr := getDbArtist(t.db, t.logger, err, id)
 		artist, conversionErr := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
 		if err != nil {
 			t.logger.LogError(err, err.Error())
@@ -272,11 +276,11 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 
 	if dbArtist.LabelId == 0 {
 		dbArtist.LabelId = labelId
-		err = updateDbArtist(t.logger, err, &dbArtist)
+		err = updateDbArtist(t.db, t.logger, err, &dbArtist)
 	}
 
 	t.cache.Remove(t.buildCacheKey(dbArtist.Id))
 	return dbArtist, err
 }
 
-const ARTIST_CACHE_DURATION time.Duration = time.Hour * 24
+const ARTIST_CACHE_DURATION = time.Hour * 24

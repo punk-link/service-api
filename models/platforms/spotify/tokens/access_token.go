@@ -1,4 +1,4 @@
-package accessToken
+package tokens
 
 type SpotifyAccessToken struct {
 	Token     string `json:"access_token"`

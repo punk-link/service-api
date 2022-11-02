@@ -1,30 +1,31 @@
 package labels
 
 import (
-	"main/data"
-	labelData "main/data/labels"
 	"main/helpers"
 	"main/models/labels"
 
 	"main/services/labels/converters"
 	"main/services/labels/validators"
 	"strings"
-	"time"
 
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type ManagerService struct {
+	db           *gorm.DB
 	labelService *LabelService
 	logger       logger.Logger
 }
 
-func ConstructManagerService(injector *do.Injector) (*ManagerService, error) {
+func NewManagerService(injector *do.Injector) (*ManagerService, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
 	labelService := do.MustInvoke[*LabelService](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &ManagerService{
+		db:           db,
 		labelService: labelService,
 		logger:       logger,
 	}, nil
@@ -49,7 +50,7 @@ func (t *ManagerService) AddMaster(request labels.AddMasterManagerRequest) (labe
 }
 
 func (t *ManagerService) Get(currentManager labels.ManagerContext) ([]labels.Manager, error) {
-	dbManagers, err := getDbManagersByLabelId(t.logger, nil, currentManager.LabelId)
+	dbManagers, err := getDbManagersByLabelId(t.db, t.logger, nil, currentManager.LabelId)
 	if err != nil {
 		return make([]labels.Manager, 0), err
 	}
@@ -91,12 +92,7 @@ func (t *ManagerService) addInternal(err error, currentManager labels.ManagerCon
 	}
 
 	dbManager := converters.ToDbManager(managerName, currentManager.LabelId)
-	err = data.DB.Create(&dbManager).Error
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-		return labels.Manager{}, err
-	}
-
+	err = createDbManager(t.db, t.logger, err, &dbManager)
 	return t.getOneInternal(err, dbManager.Id)
 }
 
@@ -105,13 +101,8 @@ func (t *ManagerService) getOneInternal(err error, id int) (labels.Manager, erro
 		return labels.Manager{}, err
 	}
 
-	var dbManager labelData.Manager
-	err = data.DB.First(&dbManager, id).Error
-	if err != nil {
-		return labels.Manager{}, err
-	}
-
-	return converters.ToManager(dbManager), nil
+	dbManager, err := getDbManager(t.db, t.logger, err, id)
+	return converters.ToManager(err, dbManager)
 }
 
 func (t *ManagerService) modifyInternal(err error, id int, managerName string) (labels.Manager, error) {
@@ -119,15 +110,9 @@ func (t *ManagerService) modifyInternal(err error, id int, managerName string) (
 		return labels.Manager{}, err
 	}
 
-	var dbManager labelData.Manager
-	err = data.DB.First(&dbManager, id).Error
-	if err != nil {
-		return labels.Manager{}, err
-	}
+	dbManager, err := getDbManager(t.db, t.logger, err, id)
 
 	dbManager.Name = managerName
-	dbManager.Updated = time.Now().UTC()
-	err = data.DB.Save(&dbManager).Error
-
+	err = updateDbManager(t.db, t.logger, err, &dbManager)
 	return t.getOneInternal(err, id)
 }

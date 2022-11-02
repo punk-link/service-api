@@ -6,25 +6,25 @@ import (
 	"main/models/artists/enums"
 	artistServices "main/services/artists"
 	"main/services/artists/converters"
-	"main/services/cache"
 	"main/services/common"
 	"sort"
 	"time"
 
+	cacheManager "github.com/punk-link/cache-manager"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type StaticArtistService struct {
-	cache          *cache.MemoryCacheService
+	cache          cacheManager.CacheManager
 	hashCoder      *common.HashCoder
 	logger         logger.Logger
 	artistService  *artistServices.ArtistService
 	releaseService *artistServices.ReleaseService
 }
 
-func ConstructStaticArtistService(injector *do.Injector) (*StaticArtistService, error) {
-	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+func NewStaticArtistService(injector *do.Injector) (*StaticArtistService, error) {
+	cache := do.MustInvoke[cacheManager.CacheManager](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	artistService := do.MustInvoke[*artistServices.ArtistService](injector)

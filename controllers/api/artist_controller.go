@@ -15,7 +15,7 @@ type ArtistController struct {
 	managerService *labels.ManagerService
 }
 
-func ConstructArtistController(injector *do.Injector) (*ArtistController, error) {
+func NewArtistController(injector *do.Injector) (*ArtistController, error) {
 	artistService := do.MustInvoke[*artists.ArtistService](injector)
 	managerService := do.MustInvoke[*labels.ManagerService](injector)
 

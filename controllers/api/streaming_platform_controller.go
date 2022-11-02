@@ -12,7 +12,7 @@ type StreamingPlatformController struct {
 	streamingPlatformService *platforms.StreamingPlatformService
 }
 
-func ConstructStreamingPlatformController(injector *do.Injector) (*StreamingPlatformController, error) {
+func NewStreamingPlatformController(injector *do.Injector) (*StreamingPlatformController, error) {
 	streamingPlatformService := do.MustInvoke[*platforms.StreamingPlatformService](injector)
 
 	return &StreamingPlatformController{

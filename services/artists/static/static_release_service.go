@@ -5,25 +5,25 @@ import (
 	"main/models/artists"
 	"main/models/platforms"
 	artistServices "main/services/artists"
-	"main/services/cache"
 	"main/services/common"
 	platformServices "main/services/platforms"
 	"time"
 
+	cacheManager "github.com/punk-link/cache-manager"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
 )
 
 type StaticReleaseService struct {
-	cache           *cache.MemoryCacheService
+	cache           cacheManager.CacheManager
 	hashCoder       *common.HashCoder
 	logger          logger.Logger
 	platformService *platformServices.StreamingPlatformService
 	releaseService  *artistServices.ReleaseService
 }
 
-func ConstructStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
-	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+func NewStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
+	cache := do.MustInvoke[cacheManager.CacheManager](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformService := do.MustInvoke[*platformServices.StreamingPlatformService](injector)

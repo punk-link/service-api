@@ -1,4 +1,4 @@
-package accessToken
+package tokens
 
 type SpotifyClientConfig struct {
 	ClientId     string

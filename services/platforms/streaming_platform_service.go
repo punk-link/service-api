@@ -11,22 +11,24 @@ import (
 	"github.com/punk-link/logger"
 	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type StreamingPlatformService struct {
-	injector       *do.Injector
+	db             *gorm.DB
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
 }
 
-func ConstructStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
+func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
 	return &StreamingPlatformService{
-		injector:       injector.Clone(),
+		db:             db,
 		logger:         logger,
 		natsConnection: natsConnection,
 		releaseService: releaseService,
@@ -34,7 +36,7 @@ func ConstructStreamingPlatformService(injector *do.Injector) (*StreamingPlatfor
 }
 
 func (t *StreamingPlatformService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
-	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.logger, nil, releaseId)
+	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.db, t.logger, nil, releaseId)
 	if err != nil {
 		return make([]platforms.PlatformReleaseUrl, 0), err
 	}
@@ -62,10 +64,7 @@ func (t *StreamingPlatformService) ProcessPlatforeUrlResults() {
 func (t *StreamingPlatformService) PublishPlatforeUrlRequests() {
 	jetStreamContext, err := t.natsConnection.JetStream()
 	err = t.createPlatformJetStreamIfNotExist(err, jetStreamContext)
-	err = t.publishPlatforeUrlRequests(err, jetStreamContext)
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
+	t.publishPlatforeUrlRequests(err, jetStreamContext)
 }
 
 func (t *StreamingPlatformService) consumeUrlResults(err error, subscription *nats.Subscription) error {
@@ -117,13 +116,13 @@ func (t *StreamingPlatformService) createReducerJetStreamIfNotExist(err error, j
 	return err
 }
 
-func (t *StreamingPlatformService) getExistedUrls(logger logger.Logger, urlResults []platformContracts.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+func (t *StreamingPlatformService) getExistedUrls(urlResults []platformContracts.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
 	ids := make([]int, len(urlResults))
 	for i, result := range urlResults {
 		ids[i] = result.Id
 	}
 
-	existedUrls, err := getDbPlatformReleaseUrlsByReleaseIds(logger, nil, ids)
+	existedUrls, err := getDbPlatformReleaseUrlsByReleaseIds(t.db, t.logger, nil, ids)
 	if err != nil {
 		return make(map[int]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -207,12 +206,12 @@ func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStre
 func (t *StreamingPlatformService) resync(urlResults []platformContracts.UrlResultContainer) {
 	timestamp := time.Now().UTC()
 
-	existedUrls, err := t.getExistedUrls(t.logger, urlResults)
+	existedUrls, err := t.getExistedUrls(urlResults)
 	platformReleaseUrls, err := t.getPlatformReleaseUrls(err, existedUrls, urlResults, timestamp)
 	newUrls, changedUrls := distinctNewUrlsFromChanged(platformReleaseUrls)
 
-	err = createDbPlatformReleaseUrlsInBatches(t.logger, err, newUrls)
-	err = updateDbPlatformReleaseUrlsInBatches(t.logger, err, changedUrls)
+	err = createDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, newUrls)
+	err = updateDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, changedUrls)
 	t.markReleasesAsUpdated(err, platformReleaseUrls, timestamp)
 }
 

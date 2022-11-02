@@ -11,37 +11,14 @@ import (
 type HashCoder struct {
 }
 
-func ConstructHashCoder(injector *do.Injector) (*HashCoder, error) {
-	encodingTable = make(map[string]int, len(decodingTable))
+func NewHashCoder(injector *do.Injector) (*HashCoder, error) {
+	_encodingTable = make(map[string]int, len(_decodingTable))
 
-	for key, value := range decodingTable {
-		encodingTable[value] = key
+	for key, value := range _decodingTable {
+		_encodingTable[value] = key
 	}
 
 	return &HashCoder{}, nil
-}
-
-func (t *HashCoder) Encode(target int) string {
-	hash := ""
-
-	denominator := len(decodingTable)
-	quotient := target
-	for {
-		if quotient == 0 {
-			break
-		}
-
-		remainder := quotient % denominator
-		quotient = quotient / denominator
-
-		hash = decodingTable[remainder] + hash
-	}
-
-	if MINIMAL_HASH_LENGTH <= len(hash) {
-		return hash
-	}
-
-	return fmt.Sprintf("%0*s", MINIMAL_HASH_LENGTH, hash)
 }
 
 func (t *HashCoder) Decode(target string) int {
@@ -51,19 +28,42 @@ func (t *HashCoder) Decode(target string) int {
 	}
 
 	result := 0
-	base := float64(len(encodingTable))
+	base := float64(len(_encodingTable))
 	for i := 0; i < len(hash); i++ {
-		encoded := encodingTable[string(hash[len(hash)-i-1])]
+		encoded := _encodingTable[string(hash[len(hash)-i-1])]
 		result += encoded * int(math.Pow(base, float64(i)))
 	}
 
 	return result
 }
 
-const MINIMAL_HASH_LENGTH int = 4
+func (t *HashCoder) Encode(target int) string {
+	hash := ""
 
-var encodingTable map[string]int
-var decodingTable = map[int]string{
+	denominator := len(_decodingTable)
+	quotient := target
+	for {
+		if quotient == 0 {
+			break
+		}
+
+		remainder := quotient % denominator
+		quotient = quotient / denominator
+
+		hash = _decodingTable[remainder] + hash
+	}
+
+	if MINIMAL_HASH_LENGTH <= len(hash) {
+		return hash
+	}
+
+	return fmt.Sprintf("%0*s", MINIMAL_HASH_LENGTH, hash)
+}
+
+const MINIMAL_HASH_LENGTH = 4
+
+var _encodingTable map[string]int
+var _decodingTable = map[int]string{
 	0:  "0",
 	1:  "1",
 	2:  "2",

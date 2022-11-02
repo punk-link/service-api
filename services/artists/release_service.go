@@ -7,29 +7,33 @@ import (
 	"main/models/labels"
 	"main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
-	"main/services/cache"
 	"main/services/platforms/spotify"
 	"sync"
 	"time"
 
+	cacheManager "github.com/punk-link/cache-manager"
 	"github.com/punk-link/logger"
 	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type ReleaseService struct {
-	cache          *cache.MemoryCacheService
+	cache          cacheManager.CacheManager
+	db             *gorm.DB
 	logger         logger.Logger
 	spotifyService *spotify.SpotifyService
 }
 
-func ConstructReleaseService(injector *do.Injector) (*ReleaseService, error) {
-	cache := do.MustInvoke[*cache.MemoryCacheService](injector)
+func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
+	cache := do.MustInvoke[cacheManager.CacheManager](injector)
+	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
 
 	return &ReleaseService{
 		cache:          cache,
+		db:             db,
 		logger:         logger,
 		spotifyService: spotifyService,
 	}, nil
@@ -39,11 +43,11 @@ func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[s
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
 	orderDbReleasesChronologically(dbReleases)
 
-	return createDbReleasesInBatches(t.logger, nil, &dbReleases)
+	return createDbReleasesInBatches(t.db, t.logger, nil, &dbReleases)
 }
 
 func (t *ReleaseService) GetCount() int {
-	count, _ := getDbReleaseCount(t.logger, nil)
+	count, _ := getDbReleaseCount(t.db, t.logger, nil)
 	return int(count)
 }
 
@@ -54,7 +58,7 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 		return value.([]artistModels.Release), nil
 	}
 
-	dbReleases, err := getDbReleasesByArtistId(t.logger, nil, artistId)
+	dbReleases, err := getDbReleasesByArtistId(t.db, t.logger, nil, artistId)
 	artists, err := t.getReleasesArtists(err, dbReleases)
 	releases, err := t.toReleases(err, dbReleases, artists)
 	if err == nil {
@@ -65,7 +69,7 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 }
 
 func (t *ReleaseService) GetMissing(artistId int, artistSpotifyId string) ([]releases.Release, error) {
-	dbReleases, err := getDbReleasesByArtistId(t.logger, nil, artistId)
+	dbReleases, err := getDbReleasesByArtistId(t.db, t.logger, nil, artistId)
 	missingReleaseSpotifyIds, err := t.getMissingReleasesSpotifyIds(err, dbReleases, artistSpotifyId)
 
 	return t.getReleaseDetails(err, missingReleaseSpotifyIds)
@@ -78,7 +82,7 @@ func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
 		return value.(artistModels.Release), nil
 	}
 
-	dbRelease, err := getDbRelease(t.logger, nil, id)
+	dbRelease, err := getDbRelease(t.db, t.logger, nil, id)
 	dbReleasesOfOne := []artistData.Release{dbRelease}
 
 	artists, err := t.getReleasesArtists(err, dbReleasesOfOne)
@@ -91,7 +95,7 @@ func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
 }
 
 func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTreshold time.Time) []platformContracts.UpcContainer {
-	releases, _ := getUpcContainers(t.logger, nil, top, skip, updateTreshold)
+	releases, _ := getUpcContainers(t.db, t.logger, nil, top, skip, updateTreshold)
 
 	results := make([]platformContracts.UpcContainer, len(releases))
 	for i, release := range releases {
@@ -105,7 +109,7 @@ func (t *ReleaseService) GetUpcContainersToUpdate(top int, skip int, updateTresh
 }
 
 func (t *ReleaseService) MarkAsUpdated(ids []int, timestamp time.Time) error {
-	return markDbReleasesAsUpdated(t.logger, nil, ids, timestamp)
+	return markDbReleasesAsUpdated(t.db, t.logger, nil, ids, timestamp)
 }
 
 func (t *ReleaseService) buildCacheKey(id int) string {
@@ -185,7 +189,7 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	}
 
 	artistIds := getArtistsIdsFromDbReleases(t.logger, releases)
-	artists, err := getDbArtists(t.logger, err, artistIds)
+	artists, err := getDbArtists(t.db, t.logger, err, artistIds)
 
 	results := make(map[int]artistModels.Artist, len(artists))
 	for _, dbArtist := range artists {

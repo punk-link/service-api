@@ -20,7 +20,7 @@ func Configure(logger logger.Logger, consul *consulClient.ConsulClient, ginMode 
 	initSentry(app, logger, consul)
 	setupRouts(app, diContainer)
 
-	data.ConfigureDatabase(logger, consul)
+	data.New(logger, consul)
 
 	return app
 }

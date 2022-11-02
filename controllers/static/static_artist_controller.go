@@ -12,7 +12,7 @@ type StaticArtistController struct {
 	service *static.StaticArtistService
 }
 
-func ConstructStaticArtistController(injector *do.Injector) (*StaticArtistController, error) {
+func NewStaticArtistController(injector *do.Injector) (*StaticArtistController, error) {
 	service := do.MustInvoke[*static.StaticArtistService](injector)
 
 	return &StaticArtistController{

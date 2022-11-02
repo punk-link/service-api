@@ -2,20 +2,19 @@ package spotify
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"io"
-	"main/models/platforms/spotify/accessToken"
+	spotifyModels "main/models/platforms/spotify/tokens"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	httpClient "github.com/punk-link/http-client"
 	"github.com/punk-link/logger"
 )
 
-func getAccessToken(logger logger.Logger, config *accessToken.SpotifyClientConfig) (string, error) {
-	if len(tokenContainer.Token) != 0 && time.Now().UTC().Before(tokenContainer.Expired) {
-		return tokenContainer.Token, nil
+func getAccessToken(logger logger.Logger, config *spotifyModels.SpotifyClientConfig) (string, error) {
+	if len(_tokenContainer.Token) != 0 && time.Now().UTC().Before(_tokenContainer.Expired) {
+		return _tokenContainer.Token, nil
 	}
 
 	request, err := getAccessTokenRequest(logger, config)
@@ -24,24 +23,22 @@ func getAccessToken(logger logger.Logger, config *accessToken.SpotifyClientConfi
 		return "", err
 	}
 
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		logger.LogError(err, err.Error())
-		return "", err
-	}
-	defer response.Body.Close()
-
-	tokenContainer, err = parseToken(logger, response)
+	var accessToken spotifyModels.SpotifyAccessToken
+	err = httpClient.MakeRequest(nil, request, &accessToken)
 	if err != nil {
 		logger.LogError(err, err.Error())
 		return "", err
 	}
 
-	return tokenContainer.Token, nil
+	_tokenContainer = spotifyModels.SpotifyAccessTokenContainer{
+		Expired: time.Now().Add(time.Second*time.Duration(accessToken.ExpiresIn) - ACCESS_TOKEN_SAFITY_THRESHOLD).UTC(),
+		Token:   accessToken.Token,
+	}
+
+	return _tokenContainer.Token, nil
 }
 
-func getAccessTokenRequest(logger logger.Logger, config *accessToken.SpotifyClientConfig) (*http.Request, error) {
+func getAccessTokenRequest(logger logger.Logger, config *spotifyModels.SpotifyClientConfig) (*http.Request, error) {
 	payload := url.Values{}
 	payload.Add("grant_type", "client_credentials")
 
@@ -59,25 +56,6 @@ func getAccessTokenRequest(logger logger.Logger, config *accessToken.SpotifyClie
 	return request, nil
 }
 
-func parseToken(logger logger.Logger, response *http.Response) (accessToken.SpotifyAccessTokenContainer, error) {
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		logger.LogError(err, err.Error())
-		return accessToken.SpotifyAccessTokenContainer{}, err
-	}
+var _tokenContainer spotifyModels.SpotifyAccessTokenContainer
 
-	var newToken accessToken.SpotifyAccessToken
-	if err := json.Unmarshal(body, &newToken); err != nil {
-		logger.LogError(err, err.Error())
-		return accessToken.SpotifyAccessTokenContainer{}, err
-	}
-
-	return accessToken.SpotifyAccessTokenContainer{
-		Expired: time.Now().Add(time.Second*time.Duration(newToken.ExpiresIn) - safetyThreshold).UTC(),
-		Token:   newToken.Token,
-	}, nil
-}
-
-var tokenContainer accessToken.SpotifyAccessTokenContainer
-
-const safetyThreshold time.Duration = time.Second * 5
+const ACCESS_TOKEN_SAFITY_THRESHOLD = time.Second * 5

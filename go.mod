@@ -52,6 +52,7 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/punk-link/cache-manager v1.0.1 // indirect
 	github.com/punk-link/http-client v1.0.0 // indirect
 	github.com/punk-link/platform-contracts v1.0.5 // indirect
 	github.com/rs/zerolog v1.28.0 // indirect

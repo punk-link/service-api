@@ -1,7 +1,6 @@
 package artists
 
 import (
-	"main/data"
 	artistData "main/data/artists"
 	"time"
 
@@ -9,13 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func createDbReleasesInBatches(logger logger.Logger, err error, releases *[]artistData.Release) error {
+func createDbReleasesInBatches(db *gorm.DB, logger logger.Logger, err error, releases *[]artistData.Release) error {
 	if err != nil || len(*releases) == 0 {
 		return err
 	}
 
-	return data.DB.Transaction(func(tx *gorm.DB) error {
-		err = data.DB.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
+	return db.Transaction(func(tx *gorm.DB) error {
+		err = db.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
 		if err != nil {
 			logger.LogError(err, err.Error())
 			return err
@@ -36,7 +35,7 @@ func createDbReleasesInBatches(logger logger.Logger, err error, releases *[]arti
 			relations = append(relations, releaseRelations...)
 		}
 
-		err = data.DB.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
+		err = db.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
 		if err != nil {
 			logger.LogError(err, err.Error())
 			return err
@@ -46,13 +45,13 @@ func createDbReleasesInBatches(logger logger.Logger, err error, releases *[]arti
 	})
 }
 
-func getDbRelease(logger logger.Logger, err error, id int) (artistData.Release, error) {
+func getDbRelease(db *gorm.DB, logger logger.Logger, err error, id int) (artistData.Release, error) {
 	if err != nil {
 		return artistData.Release{}, err
 	}
 
 	var release artistData.Release
-	err = data.DB.Model(&artistData.Release{}).
+	err = db.Model(&artistData.Release{}).
 		First(&release, id).
 		Error
 
@@ -63,17 +62,17 @@ func getDbRelease(logger logger.Logger, err error, id int) (artistData.Release, 
 	return release, err
 }
 
-func getDbReleasesByArtistId(logger logger.Logger, err error, artistId int) ([]artistData.Release, error) {
+func getDbReleasesByArtistId(db *gorm.DB, logger logger.Logger, err error, artistId int) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
 
-	subQuery := data.DB.Select("release_id").
+	subQuery := db.Select("release_id").
 		Where("artist_id = ?", artistId).
 		Table("artist_release_relations")
 
 	var releases []artistData.Release
-	err = data.DB.Where("id IN (?)", subQuery).
+	err = db.Where("id IN (?)", subQuery).
 		Order("release_date").
 		Find(&releases).
 		Error
@@ -85,13 +84,13 @@ func getDbReleasesByArtistId(logger logger.Logger, err error, artistId int) ([]a
 	return releases, err
 }
 
-func getUpcContainers(logger logger.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
+func getUpcContainers(db *gorm.DB, logger logger.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
 
 	var releases []artistData.Release
-	err = data.DB.Select("id", "upc").
+	err = db.Select("id", "upc").
 		Where("updated < ?", updateTreshold).
 		Order("id").
 		Offset(skip).
@@ -106,24 +105,24 @@ func getUpcContainers(logger logger.Logger, err error, top int, skip int, update
 	return releases, err
 }
 
-func getDbReleaseCount(logger logger.Logger, err error) (int64, error) {
+func getDbReleaseCount(db *gorm.DB, logger logger.Logger, err error) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
 
 	var count int64
-	data.DB.Model(&artistData.Release{}).
+	db.Model(&artistData.Release{}).
 		Count(&count)
 
 	return count, err
 }
 
-func markDbReleasesAsUpdated(logger logger.Logger, err error, ids []int, timestamp time.Time) error {
+func markDbReleasesAsUpdated(db *gorm.DB, logger logger.Logger, err error, ids []int, timestamp time.Time) error {
 	if err != nil {
 		return err
 	}
 
-	err = data.DB.Model(&artistData.Release{}).
+	err = db.Model(&artistData.Release{}).
 		Where("id in (?)", ids).
 		Update("updated", timestamp).
 		Error
@@ -135,5 +134,5 @@ func markDbReleasesAsUpdated(logger logger.Logger, err error, ids []int, timesta
 	return err
 }
 
-const CREATE_RELEASES_BATCH_SIZE int = 100
-const CREATE_RELATION_BATCH_SIZE int = 2000
+const CREATE_RELEASES_BATCH_SIZE = 100
+const CREATE_RELATION_BATCH_SIZE = 2000

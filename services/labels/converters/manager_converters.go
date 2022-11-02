@@ -6,18 +6,22 @@ import (
 	"time"
 )
 
-func ToManager(source data.Manager) models.Manager {
+func ToManager(err error, source data.Manager) (models.Manager, error) {
+	if err != nil {
+		return models.Manager{}, err
+	}
+
 	return models.Manager{
 		Id:      source.Id,
 		Name:    source.Name,
 		LabelId: source.LabelId,
-	}
+	}, nil
 }
 
 func ToManagers(source []data.Manager) []models.Manager {
 	managers := make([]models.Manager, len(source))
 	for i, manager := range source {
-		managers[i] = ToManager(manager)
+		managers[i], _ = ToManager(nil, manager)
 	}
 
 	return managers
