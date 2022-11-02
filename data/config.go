@@ -89,5 +89,9 @@ func openConnection(err error, connectionString string, logger logger.Logger) (*
 		}),
 	})
 
-	return db, fmt.Errorf("postgres initialization failed: %v", err.Error())
+	if err != nil {
+		err = fmt.Errorf("postgres initialization failed: %v", err.Error())
+	}
+
+	return db, err
 }

@@ -72,13 +72,13 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 
+	do.Provide(injector, apiControllers.NewStatusController)
 	do.Provide(injector, apiControllers.NewArtistController)
 	do.Provide(injector, apiControllers.NewHashController)
 	do.Provide(injector, apiControllers.NewLabelController)
 	do.Provide(injector, apiControllers.NewManagerController)
 	do.Provide(injector, apiControllers.NewStreamingPlatformController)
 	do.Provide(injector, apiControllers.NewReleaseController)
-	do.Provide(injector, apiControllers.NewStatusController)
 
 	do.Provide(injector, staticControllers.NewStaticArtistController)
 	do.Provide(injector, staticControllers.NewStaticReleaseController)
