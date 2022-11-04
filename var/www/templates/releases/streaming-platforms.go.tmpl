@@ -10,7 +10,9 @@
                 {{$platformName = "Spotyfy"}}
                 {{$platformIconName = "Spotyfy.png"}}
             {{ end }}
-            <li class="lable-music__list-item" style="background-image:url('/assets/img/{{ $platformIconName }}') ;"><a href="{{ $val.Url }}">{{ $platformName }}</a></li>
+            <li class="lable-music__list-item" style="background-image:url('/assets/img/{{ $platformIconName }}') ;">
+                <a href="{{ $val.Url }}">{{ $platformName }}</a>
+            </li>
         {{ end }}
         {{ end }}
         <!--'/assets/img/AppleMusic.png' Apple Music-->
