@@ -1,6 +1,6 @@
 package releases
 
-import "main/models/spotify/artists"
+import "main/models/platforms/spotify/artists"
 
 type Track struct {
 	Id                   string               `json:"id"`

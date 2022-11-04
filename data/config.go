@@ -5,62 +5,93 @@ import (
 	"main/data/artists"
 	"main/data/labels"
 	"main/data/platforms"
-	"main/infrastructure/consul"
-	"main/services/common"
 	"time"
 
+	consulClient "github.com/punk-link/consul-client"
+	"github.com/punk-link/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func ConfigureDatabase(logger *common.Logger, consul *consul.ConsulClient) {
-	dbSettings := consul.Get("DatabaseSettings").(map[string]interface{})
-
-	host := dbSettings["Host"].(string)
-	port := dbSettings["Port"].(string)
-	userName := dbSettings["Username"].(string)
-	password := dbSettings["Password"].(string)
-
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN:                  fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password),
-		PreferSimpleProtocol: true,
-	}), &gorm.Config{
-		Logger: gormLogger.New(logger, gormLogger.Config{
-			LogLevel: gormLogger.Error,
-		}),
-	})
+func New(logger logger.Logger, consul *consulClient.ConsulClient) *gorm.DB {
+	connectionString, err := getConnectionString(consul)
+	db, err := openConnection(err, connectionString, logger)
+	err = configureConnection(err, db)
 	if err != nil {
-		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
+		logger.LogFatal(err, err.Error())
+	}
+
+	autoMigrate(logger, db)
+
+	return db
+}
+
+func autoMigrate(logger logger.Logger, db *gorm.DB) {
+	err := migrateInternal(logger, nil, db, &labels.Label{}, &labels.Manager{})
+	err = migrateInternal(logger, err, db, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
+	_ = migrateInternal(logger, err, db, &platforms.PlatformReleaseUrl{})
+}
+
+func configureConnection(err error, db *gorm.DB) error {
+	if err != nil {
+		return err
 	}
 
 	sqlDb, err := db.DB()
 	if err != nil {
-		logger.LogError(err, "Postgres initialization failed: %v", err.Error())
+		return fmt.Errorf("postgres initialization failed: %v", err.Error())
 	}
 
 	sqlDb.SetConnMaxIdleTime(10)
 	sqlDb.SetMaxOpenConns(20)
 	sqlDb.SetConnMaxLifetime(time.Minute * 10)
 
-	DB = db
-
-	AutoMigrate(logger)
+	return err
 }
 
-func AutoMigrate(logger *common.Logger) {
-	err := migrate(logger, nil, &labels.Label{}, &labels.Manager{})
-	err = migrate(logger, err, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
-	_ = migrate(logger, err, &platforms.PlatformReleaseUrl{})
+func getConnectionString(consul *consulClient.ConsulClient) (string, error) {
+	dbSettingsValue, err := consul.Get("DatabaseSettings")
+	if err != nil {
+		return "", fmt.Errorf("can't obtain Postgres configurations from Consul: %v", err.Error())
+	}
+
+	dbSettings := dbSettingsValue.(map[string]any)
+
+	host := dbSettings["Host"].(string)
+	port := dbSettings["Port"].(string)
+	userName := dbSettings["Username"].(string)
+	password := dbSettings["Password"].(string)
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password), nil
 }
 
-func migrate(logger *common.Logger, err error, dst ...interface{}) error {
+func migrateInternal(logger logger.Logger, err error, db *gorm.DB, dst ...any) error {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
 		return err
 	}
 
-	return DB.AutoMigrate(dst...)
+	return db.AutoMigrate(dst...)
 }
 
-var DB *gorm.DB
+func openConnection(err error, connectionString string, logger logger.Logger) (*gorm.DB, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  connectionString,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{
+		Logger: gormLogger.New(logger, gormLogger.Config{
+			LogLevel: gormLogger.Error,
+		}),
+	})
+
+	if err != nil {
+		err = fmt.Errorf("postgres initialization failed: %v", err.Error())
+	}
+
+	return db, err
+}

@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"main/models/spotify"
+	"main/models/platforms/spotify"
 	"sort"
 )
 

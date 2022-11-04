@@ -13,7 +13,7 @@ type HashController struct {
 	coder *common.HashCoder
 }
 
-func ConstructHashController(injector *do.Injector) (*HashController, error) {
+func NewHashController(injector *do.Injector) (*HashController, error) {
 	coder := do.MustInvoke[*common.HashCoder](injector)
 
 	return &HashController{

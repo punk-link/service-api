@@ -12,7 +12,7 @@ type StaticReleaseController struct {
 	service *static.StaticReleaseService
 }
 
-func ConstructStaticReleaseController(injector *do.Injector) (*StaticReleaseController, error) {
+func NewStaticReleaseController(injector *do.Injector) (*StaticReleaseController, error) {
 	service := do.MustInvoke[*static.StaticReleaseService](injector)
 
 	return &StaticReleaseController{

@@ -15,7 +15,7 @@ type LabelController struct {
 	managerService *service.ManagerService
 }
 
-func ConstructLabelController(injector *do.Injector) (*LabelController, error) {
+func NewLabelController(injector *do.Injector) (*LabelController, error) {
 	labelService := do.MustInvoke[*service.LabelService](injector)
 	managerService := do.MustInvoke[*service.ManagerService](injector)
 

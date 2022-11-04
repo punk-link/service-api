@@ -1,29 +1,32 @@
 package labels
 
 import (
-	"main/data"
 	labelData "main/data/labels"
 	"main/helpers"
 	"main/models/labels"
-	"main/services/common"
 	validator "main/services/labels/validators"
-	"main/services/spotify"
+	"main/services/platforms/spotify"
 	"strings"
 	"time"
 
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type LabelService struct {
-	logger         *common.Logger
+	db             *gorm.DB
+	logger         logger.Logger
 	spotifyService *spotify.SpotifyService
 }
 
-func ConstructLabelService(injector *do.Injector) (*LabelService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+func NewLabelService(injector *do.Injector) (*LabelService, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
 
 	return &LabelService{
+		db:             db,
 		logger:         logger,
 		spotifyService: spotifyService,
 	}, nil
@@ -63,11 +66,7 @@ func (t *LabelService) addLabelInternal(err error, labelName string) (labels.Lab
 		Updated: now,
 	}
 
-	err = data.DB.Create(&dbLabel).Error
-	if err != nil {
-		t.logger.LogError(err, err.Error())
-	}
-
+	err = createDbLabel(t.db, t.logger, err, &dbLabel)
 	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }
 
@@ -76,16 +75,11 @@ func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labels.La
 		return labels.Label{}, err
 	}
 
-	var dbLabel labelData.Label
-	err = data.DB.First(&dbLabel, id).Error
-	if err != nil {
-		return labels.Label{}, err
-	}
-
+	dbLabel, err := getDbLabel(t.db, t.logger, err, id)
 	return labels.Label{
 		Id:   dbLabel.Id,
 		Name: dbLabel.Name,
-	}, nil
+	}, err
 }
 
 func (t *LabelService) modifyLabelInternal(err error, currentManager labels.ManagerContext, lebelName string) (labels.Label, error) {
@@ -93,15 +87,9 @@ func (t *LabelService) modifyLabelInternal(err error, currentManager labels.Mana
 		return labels.Label{}, err
 	}
 
-	var dbLabel labelData.Label
-	err = data.DB.First(&dbLabel, currentManager.LabelId).Error
-	if err != nil {
-		return labels.Label{}, err
-	}
+	dbLabel, err := getDbLabel(t.db, t.logger, err, currentManager.LabelId)
 
 	dbLabel.Name = lebelName
-	dbLabel.Updated = time.Now().UTC()
-	err = data.DB.Save(&dbLabel).Error
-
+	err = updateDbLabel(t.db, t.logger, err, &dbLabel)
 	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }

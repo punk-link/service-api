@@ -1,39 +1,42 @@
 package platforms
 
 import (
-	"fmt"
+	"encoding/json"
 	platformData "main/data/platforms"
 	"main/models/platforms"
-	basePlatforms "main/models/platforms/base"
-	platformConstants "main/models/platforms/constants"
 	"main/services/artists"
-	"main/services/common"
-	"main/services/platforms/base"
-	"sync"
 	"time"
 
+	"github.com/nats-io/nats.go"
+	"github.com/punk-link/logger"
+	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
-type StrimingPlatformService struct {
-	injector       *do.Injector
-	logger         *common.Logger
+type StreamingPlatformService struct {
+	db             *gorm.DB
+	logger         logger.Logger
+	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
 }
 
-func ConstructStreamingPlatformService(injector *do.Injector) (*StrimingPlatformService, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
+	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
-	return &StrimingPlatformService{
-		injector:       injector.Clone(),
+	return &StreamingPlatformService{
+		db:             db,
 		logger:         logger,
+		natsConnection: natsConnection,
 		releaseService: releaseService,
 	}, nil
 }
 
-func (t *StrimingPlatformService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
-	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.logger, nil, releaseId)
+func (t *StreamingPlatformService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
+	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.db, t.logger, nil, releaseId)
 	if err != nil {
 		return make([]platforms.PlatformReleaseUrl, 0), err
 	}
@@ -51,20 +54,75 @@ func (t *StrimingPlatformService) Get(releaseId int) ([]platforms.PlatformReleas
 	return results, err
 }
 
-func (t *StrimingPlatformService) SyncUrls() {
-	now := time.Now().UTC()
-
-	urls := t.getPlatformReleaseUrlsToSync(now)
-	t.resync(urls, now)
+func (t *StreamingPlatformService) ProcessPlatforeUrlResults() {
+	jetStreamContext, err := t.natsConnection.JetStream()
+	err = t.createReducerJetStreamIfNotExist(err, jetStreamContext)
+	subscription, err := t.getSubscription(err, jetStreamContext)
+	t.consumeUrlResults(err, subscription)
 }
 
-func (t *StrimingPlatformService) getExistedUrls(logger *common.Logger, upcContainers []platforms.UpcContainer, upcResults []platforms.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
-	ids := make([]int, len(upcContainers))
-	for i, result := range upcResults {
+func (t *StreamingPlatformService) PublishPlatforeUrlRequests() {
+	jetStreamContext, err := t.natsConnection.JetStream()
+	err = t.createPlatformJetStreamIfNotExist(err, jetStreamContext)
+	t.publishPlatforeUrlRequests(err, jetStreamContext)
+}
+
+func (t *StreamingPlatformService) consumeUrlResults(err error, subscription *nats.Subscription) error {
+	if err != nil {
+		return err
+	}
+
+	for {
+		messages, _ := subscription.Fetch(ITERATION_STEP)
+		urlResults := make([]platformContracts.UrlResultContainer, len(messages))
+		for i, message := range messages {
+			message.Ack()
+
+			var urlResult platformContracts.UrlResultContainer
+			_ = json.Unmarshal(message.Data, &urlResult)
+
+			urlResults[i] = urlResult
+		}
+
+		t.resync(urlResults)
+	}
+}
+
+func (t *StreamingPlatformService) createPlatformJetStreamIfNotExist(err error, jetStreamContext nats.JetStreamContext) error {
+	if err != nil {
+		return err
+	}
+
+	stream, _ := jetStreamContext.StreamInfo(platformContracts.PLATFORM_URL_REQUESTS_STREAM_NAME)
+	if stream == nil {
+		t.logger.LogInfo("Creating Nats stream %s and subjects %s", platformContracts.PLATFORM_URL_REQUESTS_STREAM_NAME, platformContracts.PLATFORM_URL_REQUESTS_STREAM_SUBJECTS)
+		_, err = jetStreamContext.AddStream(platformContracts.DefaultPlatformServiceConfig)
+	}
+
+	return err
+}
+
+func (t *StreamingPlatformService) createReducerJetStreamIfNotExist(err error, jetStreamContext nats.JetStreamContext) error {
+	if err != nil {
+		return err
+	}
+
+	stream, _ := jetStreamContext.StreamInfo(platformContracts.PLATFORM_URL_RESPONSE_STREAM_NAME)
+	if stream == nil {
+		t.logger.LogInfo("Creating Nats stream %s and subjects %s", platformContracts.PLATFORM_URL_RESPONSE_STREAM_NAME, platformContracts.PLATFORM_URL_RESPONSE_STREAM_SUBJECT)
+		_, err = jetStreamContext.AddStream(platformContracts.DefaultReducerConfig)
+	}
+
+	return err
+}
+
+func (t *StreamingPlatformService) getExistedUrls(urlResults []platformContracts.UrlResultContainer) (map[int]platformData.PlatformReleaseUrl, error) {
+	ids := make([]int, len(urlResults))
+	for i, result := range urlResults {
 		ids[i] = result.Id
 	}
 
-	existedUrls, err := getDbPlatformReleaseUrlsByReleaseIds(logger, nil, ids)
+	existedUrls, err := getDbPlatformReleaseUrlsByReleaseIds(t.db, t.logger, nil, ids)
 	if err != nil {
 		return make(map[int]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -77,22 +135,7 @@ func (t *StrimingPlatformService) getExistedUrls(logger *common.Logger, upcConta
 	return existedUrlsMap, err
 }
 
-func (t *StrimingPlatformService) getPlatformerContainers() []basePlatforms.PlatformerContainer {
-	platformerContainers := make([]basePlatforms.PlatformerContainer, len(platforms.AvailablePlatforms))
-	for i, platformName := range platforms.AvailablePlatforms {
-		fullPlatformName := fmt.Sprintf("%s%s", platformName, platformConstants.PLATFORM_SERVICE_TOKEN)
-		platformer := do.MustInvokeNamed[base.Platformer](t.injector, fullPlatformName)
-
-		platformerContainers[i] = basePlatforms.PlatformerContainer{
-			Instance:        platformer,
-			FullServiceName: fullPlatformName,
-		}
-	}
-
-	return platformerContainers
-}
-
-func (t *StrimingPlatformService) getPlatformReleaseUrls(err error, existedUrls map[int]platformData.PlatformReleaseUrl, upcResults []platforms.UrlResultContainer, timestamp time.Time) ([]platformData.PlatformReleaseUrl, error) {
+func (t *StreamingPlatformService) getPlatformReleaseUrls(err error, existedUrls map[int]platformData.PlatformReleaseUrl, upcResults []platformContracts.UrlResultContainer, timestamp time.Time) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -113,64 +156,15 @@ func (t *StrimingPlatformService) getPlatformReleaseUrls(err error, existedUrls 
 	return platformReleaseUrls, err
 }
 
-func (t *StrimingPlatformService) getPlatformReleaseUrlsToSync(timestamp time.Time) []platformData.PlatformReleaseUrl {
-	releaseCount := t.releaseService.GetCount()
-	updateTreshold := time.Now().UTC().Add(-UPDATE_TRESHOLD_MINUTES)
-
-	platformerContainers := t.getPlatformerContainers()
-
-	var wg sync.WaitGroup
-	chanResults := make(chan []platformData.PlatformReleaseUrl)
-
-	skip := 0
-	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
-		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
-
-		wg.Add(1)
-		go t.getUrlsToResync(&wg, chanResults, platformerContainers, upcContainers, timestamp)
-
-		skip += ITERATION_STEP
-	}
-
-	go func() {
-		wg.Wait()
-		close(chanResults)
-	}()
-
-	urls := make([]platformData.PlatformReleaseUrl, 0)
-	for result := range chanResults {
-		urls = append(urls, result...)
-	}
-
-	return urls
-}
-
-func (t *StrimingPlatformService) getUpcResultsFromPlatformers(platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer) []platforms.UrlResultContainer {
-	upcResults := make([]platforms.UrlResultContainer, 0)
-	for _, container := range platformerContainers {
-		platformer := container.Instance
-		partialUpcResults := platformer.GetReleaseUrlsByUpc(upcContainers)
-
-		upcResults = append(upcResults, partialUpcResults...)
-	}
-
-	return upcResults
-}
-
-func (t *StrimingPlatformService) getUrlsToResync(wg *sync.WaitGroup, results chan<- []platformData.PlatformReleaseUrl, platformerContainers []basePlatforms.PlatformerContainer, upcContainers []platforms.UpcContainer, timestamp time.Time) {
-	defer wg.Done()
-
-	upcResults := t.getUpcResultsFromPlatformers(platformerContainers, upcContainers)
-	existedUrls, err := t.getExistedUrls(t.logger, upcContainers, upcResults)
-	platformReleaseUrls, err := t.getPlatformReleaseUrls(err, existedUrls, upcResults, timestamp)
+func (t *StreamingPlatformService) getSubscription(err error, jetStreamContext nats.JetStreamContext) (*nats.Subscription, error) {
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	results <- platformReleaseUrls
+	return jetStreamContext.PullSubscribe(platformContracts.PLATFORM_URL_RESPONSE_STREAM_SUBJECT, platformContracts.PLATFORM_URL_RESPONSE_CONSUMER_NAME)
 }
 
-func (t *StrimingPlatformService) markReleasesAsUpdated(err error, platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) error {
+func (t *StreamingPlatformService) markReleasesAsUpdated(err error, platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) error {
 	if err != nil {
 		return err
 	}
@@ -183,29 +177,59 @@ func (t *StrimingPlatformService) markReleasesAsUpdated(err error, platformRelea
 	return t.releaseService.MarkAsUpdated(releaseIds, timestamp)
 }
 
-func (t *StrimingPlatformService) resync(platformReleaseUrls []platformData.PlatformReleaseUrl, timestamp time.Time) {
+func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStreamContext nats.JetStreamContext) error {
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	releaseCount := t.releaseService.GetCount()
+	updateTreshold := now.Add(-UPDATE_TRESHOLD_INTERVAL)
+
+	skip := 0
+	for i := 0; i < releaseCount; i = i + ITERATION_STEP {
+		upcContainers := t.releaseService.GetUpcContainersToUpdate(ITERATION_STEP, skip, updateTreshold)
+		for _, platform := range platformContracts.AvailablePlatforms {
+			subjectName := platformContracts.GetRequestStreamSubject(platform)
+			for _, container := range upcContainers {
+				json, _ := json.Marshal(container)
+				jetStreamContext.Publish(subjectName, json)
+			}
+		}
+
+		skip += ITERATION_STEP
+	}
+
+	return err
+}
+
+func (t *StreamingPlatformService) resync(urlResults []platformContracts.UrlResultContainer) {
+	timestamp := time.Now().UTC()
+
+	existedUrls, err := t.getExistedUrls(urlResults)
+	platformReleaseUrls, err := t.getPlatformReleaseUrls(err, existedUrls, urlResults, timestamp)
 	newUrls, changedUrls := distinctNewUrlsFromChanged(platformReleaseUrls)
 
-	err := createDbPlatformReleaseUrlsInBatches(t.logger, nil, newUrls)
-	err = updateDbPlatformReleaseUrlsInBatches(t.logger, err, changedUrls)
+	err = createDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, newUrls)
+	err = updateDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, changedUrls)
 	t.markReleasesAsUpdated(err, platformReleaseUrls, timestamp)
 }
 
-func buildChangedPlatformReleaseUrl(existedUrl platformData.PlatformReleaseUrl, upcResult platforms.UrlResultContainer, timestamp time.Time) platformData.PlatformReleaseUrl {
+func buildChangedPlatformReleaseUrl(existedUrl platformData.PlatformReleaseUrl, urlResult platformContracts.UrlResultContainer, timestamp time.Time) platformData.PlatformReleaseUrl {
 	return platformData.PlatformReleaseUrl{
 		Id:      existedUrl.Id,
 		Updated: timestamp,
-		Url:     upcResult.Url,
+		Url:     urlResult.Url,
 	}
 }
 
-func buildNewPlatformReleaseUrl(upcResult platforms.UrlResultContainer, timestamp time.Time) platformData.PlatformReleaseUrl {
+func buildNewPlatformReleaseUrl(urlResult platformContracts.UrlResultContainer, timestamp time.Time) platformData.PlatformReleaseUrl {
 	return platformData.PlatformReleaseUrl{
 		Created:      timestamp,
-		PlatformName: upcResult.PlatformName,
-		ReleaseId:    upcResult.Id,
+		PlatformName: urlResult.PlatformName,
+		ReleaseId:    urlResult.Id,
 		Updated:      timestamp,
-		Url:          upcResult.Url,
+		Url:          urlResult.Url,
 	}
 }
 
@@ -224,4 +248,4 @@ func distinctNewUrlsFromChanged(platformReleaseUrls []platformData.PlatformRelea
 }
 
 const ITERATION_STEP = 40
-const UPDATE_TRESHOLD_MINUTES = time.Minute * 15
+const UPDATE_TRESHOLD_INTERVAL = time.Hour

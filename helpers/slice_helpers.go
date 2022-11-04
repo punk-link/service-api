@@ -1,5 +1,22 @@
 package helpers
 
+func AlignSlice[T any](slice []T, divisor int) ([]T, []T) {
+	var unalignedItems []T
+	alignedItems := make([]T, 0)
+
+	if len(slice) < divisor {
+		unalignedItems = slice
+		return alignedItems, unalignedItems
+	}
+
+	extraElements := len(slice) % divisor
+
+	alignedItems = slice[0 : len(slice)-extraElements]
+	unalignedItems = slice[len(slice)-extraElements:]
+
+	return alignedItems, unalignedItems
+}
+
 func Chunk[T any](source []T, chunkSize int) [][]T {
 	chunkCount := (len(source) / chunkSize) + 1
 
@@ -26,22 +43,6 @@ func Distinct[T comparable](source []T) []T {
 	}
 
 	return distincted
-}
-
-func DivideChunkToLoops[T any](chunkedUrls []T, iterationStep int) ([]T, []T) {
-	var reducedLoop []T
-	mainLoop := make([]T, 0)
-
-	if len(chunkedUrls) < iterationStep {
-		reducedLoop = chunkedUrls
-	} else {
-		extraElements := len(chunkedUrls) % iterationStep
-
-		mainLoop = chunkedUrls[0 : len(chunkedUrls)-extraElements]
-		reducedLoop = chunkedUrls[len(chunkedUrls)-extraElements:]
-	}
-
-	return mainLoop, reducedLoop
 }
 
 func getChunkEndPosition[T any](chunk []T, iterationStepEnd int) int {

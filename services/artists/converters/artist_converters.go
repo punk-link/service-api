@@ -3,8 +3,8 @@ package converters
 import (
 	data "main/data/artists"
 	models "main/models/artists"
-	spotifyArtists "main/models/spotify/artists"
-	spotifyReleases "main/models/spotify/releases"
+	spotifyArtists "main/models/platforms/spotify/artists"
+	spotifyReleases "main/models/platforms/spotify/releases"
 	commonConverters "main/services/common/converters"
 	"time"
 )

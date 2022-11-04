@@ -2,36 +2,39 @@ package api
 
 import (
 	base "main/controllers"
-	"main/data"
-	"main/services/common"
 
 	"github.com/gin-gonic/gin"
+	"github.com/punk-link/logger"
 	"github.com/samber/do"
+	"gorm.io/gorm"
 )
 
 type StatusController struct {
-	logger *common.Logger
+	db     *gorm.DB
+	logger logger.Logger
 }
 
-func ConstructStatusController(injector *do.Injector) (*StatusController, error) {
-	logger := do.MustInvoke[*common.Logger](injector)
+func NewStatusController(injector *do.Injector) (*StatusController, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
 
 	return &StatusController{
+		db:     db,
 		logger: logger,
 	}, nil
 }
 
-func (controller *StatusController) CheckHealth(ctx *gin.Context) {
-	sqlDb, err := data.DB.DB()
+func (t *StatusController) CheckHealth(ctx *gin.Context) {
+	sqlDb, err := t.db.DB()
 	if err != nil {
-		controller.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
+		t.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
 		base.InternalServerError(ctx, err.Error())
 		return
 	}
 
 	err = sqlDb.Ping()
 	if err != nil {
-		controller.logger.LogError(err, "Can't reach any database instances: %v", err.Error())
+		t.logger.LogError(err, "Can't reach any database instances: %v", err.Error())
 		base.InternalServerError(ctx, err.Error())
 		return
 	}

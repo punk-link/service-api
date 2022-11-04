@@ -14,7 +14,7 @@ type ManagerController struct {
 	managerService *service.ManagerService
 }
 
-func ConstructManagerController(injector *do.Injector) (*ManagerController, error) {
+func NewManagerController(injector *do.Injector) (*ManagerController, error) {
 	managerService := do.MustInvoke[*service.ManagerService](injector)
 
 	return &ManagerController{
