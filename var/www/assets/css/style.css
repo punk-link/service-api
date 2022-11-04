@@ -296,7 +296,8 @@ body {
 }
 
 .header__user {
-  margin-left: auto;
+  position: absolute;
+  right: 5.4375rem;
   font-size: 1.875rem;
 }
 
@@ -394,6 +395,11 @@ body {
 .social-list__item {
   font-size: 1.25rem;
   padding-right: 0.625rem;
+  -webkit-transition: -webkit-transform 0.3s ease 0s;
+  transition: -webkit-transform 0.3s ease 0s;
+  -o-transition: transform 0.3s ease 0s;
+  transition: transform 0.3s ease 0s;
+  transition: transform 0.3s ease 0s, -webkit-transform 0.3s ease 0s;
 }
 
 .bg {
@@ -526,9 +532,22 @@ body {
   border-radius: 5px;
   border: 2px solid #a762ff;
   padding: 1.25rem 3.75rem;
-  margin-bottom: 6.25rem;
+  margin: 5.625rem 0 6.25rem;
 }
 
-.copy-link::before {
-  padding-right: 0.625rem;
+.copy-link span {
+  padding-left: 0.625rem;
+}
+
+@media (any-hover: hover) and (any-pointer: fine) {
+  .social-list__item:hover {
+    -webkit-transform: scale(1.1);
+        -ms-transform: scale(1.1);
+            transform: scale(1.1);
+    -webkit-transition: -webkit-transform 0.3s ease 0s;
+    transition: -webkit-transform 0.3s ease 0s;
+    -o-transition: transform 0.3s ease 0s;
+    transition: transform 0.3s ease 0s;
+    transition: transform 0.3s ease 0s, -webkit-transform 0.3s ease 0s;
+  }
 }
