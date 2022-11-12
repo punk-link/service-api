@@ -1,6 +1,7 @@
 package startup
 
 import (
+	controllers "main/controllers"
 	apiControllers "main/controllers/api"
 	staticControllers "main/controllers/static"
 	dataConfig "main/data"
@@ -72,7 +73,9 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 
-	do.Provide(injector, apiControllers.NewStatusController)
+	do.Provide(injector, controllers.NewMetricsController)
+	do.Provide(injector, controllers.NewStatusController)
+
 	do.Provide(injector, apiControllers.NewArtistController)
 	do.Provide(injector, apiControllers.NewHashController)
 	do.Provide(injector, apiControllers.NewLabelController)

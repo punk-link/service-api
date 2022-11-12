@@ -1,6 +1,7 @@
 package startup
 
 import (
+	"main/controllers"
 	apiControllers "main/controllers/api"
 	staticControllers "main/controllers/static"
 
@@ -9,7 +10,11 @@ import (
 )
 
 func setupRouts(app *gin.Engine, injector *do.Injector) {
-	registerRoutes(injector, func(controller *apiControllers.StatusController) {
+	registerRoutes(injector, func(controller *controllers.MetricsController) {
+		app.GET("/metrics", controller.GetMetrics)
+	})
+
+	registerRoutes(injector, func(controller *controllers.StatusController) {
 		app.GET("/health", controller.CheckHealth)
 	})
 
