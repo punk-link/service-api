@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/VictoriaMetrics/metrics v1.23.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -57,6 +58,8 @@ require (
 	github.com/punk-link/platform-contracts v1.0.5 // indirect
 	github.com/rs/zerolog v1.28.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
+	github.com/valyala/fastrand v1.1.0 // indirect
+	github.com/valyala/histogram v1.2.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
