@@ -36,7 +36,7 @@ func main() {
 	hostSettings := hostSettingsValues.(map[string]any)
 
 	ginMode := hostSettings["Mode"].(string)
-	app := startup.Configure(logger, consul, ginMode)
+	app := startup.Configure(logger, consul, ginMode, environmentName)
 	app.Run()
 
 	hostAddress := hostSettings["Address"]

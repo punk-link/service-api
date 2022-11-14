@@ -8,7 +8,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func Configure(logger logger.Logger, consul *consulClient.ConsulClient, ginMode string) *gin.Engine {
+func Configure(logger logger.Logger, consul *consulClient.ConsulClient, ginMode string, environmentName string) *gin.Engine {
 	diContainer := buildDependencies(logger, consul)
 
 	gin.SetMode(ginMode)
@@ -19,7 +19,7 @@ func Configure(logger logger.Logger, consul *consulClient.ConsulClient, ginMode 
 	app.LoadHTMLGlob("./var/www/templates/**/*.go.tmpl")
 	app.Static("/assets", "./var/www/assets")
 
-	initSentry(app, logger, consul)
+	initSentry(app, logger, consul, environmentName)
 	setupRouts(app, diContainer)
 
 	data.New(logger, consul)

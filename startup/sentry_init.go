@@ -8,7 +8,7 @@ import (
 	"github.com/punk-link/logger"
 )
 
-func initSentry(app *gin.Engine, logger logger.Logger, consul *consulClient.ConsulClient) {
+func initSentry(app *gin.Engine, logger logger.Logger, consul *consulClient.ConsulClient, environmentName string) {
 	app.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))
@@ -17,6 +17,7 @@ func initSentry(app *gin.Engine, logger logger.Logger, consul *consulClient.Cons
 	err := sentry.Init(sentry.ClientOptions{
 		AttachStacktrace: true,
 		Dsn:              dsn.(string),
+		Environment:      environmentName,
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {
