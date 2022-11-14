@@ -21,6 +21,12 @@ func prometheusMiddleware() gin.HandlerFunc {
 }
 
 var _exceptionalRoutes map[string]bool = map[string]bool{
-	"/health":  true,
-	"/metrics": true,
+	"/favicon.ico":                     true,
+	"/health":                          true,
+	"/metrics":                         true,
+	"/metrics/api/v1/query":            true,
+	"/metrics/api/v1/query_range":      true,
+	"/metrics/api/v1/rules":            true,
+	"/metrics/api/v1/series":           true,
+	"/metrics/api/v1/status/buildinfo": true,
 }
