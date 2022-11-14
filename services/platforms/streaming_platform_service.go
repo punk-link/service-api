@@ -7,6 +7,7 @@ import (
 	"main/services/artists"
 	"time"
 
+	"github.com/VictoriaMetrics/metrics"
 	"github.com/nats-io/nats.go"
 	"github.com/punk-link/logger"
 	platformContracts "github.com/punk-link/platform-contracts"
@@ -19,6 +20,7 @@ type StreamingPlatformService struct {
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
+	urlsInProcess  *metrics.FloatCounter
 }
 
 func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
@@ -27,11 +29,14 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
+	urlsInProcess := metrics.GetOrCreateFloatCounter("release_urls_in_process")
+
 	return &StreamingPlatformService{
 		db:             db,
 		logger:         logger,
 		natsConnection: natsConnection,
 		releaseService: releaseService,
+		urlsInProcess:  urlsInProcess,
 	}, nil
 }
 
@@ -76,14 +81,14 @@ func (t *StreamingPlatformService) consumeUrlResults(err error, subscription *na
 		messages, _ := subscription.Fetch(ITERATION_STEP)
 		urlResults := make([]platformContracts.UrlResultContainer, len(messages))
 		for i, message := range messages {
-			message.Ack()
-
 			var urlResult platformContracts.UrlResultContainer
 			_ = json.Unmarshal(message.Data, &urlResult)
 
 			urlResults[i] = urlResult
+			message.Ack()
 		}
 
+		t.urlsInProcess.Sub(float64(len(urlResults)))
 		t.resync(urlResults)
 	}
 }
@@ -195,6 +200,8 @@ func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStre
 				json, _ := json.Marshal(container)
 				jetStreamContext.Publish(subjectName, json)
 			}
+
+			t.urlsInProcess.Add(float64(len(upcContainers)))
 		}
 
 		skip += ITERATION_STEP
