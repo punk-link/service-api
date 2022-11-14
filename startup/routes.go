@@ -66,7 +66,7 @@ func setupRouts(app *gin.Engine, injector *do.Injector) {
 	})
 
 	registerRoutes(injector, func(controller *apiControllers.StreamingPlatformController) {
-		v1.POST("/platforms/sync/process", controller.ProcessUrlSyncResults)
+		v1.GET("/platforms/sync/collect", controller.ProcessUrlSyncResults)
 		v1.GET("/platforms/sync/start", controller.RequestUrlSync)
 	})
 }

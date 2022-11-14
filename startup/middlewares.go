@@ -1,13 +1,12 @@
 package startup
 
 import (
-	"fmt"
-
-	"github.com/VictoriaMetrics/metrics"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/global"
 )
 
-func prometheusMiddleware() gin.HandlerFunc {
+func metricsMiddleware(instrumentationName string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if _exceptionalRoutes[ctx.Request.URL.Path] {
 			ctx.Next()
@@ -15,8 +14,15 @@ func prometheusMiddleware() gin.HandlerFunc {
 		}
 
 		ctx.Next()
-		counterName := fmt.Sprintf("requests_total{path=%q, status_code=\"%d\"}", ctx.Request.URL.Path, ctx.Writer.Status())
-		metrics.GetOrCreateCounter(counterName).Inc()
+
+		meter := global.MeterProvider().Meter(instrumentationName)
+		requestCounter, _ := meter.SyncInt64().Counter("requests")
+
+		attributes := []attribute.KeyValue{
+			attribute.Key("path").String(ctx.Request.URL.Path),
+			attribute.Key("status_code").Int(ctx.Writer.Status()),
+		}
+		requestCounter.Add(ctx, 1, attributes...)
 	}
 }
 

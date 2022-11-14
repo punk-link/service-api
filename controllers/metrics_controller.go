@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"github.com/VictoriaMetrics/metrics"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/samber/do"
 )
 
@@ -14,5 +14,6 @@ func NewMetricsController(injector *do.Injector) (*MetricsController, error) {
 }
 
 func (t *MetricsController) GetMetrics(ctx *gin.Context) {
-	metrics.WritePrometheus(ctx.Writer, true)
+	handler := promhttp.Handler()
+	handler.ServeHTTP(ctx.Writer, ctx.Request)
 }
