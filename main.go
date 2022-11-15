@@ -40,7 +40,6 @@ func main() {
 	app := startup.Configure(logger, consul, &startupModels.StartupOptions{
 		EnvironmentName: environmentName,
 		GinMode:         hostSettings["Mode"].(string),
-		JaegerEndpoint:  "",
 		ServiceName:     constants.SERVICE_NAME,
 	})
 	app.Run()

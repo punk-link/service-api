@@ -42,7 +42,7 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 	}
 	natsSettings := natsSettingsValues.(map[string]any)
 
-	natsConnection, err := nats.Connect(natsSettings["Url"].(string))
+	natsConnection, err := nats.Connect(natsSettings["Endpoint"].(string))
 	if err != nil {
 		logger.LogFatal(err, "Nats connection error: %s", err.Error())
 	}

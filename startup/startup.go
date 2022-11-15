@@ -23,7 +23,7 @@ func Configure(logger logger.Logger, consul *consulClient.ConsulClient, options 
 	app.Static("/assets", "./var/www/assets")
 
 	initSentry(app, logger, consul, options.EnvironmentName)
-	configureOpenTelemetry(logger, options)
+	configureOpenTelemetry(logger, consul, options)
 	setupRouts(app, diContainer)
 
 	data.New(logger, consul)
