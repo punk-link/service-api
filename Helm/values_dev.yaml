@@ -1,5 +1,10 @@
 replicaCount: 1
 
+
+jaeger:
+  collector_host: dns:///jaeger-all-in-one.observability:14250
+
+
 image:
   repository: registry.punk.link/service-api
   pullPolicy: IfNotPresent
