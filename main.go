@@ -27,13 +27,11 @@ func main() {
 	consul, err := getConsulClient(constants.SERVICE_NAME, environmentName)
 	if err != nil {
 		logger.LogFatal(err, "Can't initialize the consul client: '%s'", err.Error())
-		return
 	}
 
 	hostSettingsValues, err := consul.Get("HostSettings")
 	if err != nil {
 		logger.LogFatal(err, "Can't obtain host settings from Consul: '%s'", err.Error())
-		return
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
