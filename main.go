@@ -23,7 +23,7 @@ func main() {
 	environmentName := getEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	appSecrets, err := getSecrets("secret", SERVICE_NAME)
+	appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
 	if err != nil {
 		logger.LogFatal(err, "Consul access error: %s", err)
 	}
@@ -107,6 +107,9 @@ func getSecrets(storeName string, secretName string) (map[string]any, error) {
 
 	vaultCtx := context.Background()
 	serviceApiSettings, err := vaultClient.KVv2(storeName).Get(vaultCtx, SERVICE_NAME)
+	if err != nil {
+		return nil, err
+	}
 
 	return serviceApiSettings.Data, err
 }
@@ -120,4 +123,5 @@ func getEnvironmentName() string {
 	return name
 }
 
+const SECRET_STORAGE_NAME = "secrets"
 const SERVICE_NAME = "service-api"
