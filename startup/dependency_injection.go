@@ -21,7 +21,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulClient) *do.Injector {
+func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulClient, appSecrets map[string]any) *do.Injector {
 	injector := do.New()
 
 	spotifySettingsValue, err := consul.Get("SpotifySettings")
@@ -32,7 +32,7 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 	spotifySettings := spotifySettingsValue.(map[string]any)
 	do.ProvideValue(injector, &tokens.SpotifyClientConfig{
 		ClientId:     spotifySettings["ClientId"].(string),
-		ClientSecret: spotifySettings["ClientSecret"].(string),
+		ClientSecret: appSecrets["client-secret"].(string),
 	})
 
 	natsSettingsValues, err := consul.Get("NatsSettings")
@@ -53,7 +53,7 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 		return loggerService.New(), nil
 	})
 	do.Provide(injector, func(i *do.Injector) (*gorm.DB, error) {
-		return dataConfig.New(logger, consul), nil
+		return dataConfig.New(logger, consul, appSecrets), nil
 	})
 
 	do.Provide(injector, func(i *do.Injector) (cacheManager.CacheManager, error) {

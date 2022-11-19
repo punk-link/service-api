@@ -41,7 +41,7 @@ func main() {
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
-	app := startup.Configure(logger, consul, &startupModels.StartupOptions{
+	app := startup.Configure(logger, consul, appSecrets, &startupModels.StartupOptions{
 		EnvironmentName: environmentName,
 		GinMode:         hostSettings["Mode"].(string),
 		ServiceName:     constants.SERVICE_NAME,
