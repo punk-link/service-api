@@ -25,7 +25,5 @@ func Configure(logger logger.Logger, consul *consulClient.ConsulClient, appSecre
 	configureOpenTelemetry(logger, consul, options)
 	setupRouts(app, diContainer)
 
-	//data.New(logger, consul)
-
 	return app
 }
