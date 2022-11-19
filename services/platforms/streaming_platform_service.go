@@ -1,7 +1,9 @@
 package platforms
 
 import (
+	"context"
 	"encoding/json"
+	"main/constants"
 	platformData "main/data/platforms"
 	"main/models/platforms"
 	"main/services/artists"
@@ -11,6 +13,8 @@ import (
 	"github.com/punk-link/logger"
 	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +23,7 @@ type StreamingPlatformService struct {
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artists.ReleaseService
+	urlsInProcess  syncint64.UpDownCounter
 }
 
 func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
@@ -27,11 +32,15 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
 
+	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)
+	urlsInProcess, _ := meter.SyncInt64().UpDownCounter("release_urls_in_process")
+
 	return &StreamingPlatformService{
 		db:             db,
 		logger:         logger,
 		natsConnection: natsConnection,
 		releaseService: releaseService,
+		urlsInProcess:  urlsInProcess,
 	}, nil
 }
 
@@ -76,14 +85,15 @@ func (t *StreamingPlatformService) consumeUrlResults(err error, subscription *na
 		messages, _ := subscription.Fetch(ITERATION_STEP)
 		urlResults := make([]platformContracts.UrlResultContainer, len(messages))
 		for i, message := range messages {
-			message.Ack()
-
 			var urlResult platformContracts.UrlResultContainer
 			_ = json.Unmarshal(message.Data, &urlResult)
 
 			urlResults[i] = urlResult
+			message.Ack()
 		}
 
+		ctx := context.Background()
+		t.urlsInProcess.Add(ctx, -int64(len(urlResults)))
 		t.resync(urlResults)
 	}
 }
@@ -182,6 +192,7 @@ func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStre
 		return err
 	}
 
+	ctx := context.Background()
 	now := time.Now().UTC()
 	releaseCount := t.releaseService.GetCount()
 	updateTreshold := now.Add(-UPDATE_TRESHOLD_INTERVAL)
@@ -195,6 +206,8 @@ func (t *StreamingPlatformService) publishPlatforeUrlRequests(err error, jetStre
 				json, _ := json.Marshal(container)
 				jetStreamContext.Publish(subjectName, json)
 			}
+
+			t.urlsInProcess.Add(ctx, int64(len(upcContainers)))
 		}
 
 		skip += ITERATION_STEP

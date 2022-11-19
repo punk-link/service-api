@@ -9,6 +9,7 @@ import (
 
 	consulClient "github.com/punk-link/consul-client"
 	"github.com/punk-link/logger"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
@@ -21,6 +22,8 @@ func New(logger logger.Logger, consul *consulClient.ConsulClient) *gorm.DB {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
 	}
+
+	db.Use(otelgorm.NewPlugin())
 
 	autoMigrate(logger, db)
 

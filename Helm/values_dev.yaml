@@ -1,5 +1,10 @@
 replicaCount: 1
 
+
+jaeger:
+  collector_host: dns:///jaeger-all-in-one.observability:14250
+
+
 image:
   repository: registry.punk.link/service-api
   pullPolicy: IfNotPresent
@@ -58,11 +63,11 @@ ingress:
 
 resources:
   limits:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 25m
+    memory: 56Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 25m
+    memory: 56Mi
 
 autoscaling:
   enabled: false

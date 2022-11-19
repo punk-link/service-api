@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"main/constants"
+	startupModels "main/models/startup"
 	"main/startup"
 	"net/http"
 	"os"
@@ -39,8 +41,11 @@ func main() {
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
-	ginMode := hostSettings["Mode"].(string)
-	app := startup.Configure(logger, consul, ginMode)
+	app := startup.Configure(logger, consul, &startupModels.StartupOptions{
+		EnvironmentName: environmentName,
+		GinMode:         hostSettings["Mode"].(string),
+		ServiceName:     constants.SERVICE_NAME,
+	})
 	app.Run()
 
 	hostAddress := hostSettings["Address"]
