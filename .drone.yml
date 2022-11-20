@@ -24,8 +24,6 @@ steps:
       from_secret: GO_ENVIRONMENT
     LOG_LEVEL:
       from_secret: LOG_LEVEL    
-    PNKL_VAULT_ADDR:
-      from_secret: PNKL_VAULT_ADDR
     PNKL_VAULT_TOKEN:
       from_secret: PNKL_VAULT_TOKEN        
 
@@ -49,7 +47,6 @@ steps:
       - PNKL_CONSUL_TOKEN       
       - GO_ENVIRONMENT
       - LOG_LEVEL
-      - PNKL_VAULT_ADDR
       - PNKL_VAULT_TOKEN
  
 
