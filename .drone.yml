@@ -25,7 +25,7 @@ steps:
     LOG_LEVEL:
       from_secret: LOG_LEVEL    
     PNKL_VAULT_ADDR:
-      from_secret: PNKL_VAULT__ADDR
+      from_secret: PNKL_VAULT_ADDR
     PNKL_VAULT_TOKEN:
       from_secret: PNKL_VAULT_TOKEN        
 
