@@ -25,12 +25,12 @@ func main() {
 	environmentName := getEnvironmentName()
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
-	if err != nil {
-		logger.LogFatal(err, "Vault access error: %s", err)
-	}
+	// appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
+	// if err != nil {
+	// 	logger.LogFatal(err, "Vault access error: %s", err)
+	// }
 
-	consul, err := getConsulClient(appSecrets, SERVICE_NAME, environmentName)
+	consul, err := getConsulClient( /*appSecrets, */ SERVICE_NAME, environmentName)
 	if err != nil {
 		logger.LogFatal(err, "Can't initialize Consul client: '%s'", err.Error())
 	}
@@ -41,7 +41,7 @@ func main() {
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
-	app := startup.Configure(logger, consul, appSecrets, &startupModels.StartupOptions{
+	app := startup.Configure(logger, consul /*appSecrets,*/, &startupModels.StartupOptions{
 		EnvironmentName: environmentName,
 		GinMode:         hostSettings["Mode"].(string),
 		ServiceName:     constants.SERVICE_NAME,
@@ -79,17 +79,26 @@ func main() {
 	logger.LogInfo("Exiting")
 }
 
-func getConsulClient(appSecrets map[string]any, storageName string, environmentName string) (*consulClient.ConsulClient, error) {
+func getConsulClient( /*appSecrets map[string]any,*/ storageName string, environmentName string) (*consulClient.ConsulClient, error) {
+	isExist, consulAddress := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_ADDR")
+	if !isExist {
+		return nil, fmt.Errorf("can't get PNKL_CONSUL_ADDR environment variable")
+	}
+
+	isExist, consulToken := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_TOKEN")
+	if !isExist {
+		return nil, fmt.Errorf("can't get PNKL_CONSUL_TOKEN environment variable")
+	}
+
 	return consulClient.New(&consulClient.ConsulConfig{
-		Address:         appSecrets["consul-address"].(string),
+		Address:         consulAddress, //appSecrets["consul-address"].(string),
 		EnvironmentName: environmentName,
 		StorageName:     storageName,
-		Token:           appSecrets["consul-token"].(string),
+		Token:           consulToken, //appSecrets["consul-token"].(string),
 	})
 }
 
 func getSecrets(storeName string, secretName string) (map[string]any, error) {
-	var err error = nil
 	isExist, vaultAddress := envManager.TryGetEnvironmentVariable("PNKL_VAULT_ADDR")
 	if !isExist {
 		return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
