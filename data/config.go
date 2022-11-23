@@ -72,7 +72,6 @@ func getConnectionString(consul *consulClient.ConsulClient /*, appSecrets map[st
 func migrateInternal(logger logger.Logger, err error, db *gorm.DB, dst ...any) error {
 	if err != nil {
 		logger.LogFatal(err, err.Error())
-		return err
 	}
 
 	return db.AutoMigrate(dst...)
