@@ -27,7 +27,7 @@ func main() {
 
 	appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
 	if err != nil {
-		logger.LogFatal(err, "Consul access error: %s", err)
+		logger.LogFatal(err, "Vault access error: %s", err)
 	}
 
 	consul, err := getConsulClient(appSecrets, SERVICE_NAME, environmentName)
@@ -105,18 +105,18 @@ func getSecrets(storeName string, secretName string) (map[string]any, error) {
 
 	vaultClient, err := vault.NewClient(vaultConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't initialize Vault: %s", err)
 	}
 
 	vaultClient.SetToken(vaultToken)
 
 	vaultCtx := context.Background()
-	serviceApiSettings, err := vaultClient.KVv2(storeName).Get(vaultCtx, SERVICE_NAME)
+	serviceApiSettings, err := vaultClient.KVv2(storeName).Get(vaultCtx, secretName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't obtain app secrets: %s", err)
 	}
 
-	return serviceApiSettings.Data, err
+	return serviceApiSettings.Data, nil
 }
 
 func getEnvironmentName() string {

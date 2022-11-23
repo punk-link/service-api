@@ -85,6 +85,6 @@ affinity: {}
 env:
   GO_ENVIRONMENT: "Development"
   LOG_LEVEL: "Warn"
-
-
+  PNKL_VAULT_ADDR: "http://vault.dev.svc.cluster.local:8200/v1/"
+  
   
