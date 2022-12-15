@@ -15,7 +15,7 @@ import (
 )
 
 type StaticReleaseService struct {
-	cache           cacheManager.CacheManager
+	cache           cacheManager.CacheManager[map[string]any]
 	hashCoder       *common.HashCoder
 	logger          logger.Logger
 	platformService *platformServices.StreamingPlatformService
@@ -23,7 +23,7 @@ type StaticReleaseService struct {
 }
 
 func NewStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
-	cache := do.MustInvoke[cacheManager.CacheManager](injector)
+	cache := do.MustInvoke[cacheManager.CacheManager[map[string]any]](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformService := do.MustInvoke[*platformServices.StreamingPlatformService](injector)
@@ -42,7 +42,7 @@ func (t *StaticReleaseService) Get(hash string) (map[string]any, error) {
 	cacheKey := buildReleaseCacheKey(hash)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
-		return value.(map[string]any), nil
+		return value, nil
 	}
 
 	id := t.hashCoder.Decode(hash)

@@ -5,6 +5,7 @@ import (
 	apiControllers "main/controllers/api"
 	staticControllers "main/controllers/static"
 	dataConfig "main/data"
+	artistModels "main/models/artists"
 	"main/models/platforms/spotify/tokens"
 	artistServices "main/services/artists"
 	artistStaticServices "main/services/artists/static"
@@ -21,7 +22,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulClient /*, appSecrets map[string]any*/) *do.Injector {
+func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulClient /*, appSecrets map[string]any*/) *do.Injector {
 	injector := do.New()
 
 	spotifySettingsValue, err := consul.Get("SpotifySettings")
@@ -56,9 +57,10 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 		return dataConfig.New(logger, consul /*, appSecrets*/), nil
 	})
 
-	do.Provide(injector, func(i *do.Injector) (cacheManager.CacheManager, error) {
-		return cacheManager.New(), nil
-	})
+	do.Provide(injector, registerCacheManager[artistModels.Artist]())
+	do.Provide(injector, registerCacheManager[artistModels.Release]())
+	do.Provide(injector, registerCacheManager[[]artistModels.Release]())
+	do.Provide(injector, registerCacheManager[map[string]any]())
 
 	do.Provide(injector, common.NewHashCoder)
 	do.Provide(injector, labelServices.NewLabelService)
@@ -87,4 +89,10 @@ func buildDependencies(logger loggerService.Logger, consul *consulClient.ConsulC
 	do.Provide(injector, staticControllers.NewStaticReleaseController)
 
 	return injector
+}
+
+func registerCacheManager[T any]() func(i *do.Injector) (cacheManager.CacheManager[T], error) {
+	return func(i *do.Injector) (cacheManager.CacheManager[T], error) {
+		return cacheManager.New[T](), nil
+	}
 }

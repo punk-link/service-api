@@ -15,7 +15,7 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func New(logger logger.Logger, consul *consulClient.ConsulClient /*, appSecrets map[string]any*/) *gorm.DB {
+func New(logger logger.Logger, consul consulClient.ConsulClient /*, appSecrets map[string]any*/) *gorm.DB {
 	connectionString, err := getConnectionString(consul /*, appSecrets*/)
 	db, err := openConnection(err, connectionString, logger)
 	err = configureConnection(err, db)
@@ -53,7 +53,7 @@ func configureConnection(err error, db *gorm.DB) error {
 	return err
 }
 
-func getConnectionString(consul *consulClient.ConsulClient /*, appSecrets map[string]any*/) (string, error) {
+func getConnectionString(consul consulClient.ConsulClient /*, appSecrets map[string]any*/) (string, error) {
 	dbSettingsValue, err := consul.Get("DatabaseSettings")
 	if err != nil {
 		return "", fmt.Errorf("can't obtain Postgres configurations from Consul: %v", err.Error())

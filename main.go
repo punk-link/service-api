@@ -21,8 +21,9 @@ import (
 
 func main() {
 	logger := logger.New()
+	envManager := envManager.New()
 
-	environmentName := getEnvironmentName()
+	environmentName := getEnvironmentName(envManager)
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
 	// appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
@@ -30,7 +31,7 @@ func main() {
 	// 	logger.LogFatal(err, "Vault access error: %s", err)
 	// }
 
-	consul, err := getConsulClient( /*appSecrets, */ SERVICE_NAME, environmentName)
+	consul, err := getConsulClient(envManager /*appSecrets, */, SERVICE_NAME, environmentName)
 	if err != nil {
 		logger.LogFatal(err, "Can't initialize Consul client: '%s'", err.Error())
 	}
@@ -79,13 +80,13 @@ func main() {
 	logger.LogInfo("Exiting")
 }
 
-func getConsulClient( /*appSecrets map[string]any,*/ storageName string, environmentName string) (*consulClient.ConsulClient, error) {
-	isExist, consulAddress := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_ADDR")
+func getConsulClient(envManager envManager.EnvironmentVariableManager /*appSecrets map[string]any,*/, storageName string, environmentName string) (consulClient.ConsulClient, error) {
+	consulAddress, isExist := envManager.TryGet("PNKL_CONSUL_ADDR")
 	if !isExist {
 		return nil, fmt.Errorf("can't get PNKL_CONSUL_ADDR environment variable")
 	}
 
-	isExist, consulToken := envManager.TryGetEnvironmentVariable("PNKL_CONSUL_TOKEN")
+	consulToken, isExist := envManager.TryGet("PNKL_CONSUL_TOKEN")
 	if !isExist {
 		return nil, fmt.Errorf("can't get PNKL_CONSUL_TOKEN environment variable")
 	}
@@ -98,13 +99,13 @@ func getConsulClient( /*appSecrets map[string]any,*/ storageName string, environ
 	})
 }
 
-func getSecrets(storeName string, secretName string) (map[string]any, error) {
-	isExist, vaultAddress := envManager.TryGetEnvironmentVariable("PNKL_VAULT_ADDR")
+func getSecrets(envManager envManager.EnvironmentVariableManager, storeName string, secretName string) (map[string]any, error) {
+	vaultAddress, isExist := envManager.TryGet("PNKL_VAULT_ADDR")
 	if !isExist {
 		return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
 	}
 
-	isExist, vaultToken := envManager.TryGetEnvironmentVariable("PNKL_VAULT_TOKEN")
+	vaultToken, isExist := envManager.TryGet("PNKL_VAULT_TOKEN")
 	if !isExist {
 		return nil, fmt.Errorf("can't get PNKL_VAULT_TOKEN environment variable")
 	}
@@ -128,8 +129,8 @@ func getSecrets(storeName string, secretName string) (map[string]any, error) {
 	return serviceApiSettings.Data, nil
 }
 
-func getEnvironmentName() string {
-	isExist, name := envManager.TryGetEnvironmentVariable("GO_ENVIRONMENT")
+func getEnvironmentName(envManager envManager.EnvironmentVariableManager) string {
+	name, isExist := envManager.TryGet("GO_ENVIRONMENT")
 	if !isExist {
 		return "Development"
 	}

@@ -20,7 +20,7 @@ import (
 )
 
 type ArtistService struct {
-	cache          cacheManager.CacheManager
+	cache          cacheManager.CacheManager[artistModels.Artist]
 	db             *gorm.DB
 	logger         logger.Logger
 	releaseService *ReleaseService
@@ -28,7 +28,7 @@ type ArtistService struct {
 }
 
 func NewArtistService(injector *do.Injector) (*ArtistService, error) {
-	cache := do.MustInvoke[cacheManager.CacheManager](injector)
+	cache := do.MustInvoke[cacheManager.CacheManager[artistModels.Artist]](injector)
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
@@ -136,7 +136,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 	var err error
 	dbArtists := make([]artistData.Artist, len(missingArtists))
 	for i, artist := range missingArtists {
-		dbArtist, localError := converters.ToDbArtist(artist, 0, timeStamp)
+		dbArtist, localError := converters.ToDbArtist(&artist, 0, timeStamp)
 		if localError != nil {
 			err = helpers.CombineErrors(err, localError)
 			continue
@@ -229,7 +229,7 @@ func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist
 		cacheKey := t.buildCacheKey(id)
 		value, isCached := t.cache.TryGet(cacheKey)
 		if isCached {
-			artists[i] = value.(artistModels.Artist)
+			artists[i] = value
 			continue
 		}
 

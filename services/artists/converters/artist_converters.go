@@ -48,7 +48,7 @@ func ToArtistSearchResults(spotifyArtists []spotifyArtists.SlimArtist) []models.
 	return results
 }
 
-func ToDbArtist(artist spotifyArtists.Artist, labelId int, timeStamp time.Time) (data.Artist, error) {
+func ToDbArtist(artist *spotifyArtists.Artist, labelId int, timeStamp time.Time) (data.Artist, error) {
 	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(artist.ImageDetails, artist.Name)
 
 	return data.Artist{

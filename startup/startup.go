@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-func Configure(logger logger.Logger, consul *consulClient.ConsulClient /*appSecrets map[string]any,*/, options *startupModels.StartupOptions) *gin.Engine {
+func Configure(logger logger.Logger, consul consulClient.ConsulClient /*appSecrets map[string]any,*/, options *startupModels.StartupOptions) *gin.Engine {
 	diContainer := buildDependencies(logger, consul /*, appSecrets*/)
 
 	gin.SetMode(options.GinMode)

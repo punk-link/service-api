@@ -35,15 +35,15 @@ func NewSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 	}, nil
 }
 
-func (t *SpotifyService) GetArtist(spotifyId string) (spotifyArtists.Artist, error) {
+func (t *SpotifyService) GetArtist(spotifyId string) (*spotifyArtists.Artist, error) {
 	httpRequest, err := t.getHttpRequest("GET", fmt.Sprintf("artists/%s", spotifyId))
 	if err != nil {
 		t.logger.LogWarn(err.Error())
-		return spotifyArtists.Artist{}, nil
+		return nil, err
 	}
 
-	var spotifyArtist spotifyArtists.Artist
-	err = httpClient.MakeRequest(t.httpConfig, httpRequest, &spotifyArtist)
+	httpClient := httpClient.New[spotifyArtists.Artist](t.httpConfig)
+	spotifyArtist, err := httpClient.MakeRequest(httpRequest)
 	if err != nil {
 		t.logger.LogWarn(err.Error())
 	}
@@ -54,7 +54,9 @@ func (t *SpotifyService) GetArtist(spotifyId string) (spotifyArtists.Artist, err
 func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist {
 	chunkedIds := helpers.Chunk(spotifyIds, ARTIST_QUERY_LIMIT)
 	httpRequests := t.getHttpRequests(chunkedIds, "GET", "artists?ids=%s")
-	spotifyArtistContainers := httpClient.MakeBatchRequest[spotifyArtists.ArtistContainer](t.httpConfig, httpRequests)
+
+	httpClient := httpClient.New[spotifyArtists.ArtistContainer](t.httpConfig)
+	spotifyArtistContainers := httpClient.MakeBatchRequest(httpRequests)
 
 	results := make([]spotifyArtists.Artist, 0)
 	for _, container := range spotifyArtistContainers {
@@ -76,8 +78,8 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 			continue
 		}
 
-		var tmpResponse releases.ArtistReleasesContainer
-		err = httpClient.MakeRequest(t.httpConfig, httpRequest, &tmpResponse)
+		httpClient := httpClient.New[releases.ArtistReleasesContainer](t.httpConfig)
+		tmpResponse, err := httpClient.MakeRequest(httpRequest)
 		if err != nil {
 			t.logger.LogWarn(err.Error())
 			continue
@@ -95,7 +97,9 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
 	chunkedIds := helpers.Chunk(spotifyIds, RELEASE_QUERY_LIMIT)
 	httpRequests := t.getHttpRequests(chunkedIds, "GET", "albums?ids=%s")
-	releaseContainers := httpClient.MakeBatchRequest[releases.ReleaseDetailsContainer](t.httpConfig, httpRequests)
+
+	httpClient := httpClient.New[releases.ReleaseDetailsContainer](t.httpConfig)
+	releaseContainers := httpClient.MakeBatchRequest(httpRequests)
 
 	spotifyReleases := make([]releases.Release, 0)
 	for _, container := range releaseContainers {
@@ -112,8 +116,8 @@ func (t *SpotifyService) SearchArtist(query string) []spotifyArtists.SlimArtist 
 		return make([]spotifyArtists.SlimArtist, 0)
 	}
 
-	var spotifyArtistSearchResults searchModels.ArtistSearchResult
-	err = httpClient.MakeRequest(t.httpConfig, httpRequest, &spotifyArtistSearchResults)
+	httpClient := httpClient.New[searchModels.ArtistSearchResult](t.httpConfig)
+	spotifyArtistSearchResults, err := httpClient.MakeRequest(httpRequest)
 	if err != nil {
 		t.logger.LogWarn(err.Error())
 		return make([]spotifyArtists.SlimArtist, 0)

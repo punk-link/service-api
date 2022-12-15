@@ -16,7 +16,7 @@ import (
 )
 
 type StaticArtistService struct {
-	cache          cacheManager.CacheManager
+	cache          cacheManager.CacheManager[map[string]any]
 	hashCoder      *common.HashCoder
 	logger         logger.Logger
 	artistService  *artistServices.ArtistService
@@ -24,7 +24,7 @@ type StaticArtistService struct {
 }
 
 func NewStaticArtistService(injector *do.Injector) (*StaticArtistService, error) {
-	cache := do.MustInvoke[cacheManager.CacheManager](injector)
+	cache := do.MustInvoke[cacheManager.CacheManager[map[string]any]](injector)
 	hashCoder := do.MustInvoke[*common.HashCoder](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	artistService := do.MustInvoke[*artistServices.ArtistService](injector)
@@ -43,7 +43,7 @@ func (t *StaticArtistService) Get(hash string) (map[string]any, error) {
 	cacheKey := buildArtistCacheKey(hash)
 	value, isCached := t.cache.TryGet(cacheKey)
 	if isCached {
-		return value.(map[string]any), nil
+		return value, nil
 	}
 
 	id := t.hashCoder.Decode(hash)
@@ -94,7 +94,7 @@ func buildArtistCacheKey(hash string) string {
 
 func buildArtistResult(err error, hashCoder *common.HashCoder, artist artists.Artist, soleReleases []artists.Release, compilations []artists.Release) (map[string]any, error) {
 	if err != nil {
-		return make(map[string]any), err
+		return make(map[string]any, 0), err
 	}
 
 	return map[string]any{

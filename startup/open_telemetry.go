@@ -16,7 +16,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
 
-func configureOpenTelemetry(logger logger.Logger, consul *consulClient.ConsulClient, options *startupModels.StartupOptions) {
+func configureOpenTelemetry(logger logger.Logger, consul consulClient.ConsulClient, options *startupModels.StartupOptions) {
 	configureTracing(logger, consul, options)
 	configureMetrics(logger)
 }
@@ -29,7 +29,7 @@ func configureMetrics(logger logger.Logger) {
 	global.SetMeterProvider(metricProvider)
 }
 
-func configureTracing(logger logger.Logger, consul *consulClient.ConsulClient, options *startupModels.StartupOptions) {
+func configureTracing(logger logger.Logger, consul consulClient.ConsulClient, options *startupModels.StartupOptions) {
 	jaegerSettingsValues, err := consul.Get("JaegerSettings")
 	if err != nil {
 		logger.LogInfo("Jaeger settings is empty")

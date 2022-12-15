@@ -23,8 +23,8 @@ func getAccessToken(logger logger.Logger, config *spotifyModels.SpotifyClientCon
 		return "", err
 	}
 
-	var accessToken spotifyModels.SpotifyAccessToken
-	err = httpClient.MakeRequest(nil, request, &accessToken)
+	httpClient := httpClient.New[spotifyModels.SpotifyAccessToken](httpClient.DefaultConfig(logger))
+	accessToken, err := httpClient.MakeRequest(request)
 	if err != nil {
 		logger.LogError(err, err.Error())
 		return "", err
