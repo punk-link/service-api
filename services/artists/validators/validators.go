@@ -2,10 +2,10 @@ package validators
 
 import (
 	"errors"
-	data "main/data/artists"
+	artistData "main/data/artists"
 )
 
-func CurrentDbArtistBelongsToLabel(err error, dbArtist data.Artist, targetLabelId int) error {
+func CurrentDbArtistBelongsToLabel(err error, dbArtist artistData.Artist, targetLabelId int) error {
 	if err != nil {
 		return err
 	}

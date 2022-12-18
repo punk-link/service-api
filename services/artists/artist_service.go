@@ -6,11 +6,11 @@ import (
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
-	"main/models/labels"
-	"main/models/platforms/spotify/releases"
+	labelModels "main/models/labels"
+	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	"main/services/artists/validators"
-	"main/services/platforms/spotify"
+	spotifyPlatformServices "main/services/platforms/spotify"
 	"time"
 
 	cacheManager "github.com/punk-link/cache-manager"
@@ -24,14 +24,14 @@ type ArtistService struct {
 	db             *gorm.DB
 	logger         logger.Logger
 	releaseService *ReleaseService
-	spotifyService *spotify.SpotifyService
+	spotifyService *spotifyPlatformServices.SpotifyService
 }
 
 func NewArtistService(injector *do.Injector) (*ArtistService, error) {
 	cache := do.MustInvoke[cacheManager.CacheManager[artistModels.Artist]](injector)
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	releaseService := do.MustInvoke[*spotify.SpotifyService](injector)
+	releaseService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
 	spotifyService := do.MustInvoke[*ReleaseService](injector)
 
 	return &ArtistService{
@@ -43,7 +43,7 @@ func NewArtistService(injector *do.Injector) (*ArtistService, error) {
 	}, nil
 }
 
-func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId string) (artistModels.Artist, error) {
+func (t *ArtistService) Add(currentManager labelModels.ManagerContext, spotifyId string) (artistModels.Artist, error) {
 	var err error
 	if spotifyId == "" {
 		err = errors.New("artist's spotify ID is empty")
@@ -68,7 +68,7 @@ func (t *ArtistService) Add(currentManager labels.ManagerContext, spotifyId stri
 	return artist[0], nil
 }
 
-func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
+func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labelModels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistDa
 	return results, err
 }
 
-func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []releases.Release) ([]string, error) {
+func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []releaseSpotifyPlatformModels.Release) ([]string, error) {
 	if err != nil {
 		return make([]string, 0), err
 	}

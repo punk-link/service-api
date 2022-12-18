@@ -4,15 +4,15 @@ import (
 	controllers "main/controllers"
 	apiControllers "main/controllers/api"
 	staticControllers "main/controllers/static"
-	dataConfig "main/data"
+	"main/data"
 	artistModels "main/models/artists"
-	"main/models/platforms/spotify/tokens"
+	tokenSpotifyPlatformModels "main/models/platforms/spotify/tokens"
 	artistServices "main/services/artists"
-	artistStaticServices "main/services/artists/static"
-	"main/services/common"
+	staticArtistServices "main/services/artists/static"
+	commonServices "main/services/common"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
-	spotifyServices "main/services/platforms/spotify"
+	spotifyPlatformServices "main/services/platforms/spotify"
 
 	"github.com/nats-io/nats.go"
 	cacheManager "github.com/punk-link/cache-manager"
@@ -31,7 +31,7 @@ func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	}
 
 	spotifySettings := spotifySettingsValue.(map[string]any)
-	do.ProvideValue(injector, &tokens.SpotifyClientConfig{
+	do.ProvideValue(injector, &tokenSpotifyPlatformModels.SpotifyClientConfig{
 		ClientId:     spotifySettings["ClientId"].(string),
 		ClientSecret: spotifySettings["ClientSecret"].(string), //appSecrets["client-secret"].(string),
 	})
@@ -54,7 +54,7 @@ func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 		return loggerService.New(), nil
 	})
 	do.Provide(injector, func(i *do.Injector) (*gorm.DB, error) {
-		return dataConfig.New(logger, consul /*, appSecrets*/), nil
+		return data.New(logger, consul /*, appSecrets*/), nil
 	})
 
 	do.Provide(injector, registerCacheManager[artistModels.Artist]())
@@ -62,16 +62,16 @@ func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, registerCacheManager[[]artistModels.Release]())
 	do.Provide(injector, registerCacheManager[map[string]any]())
 
-	do.Provide(injector, common.NewHashCoder)
+	do.Provide(injector, commonServices.NewHashCoder)
 	do.Provide(injector, labelServices.NewLabelService)
 	do.Provide(injector, labelServices.NewManagerService)
 
-	do.Provide(injector, spotifyServices.NewSpotifyService)
+	do.Provide(injector, spotifyPlatformServices.NewSpotifyService)
 
 	do.Provide(injector, artistServices.NewReleaseService)
-	do.Provide(injector, artistStaticServices.NewStaticReleaseService)
+	do.Provide(injector, staticArtistServices.NewStaticReleaseService)
 	do.Provide(injector, artistServices.NewArtistService)
-	do.Provide(injector, artistStaticServices.NewStaticArtistService)
+	do.Provide(injector, staticArtistServices.NewStaticArtistService)
 
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 

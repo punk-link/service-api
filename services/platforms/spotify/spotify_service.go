@@ -3,10 +3,10 @@ package spotify
 import (
 	"fmt"
 	"main/helpers"
-	spotifyArtists "main/models/platforms/spotify/artists"
-	"main/models/platforms/spotify/releases"
-	searchModels "main/models/platforms/spotify/searches"
-	spotifyModels "main/models/platforms/spotify/tokens"
+	artistSpotifyPlatformModels "main/models/platforms/spotify/artists"
+	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
+	searchSpotifyPlatformModels "main/models/platforms/spotify/searches"
+	tokenSpotifyPlatformModels "main/models/platforms/spotify/tokens"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,13 +17,13 @@ import (
 )
 
 type SpotifyService struct {
-	config     *spotifyModels.SpotifyClientConfig
+	config     *tokenSpotifyPlatformModels.SpotifyClientConfig
 	httpConfig *httpClient.HttpClientConfig
 	logger     logger.Logger
 }
 
 func NewSpotifyService(injector *do.Injector) (*SpotifyService, error) {
-	config := do.MustInvoke[*spotifyModels.SpotifyClientConfig](injector)
+	config := do.MustInvoke[*tokenSpotifyPlatformModels.SpotifyClientConfig](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 
 	httpConfig := httpClient.DefaultConfig(logger)
@@ -35,14 +35,14 @@ func NewSpotifyService(injector *do.Injector) (*SpotifyService, error) {
 	}, nil
 }
 
-func (t *SpotifyService) GetArtist(spotifyId string) (*spotifyArtists.Artist, error) {
+func (t *SpotifyService) GetArtist(spotifyId string) (*artistSpotifyPlatformModels.Artist, error) {
 	httpRequest, err := t.getHttpRequest("GET", fmt.Sprintf("artists/%s", spotifyId))
 	if err != nil {
 		t.logger.LogWarn(err.Error())
 		return nil, err
 	}
 
-	httpClient := httpClient.New[spotifyArtists.Artist](t.httpConfig)
+	httpClient := httpClient.New[artistSpotifyPlatformModels.Artist](t.httpConfig)
 	spotifyArtist, err := httpClient.MakeRequest(httpRequest)
 	if err != nil {
 		t.logger.LogWarn(err.Error())
@@ -51,14 +51,14 @@ func (t *SpotifyService) GetArtist(spotifyId string) (*spotifyArtists.Artist, er
 	return spotifyArtist, err
 }
 
-func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist {
+func (t *SpotifyService) GetArtists(spotifyIds []string) []artistSpotifyPlatformModels.Artist {
 	chunkedIds := helpers.Chunk(spotifyIds, ARTIST_QUERY_LIMIT)
 	httpRequests := t.getHttpRequests(chunkedIds, "GET", "artists?ids=%s")
 
-	httpClient := httpClient.New[spotifyArtists.ArtistContainer](t.httpConfig)
+	httpClient := httpClient.New[artistSpotifyPlatformModels.ArtistContainer](t.httpConfig)
 	spotifyArtistContainers := httpClient.MakeBatchRequest(httpRequests)
 
-	results := make([]spotifyArtists.Artist, 0)
+	results := make([]artistSpotifyPlatformModels.Artist, 0)
 	for _, container := range spotifyArtistContainers {
 		results = append(results, container.Artists...)
 	}
@@ -66,8 +66,8 @@ func (t *SpotifyService) GetArtists(spotifyIds []string) []spotifyArtists.Artist
 	return results
 }
 
-func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release {
-	var spotifyResponse releases.ArtistReleasesContainer
+func (t *SpotifyService) GetArtistReleases(spotifyId string) []releaseSpotifyPlatformModels.Release {
+	var spotifyResponse releaseSpotifyPlatformModels.ArtistReleasesContainer
 	offset := 0
 	for {
 		offset = offset + RELEASE_QUERY_LIMIT
@@ -78,7 +78,7 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 			continue
 		}
 
-		httpClient := httpClient.New[releases.ArtistReleasesContainer](t.httpConfig)
+		httpClient := httpClient.New[releaseSpotifyPlatformModels.ArtistReleasesContainer](t.httpConfig)
 		tmpResponse, err := httpClient.MakeRequest(httpRequest)
 		if err != nil {
 			t.logger.LogWarn(err.Error())
@@ -94,14 +94,14 @@ func (t *SpotifyService) GetArtistReleases(spotifyId string) []releases.Release 
 	return spotifyResponse.Items
 }
 
-func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Release {
+func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releaseSpotifyPlatformModels.Release {
 	chunkedIds := helpers.Chunk(spotifyIds, RELEASE_QUERY_LIMIT)
 	httpRequests := t.getHttpRequests(chunkedIds, "GET", "albums?ids=%s")
 
-	httpClient := httpClient.New[releases.ReleaseDetailsContainer](t.httpConfig)
+	httpClient := httpClient.New[releaseSpotifyPlatformModels.ReleaseDetailsContainer](t.httpConfig)
 	releaseContainers := httpClient.MakeBatchRequest(httpRequests)
 
-	spotifyReleases := make([]releases.Release, 0)
+	spotifyReleases := make([]releaseSpotifyPlatformModels.Release, 0)
 	for _, container := range releaseContainers {
 		spotifyReleases = append(spotifyReleases, container.Releases...)
 	}
@@ -109,18 +109,18 @@ func (t *SpotifyService) GetReleasesDetails(spotifyIds []string) []releases.Rele
 	return spotifyReleases
 }
 
-func (t *SpotifyService) SearchArtist(query string) []spotifyArtists.SlimArtist {
+func (t *SpotifyService) SearchArtist(query string) []artistSpotifyPlatformModels.SlimArtist {
 	httpRequest, err := t.getHttpRequest("GET", fmt.Sprintf("search?type=artist&limit=10&q=%s", url.QueryEscape(query)))
 	if err != nil {
 		t.logger.LogWarn(err.Error())
-		return make([]spotifyArtists.SlimArtist, 0)
+		return make([]artistSpotifyPlatformModels.SlimArtist, 0)
 	}
 
-	httpClient := httpClient.New[searchModels.ArtistSearchResult](t.httpConfig)
+	httpClient := httpClient.New[searchSpotifyPlatformModels.ArtistSearchResult](t.httpConfig)
 	spotifyArtistSearchResults, err := httpClient.MakeRequest(httpRequest)
 	if err != nil {
 		t.logger.LogWarn(err.Error())
-		return make([]spotifyArtists.SlimArtist, 0)
+		return make([]artistSpotifyPlatformModels.SlimArtist, 0)
 	}
 
 	return spotifyArtistSearchResults.Artists.Items

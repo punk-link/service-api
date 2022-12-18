@@ -4,10 +4,10 @@ import (
 	"fmt"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
-	"main/models/labels"
-	"main/models/platforms/spotify/releases"
+	labelModels "main/models/labels"
+	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
-	"main/services/platforms/spotify"
+	spotifyPlatformServices "main/services/platforms/spotify"
 	"sync"
 	"time"
 
@@ -23,7 +23,7 @@ type ReleaseService struct {
 	releaseArrayCache cacheManager.CacheManager[[]artistModels.Release]
 	db                *gorm.DB
 	logger            logger.Logger
-	spotifyService    *spotify.SpotifyService
+	spotifyService    *spotifyPlatformServices.SpotifyService
 }
 
 func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
@@ -31,7 +31,7 @@ func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
 	releaseArrayCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
+	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
 
 	return &ReleaseService{
 		releaseCache:      releaseCache,
@@ -42,7 +42,7 @@ func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
 	}, nil
 }
 
-func (t *ReleaseService) Add(currentManager labels.ManagerContext, artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) error {
+func (t *ReleaseService) Add(currentManager labelModels.ManagerContext, artists map[string]artistData.Artist, releases []releaseSpotifyPlatformModels.Release, timeStamp time.Time) error {
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
 	orderDbReleasesChronologically(dbReleases)
 
@@ -71,7 +71,7 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 	return releases, err
 }
 
-func (t *ReleaseService) GetMissing(artistId int, artistSpotifyId string) ([]releases.Release, error) {
+func (t *ReleaseService) GetMissing(artistId int, artistSpotifyId string) ([]releaseSpotifyPlatformModels.Release, error) {
 	dbReleases, err := getDbReleasesByArtistId(t.db, t.logger, nil, artistId)
 	missingReleaseSpotifyIds, err := t.getMissingReleasesSpotifyIds(err, dbReleases, artistSpotifyId)
 
@@ -123,7 +123,7 @@ func (t *ReleaseService) buildArtistReleasesCacheKey(artistId int) string {
 	return fmt.Sprintf("ArtistReleases::%v", artistId)
 }
 
-func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, releases []releases.Release, timeStamp time.Time) []artistData.Release {
+func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, releases []releaseSpotifyPlatformModels.Release, timeStamp time.Time) []artistData.Release {
 	var wg sync.WaitGroup
 	chanResults := make(chan artistData.Release)
 	for _, release := range releases {
@@ -144,7 +144,7 @@ func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, r
 	return dbReleases
 }
 
-func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- artistData.Release, artists map[string]artistData.Artist, release releases.Release, timeStamp time.Time) {
+func (t *ReleaseService) buildFromSpotify(wg *sync.WaitGroup, results chan<- artistData.Release, artists map[string]artistData.Artist, release releaseSpotifyPlatformModels.Release, timeStamp time.Time) {
 	defer wg.Done()
 
 	dbArtist, err := converters.ToDbReleaseFromSpotify(release, artists, timeStamp)
@@ -177,9 +177,9 @@ func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []ar
 	return missingReleaseSpotifyIds, nil
 }
 
-func (t *ReleaseService) getReleaseDetails(err error, missingReleaseSpotifyIds []string) ([]releases.Release, error) {
+func (t *ReleaseService) getReleaseDetails(err error, missingReleaseSpotifyIds []string) ([]releaseSpotifyPlatformModels.Release, error) {
 	if err != nil {
-		return make([]releases.Release, 0), err
+		return make([]releaseSpotifyPlatformModels.Release, 0), err
 	}
 
 	details := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)

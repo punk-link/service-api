@@ -2,10 +2,10 @@ package validators
 
 import (
 	"errors"
-	"main/models/labels"
+	labelModels "main/models/labels"
 )
 
-func CurrentManagerBelongsToLabel(currentManager labels.ManagerContext, targetLabelId int) error {
+func CurrentManagerBelongsToLabel(currentManager labelModels.ManagerContext, targetLabelId int) error {
 	if currentManager.LabelId != targetLabelId {
 		return errors.New("the current mamber isn't belong to the target label")
 	}

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"main/constants"
 	platformData "main/data/platforms"
-	"main/models/platforms"
-	"main/services/artists"
+	platformModels "main/models/platforms"
+	artistServices "main/services/artists"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -22,7 +22,7 @@ type StreamingPlatformService struct {
 	db             *gorm.DB
 	logger         logger.Logger
 	natsConnection *nats.Conn
-	releaseService *artists.ReleaseService
+	releaseService *artistServices.ReleaseService
 	urlsInProcess  syncint64.UpDownCounter
 }
 
@@ -30,7 +30,7 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
-	releaseService := do.MustInvoke[*artists.ReleaseService](injector)
+	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
 
 	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)
 	urlsInProcess, _ := meter.SyncInt64().UpDownCounter("release_urls_in_process")
@@ -44,15 +44,15 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	}, nil
 }
 
-func (t *StreamingPlatformService) Get(releaseId int) ([]platforms.PlatformReleaseUrl, error) {
+func (t *StreamingPlatformService) Get(releaseId int) ([]platformModels.PlatformReleaseUrl, error) {
 	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.db, t.logger, nil, releaseId)
 	if err != nil {
-		return make([]platforms.PlatformReleaseUrl, 0), err
+		return make([]platformModels.PlatformReleaseUrl, 0), err
 	}
 
-	results := make([]platforms.PlatformReleaseUrl, len(urls))
+	results := make([]platformModels.PlatformReleaseUrl, len(urls))
 	for i, url := range urls {
-		results[i] = platforms.PlatformReleaseUrl{
+		results[i] = platformModels.PlatformReleaseUrl{
 			Id:           url.Id,
 			PlatformName: url.PlatformName,
 			ReleaseId:    url.ReleaseId,

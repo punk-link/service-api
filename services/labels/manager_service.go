@@ -2,7 +2,7 @@ package labels
 
 import (
 	"main/helpers"
-	"main/models/labels"
+	labelModels "main/models/labels"
 
 	"main/services/labels/converters"
 	"main/services/labels/validators"
@@ -31,50 +31,50 @@ func NewManagerService(injector *do.Injector) (*ManagerService, error) {
 	}, nil
 }
 
-func (t *ManagerService) Add(currentManager labels.ManagerContext, manager labels.Manager) (labels.Manager, error) {
+func (t *ManagerService) Add(currentManager labelModels.ManagerContext, manager labelModels.Manager) (labelModels.Manager, error) {
 	trimmedName := strings.TrimSpace(manager.Name)
 	err := validators.NameNotEmpty(trimmedName)
 
 	return t.addInternal(err, currentManager, trimmedName)
 }
 
-func (t *ManagerService) AddMaster(request labels.AddMasterManagerRequest) (labels.Manager, error) {
+func (t *ManagerService) AddMaster(request labelModels.AddMasterManagerRequest) (labelModels.Manager, error) {
 	trimmedName := strings.TrimSpace(request.Name)
 	err := validators.NameNotEmpty(trimmedName)
 	if err != nil {
-		return labels.Manager{}, err
+		return labelModels.Manager{}, err
 	}
 
 	label, err := t.labelService.AddLabel(request.LabelName)
-	return t.addInternal(err, labels.ManagerContext{LabelId: label.Id}, trimmedName)
+	return t.addInternal(err, labelModels.ManagerContext{LabelId: label.Id}, trimmedName)
 }
 
-func (t *ManagerService) Get(currentManager labels.ManagerContext) ([]labels.Manager, error) {
+func (t *ManagerService) Get(currentManager labelModels.ManagerContext) ([]labelModels.Manager, error) {
 	dbManagers, err := getDbManagersByLabelId(t.db, t.logger, nil, currentManager.LabelId)
 	if err != nil {
-		return make([]labels.Manager, 0), err
+		return make([]labelModels.Manager, 0), err
 	}
 
 	return converters.ToManagers(dbManagers), nil
 }
 
-func (t *ManagerService) GetContext(id int) (labels.ManagerContext, error) {
+func (t *ManagerService) GetContext(id int) (labelModels.ManagerContext, error) {
 	manager, err := t.getOneInternal(nil, id)
 
-	return labels.ManagerContext{
+	return labelModels.ManagerContext{
 		Id:      manager.Id,
 		LabelId: manager.LabelId,
 	}, err
 }
 
-func (t *ManagerService) GetOne(currentManager labels.ManagerContext, id int) (labels.Manager, error) {
+func (t *ManagerService) GetOne(currentManager labelModels.ManagerContext, id int) (labelModels.Manager, error) {
 	manager, err1 := t.getOneInternal(nil, id)
 	err2 := validators.CurrentManagerBelongsToLabel(currentManager, manager.LabelId)
 
 	return manager, helpers.AccumulateErrors(err1, err2)
 }
 
-func (t *ManagerService) Modify(currentManager labels.ManagerContext, manager labels.Manager, id int) (labels.Manager, error) {
+func (t *ManagerService) Modify(currentManager labelModels.ManagerContext, manager labelModels.Manager, id int) (labelModels.Manager, error) {
 	err1 := validators.IdConsistsOverRequest(manager.Id, id)
 
 	trimmedName := strings.TrimSpace(manager.Name)
@@ -86,9 +86,9 @@ func (t *ManagerService) Modify(currentManager labels.ManagerContext, manager la
 	return t.modifyInternal(helpers.AccumulateErrors(err3, err4), manager.Id, trimmedName)
 }
 
-func (t *ManagerService) addInternal(err error, currentManager labels.ManagerContext, managerName string) (labels.Manager, error) {
+func (t *ManagerService) addInternal(err error, currentManager labelModels.ManagerContext, managerName string) (labelModels.Manager, error) {
 	if err != nil {
-		return labels.Manager{}, err
+		return labelModels.Manager{}, err
 	}
 
 	dbManager := converters.ToDbManager(managerName, currentManager.LabelId)
@@ -96,18 +96,18 @@ func (t *ManagerService) addInternal(err error, currentManager labels.ManagerCon
 	return t.getOneInternal(err, dbManager.Id)
 }
 
-func (t *ManagerService) getOneInternal(err error, id int) (labels.Manager, error) {
+func (t *ManagerService) getOneInternal(err error, id int) (labelModels.Manager, error) {
 	if err != nil {
-		return labels.Manager{}, err
+		return labelModels.Manager{}, err
 	}
 
 	dbManager, err := getDbManager(t.db, t.logger, err, id)
 	return converters.ToManager(err, dbManager)
 }
 
-func (t *ManagerService) modifyInternal(err error, id int, managerName string) (labels.Manager, error) {
+func (t *ManagerService) modifyInternal(err error, id int, managerName string) (labelModels.Manager, error) {
 	if err != nil {
-		return labels.Manager{}, err
+		return labelModels.Manager{}, err
 	}
 
 	dbManager, err := getDbManager(t.db, t.logger, err, id)

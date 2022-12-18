@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"main/helpers"
-	"main/models/common"
-	"main/models/platforms/spotify"
+	commonModels "main/models/common"
+	spotifyPlatformModels "main/models/platforms/spotify"
 )
 
-func FromJson(detailsJson string) (common.ImageDetails, error) {
-	imageDetails := common.ImageDetails{}
+func FromJson(detailsJson string) (commonModels.ImageDetails, error) {
+	imageDetails := commonModels.ImageDetails{}
 	var err error
 
 	if detailsJson != emptyJsonToken {
@@ -19,13 +19,13 @@ func FromJson(detailsJson string) (common.ImageDetails, error) {
 	return imageDetails, err
 }
 
-func ToImageDetailsFromSpotify(imageDetails []spotify.ImageDetails, altText string) common.ImageDetails {
+func ToImageDetailsFromSpotify(imageDetails []spotifyPlatformModels.ImageDetails, altText string) commonModels.ImageDetails {
 	if len(imageDetails) == 0 {
-		return common.ImageDetails{}
+		return commonModels.ImageDetails{}
 	}
 
 	helpers.OrderImageDetailsDesc(imageDetails)
-	return common.ImageDetails{
+	return commonModels.ImageDetails{
 		AltText: altText,
 		Height:  imageDetails[0].Height,
 		Url:     imageDetails[0].Url,
@@ -33,7 +33,7 @@ func ToImageDetailsFromSpotify(imageDetails []spotify.ImageDetails, altText stri
 	}
 }
 
-func ToJsonFromSpotify(imageDetails []spotify.ImageDetails, altText string) (string, error) {
+func ToJsonFromSpotify(imageDetails []spotifyPlatformModels.ImageDetails, altText string) (string, error) {
 	imageDetailsJson := emptyJsonToken
 	var err error
 
@@ -45,7 +45,7 @@ func ToJsonFromSpotify(imageDetails []spotify.ImageDetails, altText string) (str
 	return imageDetailsJson, err
 }
 
-func ToJson(imageDetails common.ImageDetails) (string, error) {
+func ToJson(imageDetails commonModels.ImageDetails) (string, error) {
 	imageDetailsBytes, err := json.Marshal(imageDetails)
 	if err != nil {
 		return "", fmt.Errorf("can't serialize image details: '%s'", err.Error())

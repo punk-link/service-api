@@ -2,10 +2,10 @@ package static
 
 import (
 	"fmt"
-	"main/models/artists"
-	"main/models/platforms"
+	artistModels "main/models/artists"
+	platformModels "main/models/platforms"
 	artistServices "main/services/artists"
-	"main/services/common"
+	commonServices "main/services/common"
 	platformServices "main/services/platforms"
 	"time"
 
@@ -16,7 +16,7 @@ import (
 
 type StaticReleaseService struct {
 	cache           cacheManager.CacheManager[map[string]any]
-	hashCoder       *common.HashCoder
+	hashCoder       *commonServices.HashCoder
 	logger          logger.Logger
 	platformService *platformServices.StreamingPlatformService
 	releaseService  *artistServices.ReleaseService
@@ -24,7 +24,7 @@ type StaticReleaseService struct {
 
 func NewStaticReleaseService(injector *do.Injector) (*StaticReleaseService, error) {
 	cache := do.MustInvoke[cacheManager.CacheManager[map[string]any]](injector)
-	hashCoder := do.MustInvoke[*common.HashCoder](injector)
+	hashCoder := do.MustInvoke[*commonServices.HashCoder](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformService := do.MustInvoke[*platformServices.StreamingPlatformService](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
@@ -58,9 +58,9 @@ func (t *StaticReleaseService) Get(hash string) (map[string]any, error) {
 	return result, err
 }
 
-func (t *StaticReleaseService) buildTracks(err error, tracks []artists.Track, releaseArtists []artists.Artist) ([]artists.SlimTrack, error) {
+func (t *StaticReleaseService) buildTracks(err error, tracks []artistModels.Track, releaseArtists []artistModels.Artist) ([]artistModels.SlimTrack, error) {
 	if err != nil {
-		return make([]artists.SlimTrack, 0), err
+		return make([]artistModels.SlimTrack, 0), err
 	}
 
 	releaseArtistIds := make(map[int]int, len(releaseArtists))
@@ -68,7 +68,7 @@ func (t *StaticReleaseService) buildTracks(err error, tracks []artists.Track, re
 		releaseArtistIds[artist.Id] = 0
 	}
 
-	slimTracks := make([]artists.SlimTrack, len(tracks))
+	slimTracks := make([]artistModels.SlimTrack, len(tracks))
 	for i, track := range tracks {
 		trackArtists := make([]string, 0)
 		for _, artist := range track.Artists {
@@ -77,7 +77,7 @@ func (t *StaticReleaseService) buildTracks(err error, tracks []artists.Track, re
 			}
 		}
 
-		slimTracks[i] = artists.SlimTrack{
+		slimTracks[i] = artistModels.SlimTrack{
 			ArtistNames: trackArtists,
 			IsExplicit:  track.IsExplicit,
 			Name:        track.Name,
@@ -87,9 +87,9 @@ func (t *StaticReleaseService) buildTracks(err error, tracks []artists.Track, re
 	return slimTracks, err
 }
 
-func (t *StaticReleaseService) getPlatformReleaseUrls(err error, id int) ([]platforms.PlatformReleaseUrl, error) {
+func (t *StaticReleaseService) getPlatformReleaseUrls(err error, id int) ([]platformModels.PlatformReleaseUrl, error) {
 	if err != nil {
-		return make([]platforms.PlatformReleaseUrl, 0), err
+		return make([]platformModels.PlatformReleaseUrl, 0), err
 	}
 
 	return t.platformService.Get(id)
@@ -99,7 +99,7 @@ func buildReleaseCacheKey(hash string) string {
 	return fmt.Sprintf("ArtistStaticRelease::%s", hash)
 }
 
-func buildReleaseResult(err error, release artists.Release, tracks []artists.SlimTrack, platformUrls []platforms.PlatformReleaseUrl) (map[string]any, error) {
+func buildReleaseResult(err error, release artistModels.Release, tracks []artistModels.SlimTrack, platformUrls []platformModels.PlatformReleaseUrl) (map[string]any, error) {
 	if err != nil {
 		return make(map[string]any), err
 	}

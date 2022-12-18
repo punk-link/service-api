@@ -3,9 +3,9 @@ package labels
 import (
 	labelData "main/data/labels"
 	"main/helpers"
-	"main/models/labels"
-	validator "main/services/labels/validators"
-	"main/services/platforms/spotify"
+	labelModels "main/models/labels"
+	"main/services/labels/validators"
+	spotifyPlatformServices "main/services/platforms/spotify"
 	"strings"
 	"time"
 
@@ -17,13 +17,13 @@ import (
 type LabelService struct {
 	db             *gorm.DB
 	logger         logger.Logger
-	spotifyService *spotify.SpotifyService
+	spotifyService *spotifyPlatformServices.SpotifyService
 }
 
 func NewLabelService(injector *do.Injector) (*LabelService, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	spotifyService := do.MustInvoke[*spotify.SpotifyService](injector)
+	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
 
 	return &LabelService{
 		db:             db,
@@ -32,31 +32,31 @@ func NewLabelService(injector *do.Injector) (*LabelService, error) {
 	}, nil
 }
 
-func (t *LabelService) AddLabel(labelName string) (labels.Label, error) {
+func (t *LabelService) AddLabel(labelName string) (labelModels.Label, error) {
 	trimmedName := strings.TrimSpace(labelName)
-	err := validator.NameNotEmpty(trimmedName)
+	err := validators.NameNotEmpty(trimmedName)
 
 	return t.addLabelInternal(err, trimmedName)
 }
 
-func (t *LabelService) GetLabel(currentManager labels.ManagerContext, id int) (labels.Label, error) {
-	err := validator.CurrentManagerBelongsToLabel(currentManager, id)
+func (t *LabelService) GetLabel(currentManager labelModels.ManagerContext, id int) (labelModels.Label, error) {
+	err := validators.CurrentManagerBelongsToLabel(currentManager, id)
 	return t.getLabelWithoutContextCheck(err, id)
 }
 
-func (t *LabelService) ModifyLabel(currentManager labels.ManagerContext, label labels.Label, id int) (labels.Label, error) {
-	err1 := validator.CurrentManagerBelongsToLabel(currentManager, id)
-	err2 := validator.IdConsistsOverRequest(label.Id, id)
+func (t *LabelService) ModifyLabel(currentManager labelModels.ManagerContext, label labelModels.Label, id int) (labelModels.Label, error) {
+	err1 := validators.CurrentManagerBelongsToLabel(currentManager, id)
+	err2 := validators.IdConsistsOverRequest(label.Id, id)
 
 	trimmedName := strings.TrimSpace(label.Name)
-	err3 := validator.NameNotEmpty(trimmedName)
+	err3 := validators.NameNotEmpty(trimmedName)
 
 	return t.modifyLabelInternal(helpers.AccumulateErrors(err1, err2, err3), currentManager, trimmedName)
 }
 
-func (t *LabelService) addLabelInternal(err error, labelName string) (labels.Label, error) {
+func (t *LabelService) addLabelInternal(err error, labelName string) (labelModels.Label, error) {
 	if err != nil {
-		return labels.Label{}, err
+		return labelModels.Label{}, err
 	}
 
 	now := time.Now().UTC()
@@ -70,21 +70,21 @@ func (t *LabelService) addLabelInternal(err error, labelName string) (labels.Lab
 	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }
 
-func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labels.Label, error) {
+func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labelModels.Label, error) {
 	if err != nil {
-		return labels.Label{}, err
+		return labelModels.Label{}, err
 	}
 
 	dbLabel, err := getDbLabel(t.db, t.logger, err, id)
-	return labels.Label{
+	return labelModels.Label{
 		Id:   dbLabel.Id,
 		Name: dbLabel.Name,
 	}, err
 }
 
-func (t *LabelService) modifyLabelInternal(err error, currentManager labels.ManagerContext, lebelName string) (labels.Label, error) {
+func (t *LabelService) modifyLabelInternal(err error, currentManager labelModels.ManagerContext, lebelName string) (labelModels.Label, error) {
 	if err != nil {
-		return labels.Label{}, err
+		return labelModels.Label{}, err
 	}
 
 	dbLabel, err := getDbLabel(t.db, t.logger, err, currentManager.LabelId)
