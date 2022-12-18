@@ -24,6 +24,7 @@ type ArtistService struct {
 	db             *gorm.DB
 	logger         logger.Logger
 	releaseService *ReleaseService
+	repository     *ArtistRepository
 	spotifyService *spotifyPlatformServices.SpotifyService
 }
 
@@ -32,6 +33,7 @@ func NewArtistService(injector *do.Injector) (*ArtistService, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
+	repository := do.MustInvoke[*ArtistRepository](injector)
 	spotifyService := do.MustInvoke[*ReleaseService](injector)
 
 	return &ArtistService{
@@ -39,6 +41,7 @@ func NewArtistService(injector *do.Injector) (*ArtistService, error) {
 		db:             db,
 		logger:         logger,
 		releaseService: spotifyService,
+		repository:     repository,
 		spotifyService: releaseService,
 	}, nil
 }
@@ -49,7 +52,7 @@ func (t *ArtistService) Add(currentManager labelModels.ManagerContext, spotifyId
 		err = errors.New("artist's spotify ID is empty")
 	}
 
-	dbArtist, err := getDbArtistBySpotifyId(t.db, t.logger, err, spotifyId)
+	dbArtist, err := t.repository.GetOneBySpotifyId(err, spotifyId)
 
 	now := time.Now().UTC()
 	if dbArtist.Id != 0 {
@@ -91,7 +94,7 @@ func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labe
 }
 
 func (t *ArtistService) Get(labelId int) ([]artistModels.Artist, error) {
-	dbArtistIds, err := getDbArtistIdsByLabelId(t.db, t.logger, nil, labelId)
+	dbArtistIds, err := t.repository.GetIdsByLabelId(nil, labelId)
 	return t.getInternal(err, dbArtistIds)
 }
 
@@ -125,7 +128,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 	}
 
 	dbArtist, err := converters.ToDbArtist(spotifyArtist, labelId, timeStamp)
-	err = createDbArtist(t.db, t.logger, err, &dbArtist)
+	err = t.repository.Create(err, &dbArtist)
 
 	return dbArtist, err
 }
@@ -149,8 +152,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 		t.logger.LogError(err, err.Error())
 	}
 
-	err = createDbArtistsInBatches(t.db, t.logger, err, &dbArtists)
-
+	err = t.repository.CreateInBatches(err, &dbArtists)
 	return dbArtists, err
 }
 
@@ -179,7 +181,7 @@ func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistDa
 		return make(map[string]artistData.Artist, 0), err
 	}
 
-	existedArtists, err := getDbArtistsBySpotifyIds(t.db, t.logger, err, spotifyIds)
+	existedArtists, err := t.repository.GetBySpotifyIds(err, spotifyIds)
 
 	results := make(map[string]artistData.Artist, 0)
 	for _, artist := range existedArtists {
@@ -233,7 +235,7 @@ func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist
 			continue
 		}
 
-		dbArtist, dbArtistErr := getDbArtist(t.db, t.logger, err, id)
+		dbArtist, dbArtistErr := t.repository.GetOne(err, id)
 		artist, conversionErr := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
 		if err != nil {
 			t.logger.LogError(err, err.Error())
@@ -276,7 +278,7 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 
 	if dbArtist.LabelId == 0 {
 		dbArtist.LabelId = labelId
-		err = updateDbArtist(t.db, t.logger, err, &dbArtist)
+		err = t.repository.Update(err, &dbArtist)
 	}
 
 	t.cache.Remove(t.buildCacheKey(dbArtist.Id))

@@ -5,24 +5,40 @@ import (
 	"time"
 
 	"github.com/punk-link/logger"
+	"github.com/samber/do"
 	"gorm.io/gorm"
 )
 
-func createDbReleasesInBatches(db *gorm.DB, logger logger.Logger, err error, releases *[]artistData.Release) error {
+type ReleaseRepository struct {
+	db     *gorm.DB
+	logger logger.Logger
+}
+
+func NewReleaseRepository(injector *do.Injector) (*ReleaseRepository, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
+
+	return &ReleaseRepository{
+		db:     db,
+		logger: logger,
+	}, nil
+}
+
+func (t *ReleaseRepository) CreateInBatches(err error, releases *[]artistData.Release) error {
 	if err != nil || len(*releases) == 0 {
 		return err
 	}
 
-	return db.Transaction(func(tx *gorm.DB) error {
-		err = db.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
+	return t.db.Transaction(func(tx *gorm.DB) error {
+		err = t.db.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
 		if err != nil {
-			logger.LogError(err, err.Error())
+			t.logger.LogError(err, err.Error())
 			return err
 		}
 
 		relations := make([]artistData.ArtistReleaseRelation, 0)
 		for _, release := range *releases {
-			artistIds := getArtistsIdsFromDbRelease(logger, release)
+			artistIds := getArtistsIdsFromDbRelease(t.logger, release)
 
 			releaseRelations := make([]artistData.ArtistReleaseRelation, 0)
 			for _, id := range artistIds {
@@ -35,62 +51,49 @@ func createDbReleasesInBatches(db *gorm.DB, logger logger.Logger, err error, rel
 			relations = append(relations, releaseRelations...)
 		}
 
-		err = db.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
-		if err != nil {
-			logger.LogError(err, err.Error())
-			return err
-		}
-
-		return nil
+		err = t.db.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
+		return t.handleError(err)
 	})
 }
 
-func getDbRelease(db *gorm.DB, logger logger.Logger, err error, id int) (artistData.Release, error) {
+func (t *ReleaseRepository) GetOne(err error, id int) (artistData.Release, error) {
 	if err != nil {
 		return artistData.Release{}, err
 	}
 
 	var release artistData.Release
-	err = db.Model(&artistData.Release{}).
+	err = t.db.Model(&artistData.Release{}).
 		First(&release, id).
 		Error
 
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return release, err
+	return release, t.handleError(err)
 }
 
-func getDbReleasesByArtistId(db *gorm.DB, logger logger.Logger, err error, artistId int) ([]artistData.Release, error) {
+func (t *ReleaseRepository) GetByArtistId(err error, artistId int) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
 
-	subQuery := db.Select("release_id").
+	subQuery := t.db.Select("release_id").
 		Where("artist_id = ?", artistId).
 		Table("artist_release_relations")
 
 	var releases []artistData.Release
-	err = db.Where("id IN (?)", subQuery).
+	err = t.db.Where("id IN (?)", subQuery).
 		Order("release_date").
 		Find(&releases).
 		Error
 
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return releases, err
+	return releases, t.handleError(err)
 }
 
-func getUpcContainers(db *gorm.DB, logger logger.Logger, err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
+func (t *ReleaseRepository) GetUpcContainers(err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err
 	}
 
 	var releases []artistData.Release
-	err = db.Select("id", "upc").
+	err = t.db.Select("id", "upc").
 		Where("updated < ?", updateTreshold).
 		Order("id").
 		Offset(skip).
@@ -98,37 +101,37 @@ func getUpcContainers(db *gorm.DB, logger logger.Logger, err error, top int, ski
 		Find(&releases).
 		Error
 
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return releases, err
+	return releases, t.handleError(err)
 }
 
-func getDbReleaseCount(db *gorm.DB, logger logger.Logger, err error) (int64, error) {
+func (t *ReleaseRepository) GetCount(err error) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
 
 	var count int64
-	db.Model(&artistData.Release{}).
+	t.db.Model(&artistData.Release{}).
 		Count(&count)
 
-	return count, err
+	return count, t.handleError(err)
 }
 
-func markDbReleasesAsUpdated(db *gorm.DB, logger logger.Logger, err error, ids []int, timestamp time.Time) error {
+func (t *ReleaseRepository) MarksAsUpdated(err error, ids []int, timestamp time.Time) error {
 	if err != nil {
 		return err
 	}
 
-	err = db.Model(&artistData.Release{}).
+	err = t.db.Model(&artistData.Release{}).
 		Where("id in (?)", ids).
 		Update("updated", timestamp).
 		Error
 
+	return t.handleError(err)
+}
+
+func (t *ReleaseRepository) handleError(err error) error {
 	if err != nil {
-		logger.LogError(err, err.Error())
+		t.logger.LogError(err, err.Error())
 	}
 
 	return err

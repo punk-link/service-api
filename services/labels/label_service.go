@@ -17,17 +17,20 @@ import (
 type LabelService struct {
 	db             *gorm.DB
 	logger         logger.Logger
+	repository     *LabelRepository
 	spotifyService *spotifyPlatformServices.SpotifyService
 }
 
 func NewLabelService(injector *do.Injector) (*LabelService, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
+	repository := do.MustInvoke[*LabelRepository](injector)
 	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
 
 	return &LabelService{
 		db:             db,
 		logger:         logger,
+		repository:     repository,
 		spotifyService: spotifyService,
 	}, nil
 }
@@ -66,7 +69,7 @@ func (t *LabelService) addLabelInternal(err error, labelName string) (labelModel
 		Updated: now,
 	}
 
-	err = createDbLabel(t.db, t.logger, err, &dbLabel)
+	err = t.repository.Create(err, &dbLabel)
 	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }
 
@@ -75,7 +78,7 @@ func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labelMode
 		return labelModels.Label{}, err
 	}
 
-	dbLabel, err := getDbLabel(t.db, t.logger, err, id)
+	dbLabel, err := t.repository.GetOne(err, id)
 	return labelModels.Label{
 		Id:   dbLabel.Id,
 		Name: dbLabel.Name,
@@ -87,9 +90,9 @@ func (t *LabelService) modifyLabelInternal(err error, currentManager labelModels
 		return labelModels.Label{}, err
 	}
 
-	dbLabel, err := getDbLabel(t.db, t.logger, err, currentManager.LabelId)
+	dbLabel, err := t.repository.GetOne(err, currentManager.LabelId)
 
 	dbLabel.Name = lebelName
-	err = updateDbLabel(t.db, t.logger, err, &dbLabel)
+	err = t.repository.Update(err, &dbLabel)
 	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
 }

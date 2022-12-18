@@ -23,6 +23,7 @@ type StreamingPlatformService struct {
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artistServices.ReleaseService
+	repository     *PlatformReleaseUrlRepository
 	urlsInProcess  syncint64.UpDownCounter
 }
 
@@ -31,6 +32,7 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
+	repository := do.MustInvoke[*PlatformReleaseUrlRepository](injector)
 
 	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)
 	urlsInProcess, _ := meter.SyncInt64().UpDownCounter("release_urls_in_process")
@@ -40,12 +42,13 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 		logger:         logger,
 		natsConnection: natsConnection,
 		releaseService: releaseService,
+		repository:     repository,
 		urlsInProcess:  urlsInProcess,
 	}, nil
 }
 
 func (t *StreamingPlatformService) Get(releaseId int) ([]platformModels.PlatformReleaseUrl, error) {
-	urls, err := getDbPlatformReleaseUrlsByReleaseId(t.db, t.logger, nil, releaseId)
+	urls, err := t.repository.GetByReleaseId(nil, releaseId)
 	if err != nil {
 		return make([]platformModels.PlatformReleaseUrl, 0), err
 	}
@@ -132,7 +135,7 @@ func (t *StreamingPlatformService) getExistedUrls(urlResults []platformContracts
 		ids[i] = result.Id
 	}
 
-	existedUrls, err := getDbPlatformReleaseUrlsByReleaseIds(t.db, t.logger, nil, ids)
+	existedUrls, err := t.repository.GetByReleaseIds(nil, ids)
 	if err != nil {
 		return make(map[int]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -223,8 +226,8 @@ func (t *StreamingPlatformService) resync(urlResults []platformContracts.UrlResu
 	platformReleaseUrls, err := t.getPlatformReleaseUrls(err, existedUrls, urlResults, timestamp)
 	newUrls, changedUrls := distinctNewUrlsFromChanged(platformReleaseUrls)
 
-	err = createDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, newUrls)
-	err = updateDbPlatformReleaseUrlsInBatches(t.db, t.logger, err, changedUrls)
+	err = t.repository.CreatelsInBatches(err, newUrls)
+	err = t.repository.UpdateInBatches(err, changedUrls)
 	t.markReleasesAsUpdated(err, platformReleaseUrls, timestamp)
 }
 

@@ -5,50 +5,58 @@ import (
 	"main/helpers"
 
 	"github.com/punk-link/logger"
+	"github.com/samber/do"
 	"gorm.io/gorm"
 )
 
-func createDbPlatformReleaseUrlsInBatches(db *gorm.DB, logger logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
+type PlatformReleaseUrlRepository struct {
+	db     *gorm.DB
+	logger logger.Logger
+}
+
+func NewPlatformReleaseUrlRepository(injector *do.Injector) (*PlatformReleaseUrlRepository, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
+
+	return &PlatformReleaseUrlRepository{
+		db:     db,
+		logger: logger,
+	}, nil
+}
+
+func (t *PlatformReleaseUrlRepository) CreatelsInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil {
 		return err
 	}
 
-	err = db.CreateInBatches(&urls, CREATE_PLATFORM_RELEASE_URLS_BATCH_SIZE).Error
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return err
+	err = t.db.CreateInBatches(&urls, CREATE_PLATFORM_RELEASE_URLS_BATCH_SIZE).Error
+	return t.handleError(err)
 }
 
-func getDbPlatformReleaseUrlsByReleaseId(db *gorm.DB, logger logger.Logger, err error, id int) ([]platformData.PlatformReleaseUrl, error) {
-	return getDbPlatformReleaseUrlsByReleaseIds(db, logger, err, []int{id})
+func (t *PlatformReleaseUrlRepository) GetByReleaseId(err error, id int) ([]platformData.PlatformReleaseUrl, error) {
+	return t.GetByReleaseIds(err, []int{id})
 }
 
-func getDbPlatformReleaseUrlsByReleaseIds(db *gorm.DB, logger logger.Logger, err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
+func (t *PlatformReleaseUrlRepository) GetByReleaseIds(err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err
 	}
 
 	var results []platformData.PlatformReleaseUrl
-	err = db.Where("release_id in (?)", ids).
+	err = t.db.Where("release_id in (?)", ids).
 		Find(&results).
 		Error
 
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return results, err
+	return results, t.handleError(err)
 }
 
-func updateDbPlatformReleaseUrlsInBatches(db *gorm.DB, logger logger.Logger, err error, urls []platformData.PlatformReleaseUrl) error {
+func (t *PlatformReleaseUrlRepository) UpdateInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil || len(urls) == 0 {
 		return err
 	}
 
 	for _, url := range urls {
-		innerErr := db.Model(&platformData.PlatformReleaseUrl{}).
+		innerErr := t.db.Model(&platformData.PlatformReleaseUrl{}).
 			Where("id = ?", url.Id).
 			Updates(url).
 			Error
@@ -56,8 +64,12 @@ func updateDbPlatformReleaseUrlsInBatches(db *gorm.DB, logger logger.Logger, err
 		err = helpers.CombineErrors(err, innerErr)
 	}
 
+	return t.handleError(err)
+}
+
+func (t *PlatformReleaseUrlRepository) handleError(err error) error {
 	if err != nil {
-		logger.LogError(err, err.Error())
+		t.logger.LogError(err, err.Error())
 	}
 
 	return err

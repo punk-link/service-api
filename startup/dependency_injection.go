@@ -63,16 +63,22 @@ func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, registerCacheManager[map[string]any]())
 
 	do.Provide(injector, commonServices.NewHashCoder)
+
+	do.Provide(injector, labelServices.NewLabelRepository)
 	do.Provide(injector, labelServices.NewLabelService)
+	do.Provide(injector, labelServices.NewManagerRepository)
 	do.Provide(injector, labelServices.NewManagerService)
 
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyService)
 
+	do.Provide(injector, artistServices.NewArtistRepository)
+	do.Provide(injector, artistServices.NewReleaseRepository)
 	do.Provide(injector, artistServices.NewReleaseService)
 	do.Provide(injector, staticArtistServices.NewStaticReleaseService)
 	do.Provide(injector, artistServices.NewArtistService)
 	do.Provide(injector, staticArtistServices.NewStaticArtistService)
 
+	do.Provide(injector, platformServices.NewPlatformReleaseUrlRepository)
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 
 	do.Provide(injector, controllers.NewMetricsController)

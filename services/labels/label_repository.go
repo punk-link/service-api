@@ -5,63 +5,58 @@ import (
 	"time"
 
 	"github.com/punk-link/logger"
+	"github.com/samber/do"
 	"gorm.io/gorm"
 )
 
-func createDbLabel(db *gorm.DB, logger logger.Logger, err error, dbLabel *labelData.Label) error {
+type LabelRepository struct {
+	db     *gorm.DB
+	logger logger.Logger
+}
+
+func NewLabelRepository(injector *do.Injector) (*LabelRepository, error) {
+	db := do.MustInvoke[*gorm.DB](injector)
+	logger := do.MustInvoke[logger.Logger](injector)
+
+	return &LabelRepository{
+		db:     db,
+		logger: logger,
+	}, nil
+}
+
+func (t *LabelRepository) Create(err error, dbLabel *labelData.Label) error {
 	if err != nil {
 		return err
 	}
 
-	err = db.Create(&dbLabel).Error
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return err
+	err = t.db.Create(&dbLabel).Error
+	return t.handleError(err)
 }
 
-func getDbLabel(db *gorm.DB, logger logger.Logger, err error, id int) (labelData.Label, error) {
+func (t *LabelRepository) GetOne(err error, id int) (labelData.Label, error) {
 	if err != nil {
 		return labelData.Label{}, err
 	}
 
 	var dbLabel labelData.Label
-	err = db.First(&dbLabel, id).Error
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return dbLabel, err
+	err = t.db.First(&dbLabel, id).Error
+	return dbLabel, t.handleError(err)
 }
 
-func getDbManagersByLabelId(db *gorm.DB, logger logger.Logger, err error, labelId int) ([]labelData.Manager, error) {
-	if err != nil {
-		return make([]labelData.Manager, 0), err
-	}
-
-	var dbManagers []labelData.Manager
-	err = db.Where("label_id = ?", labelId).
-		Find(&dbManagers).
-		Error
-
-	if err != nil {
-		logger.LogError(err, err.Error())
-	}
-
-	return dbManagers, err
-}
-
-func updateDbLabel(db *gorm.DB, logger logger.Logger, err error, dbLabel *labelData.Label) error {
+func (t *LabelRepository) Update(err error, dbLabel *labelData.Label) error {
 	if err != nil {
 		return err
 	}
 
 	dbLabel.Updated = time.Now().UTC()
-	err = db.Save(&dbLabel).Error
+	err = t.db.Save(&dbLabel).Error
 
+	return t.handleError(err)
+}
+
+func (t *LabelRepository) handleError(err error) error {
 	if err != nil {
-		logger.LogError(err, err.Error())
+		t.logger.LogError(err, err.Error())
 	}
 
 	return err

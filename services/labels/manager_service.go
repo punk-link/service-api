@@ -17,17 +17,20 @@ type ManagerService struct {
 	db           *gorm.DB
 	labelService *LabelService
 	logger       logger.Logger
+	repository   *ManagerRepository
 }
 
 func NewManagerService(injector *do.Injector) (*ManagerService, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	labelService := do.MustInvoke[*LabelService](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
+	repository := do.MustInvoke[*ManagerRepository](injector)
 
 	return &ManagerService{
 		db:           db,
 		labelService: labelService,
 		logger:       logger,
+		repository:   repository,
 	}, nil
 }
 
@@ -50,7 +53,7 @@ func (t *ManagerService) AddMaster(request labelModels.AddMasterManagerRequest) 
 }
 
 func (t *ManagerService) Get(currentManager labelModels.ManagerContext) ([]labelModels.Manager, error) {
-	dbManagers, err := getDbManagersByLabelId(t.db, t.logger, nil, currentManager.LabelId)
+	dbManagers, err := t.repository.GetByLabelId(nil, currentManager.LabelId)
 	if err != nil {
 		return make([]labelModels.Manager, 0), err
 	}
@@ -92,7 +95,7 @@ func (t *ManagerService) addInternal(err error, currentManager labelModels.Manag
 	}
 
 	dbManager := converters.ToDbManager(managerName, currentManager.LabelId)
-	err = createDbManager(t.db, t.logger, err, &dbManager)
+	err = t.repository.Create(err, &dbManager)
 	return t.getOneInternal(err, dbManager.Id)
 }
 
@@ -101,7 +104,7 @@ func (t *ManagerService) getOneInternal(err error, id int) (labelModels.Manager,
 		return labelModels.Manager{}, err
 	}
 
-	dbManager, err := getDbManager(t.db, t.logger, err, id)
+	dbManager, err := t.repository.GetOne(err, id)
 	return converters.ToManager(err, dbManager)
 }
 
@@ -110,9 +113,9 @@ func (t *ManagerService) modifyInternal(err error, id int, managerName string) (
 		return labelModels.Manager{}, err
 	}
 
-	dbManager, err := getDbManager(t.db, t.logger, err, id)
+	dbManager, err := t.repository.GetOne(err, id)
 
 	dbManager.Name = managerName
-	err = updateDbManager(t.db, t.logger, err, &dbManager)
+	err = t.repository.Update(err, &dbManager)
 	return t.getOneInternal(err, id)
 }
