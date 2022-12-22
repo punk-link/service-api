@@ -90,10 +90,11 @@ func getConsulClient(appSecrets map[string]any, storageName string, environmentN
 
 func getSecrets(storeName string, secretName string) (map[string]any, error) {
 	var err error = nil
-	isExist, vaultAddress := envManager.TryGetEnvironmentVariable("PNKL_VAULT_ADDR")
-	if !isExist {
-		return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
-	}
+	// isExist, vaultAddress := envManager.TryGetEnvironmentVariable("PNKL_VAULT_ADDR")
+	// if !isExist {
+	// 	return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
+	// }
+	vaultAddress := "http://localhost:8200"
 
 	isExist, vaultToken := envManager.TryGetEnvironmentVariable("PNKL_VAULT_TOKEN")
 	if !isExist {
