@@ -94,7 +94,7 @@ func getSecrets(storeName string, secretName string) (map[string]any, error) {
 	// if !isExist {
 	// 	return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
 	// }
-	vaultAddress := "http://localhost:8200"
+	vaultAddress := "http://vault.dev.svc.cluster.local:8200"
 
 	isExist, vaultToken := envManager.TryGetEnvironmentVariable("PNKL_VAULT_TOKEN")
 	if !isExist {
