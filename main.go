@@ -130,4 +130,4 @@ func getEnvironmentName() string {
 }
 
 const SECRET_STORAGE_NAME = "secrets"
-const SERVICE_NAME = "api"
+const SERVICE_NAME = "service-api"
