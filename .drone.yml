@@ -33,7 +33,6 @@ steps:
     repo: registry.punk.link/service-api
     tags:
       - ${DRONE_COMMIT_SHA:0:7}
-      - ${DRONE_COMMIT_BRANCH}
     force_tag: true
     use_cache: true
     username:
