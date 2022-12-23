@@ -4,7 +4,7 @@ name: Build
 
 trigger:
   branch:
-    - master
+    - technical/vault-support 
   event:
     include:
       - push
