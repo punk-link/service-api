@@ -2,11 +2,9 @@ module main
 
 go 1.19
 
-require github.com/gin-gonic/gin v1.8.1 // direct
-
 require (
+	github.com/gin-gonic/gin v1.8.1
 	github.com/getsentry/sentry-go v0.14.0
-	github.com/hashicorp/vault/api v1.8.2
 	github.com/nats-io/nats.go v1.21.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/punk-link/cache-manager v1.0.2
@@ -15,6 +13,7 @@ require (
 	github.com/punk-link/http-client v1.0.2
 	github.com/punk-link/logger v1.0.6
 	github.com/punk-link/platform-contracts v1.0.7
+	github.com/punk-link/vault-client v1.0.0
 	github.com/samber/do v1.4.1
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.1.17
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.36.4
@@ -62,6 +61,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
+	github.com/hashicorp/vault/api v1.8.2 // indirect
+	github.com/hashicorp/vault/api/auth/approle v0.3.0 // indirect
 	github.com/hashicorp/vault/sdk v0.6.0 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

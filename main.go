@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	vault "github.com/hashicorp/vault/api"
 	consulClient "github.com/punk-link/consul-client"
 	envManager "github.com/punk-link/environment-variable-manager"
 	"github.com/punk-link/logger"
+	vaultClient "github.com/punk-link/vault-client"
 )
 
 func main() {
@@ -26,12 +26,8 @@ func main() {
 	environmentName := getEnvironmentName(envManager)
 	logger.LogInfo("Artist Updater API is running as '%s'", environmentName)
 
-	// appSecrets, err := getSecrets(SECRET_STORAGE_NAME, SERVICE_NAME)
-	// if err != nil {
-	// 	logger.LogFatal(err, "Vault access error: %s", err)
-	// }
-
-	consul, err := getConsulClient(envManager /*appSecrets, */, SERVICE_NAME, environmentName)
+	appSecrets := getSecrets(envManager, logger, SECRET_ENGINE_NAME, SERVICE_NAME)
+	consul, err := getConsulClient(envManager, appSecrets, SERVICE_NAME, environmentName)
 	if err != nil {
 		logger.LogFatal(err, "Can't initialize Consul client: '%s'", err.Error())
 	}
@@ -42,7 +38,7 @@ func main() {
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
-	app := startup.Configure(logger, consul /*appSecrets,*/, &startupModels.StartupOptions{
+	app := startup.Configure(logger, consul, appSecrets, &startupModels.StartupOptions{
 		EnvironmentName: environmentName,
 		GinMode:         hostSettings["Mode"].(string),
 		ServiceName:     constants.SERVICE_NAME,
@@ -80,53 +76,35 @@ func main() {
 	logger.LogInfo("Exiting")
 }
 
-func getConsulClient(envManager envManager.EnvironmentVariableManager /*appSecrets map[string]any,*/, storageName string, environmentName string) (consulClient.ConsulClient, error) {
-	consulAddress, isExist := envManager.TryGet("PNKL_CONSUL_ADDR")
-	if !isExist {
-		return nil, fmt.Errorf("can't get PNKL_CONSUL_ADDR environment variable")
-	}
-
-	consulToken, isExist := envManager.TryGet("PNKL_CONSUL_TOKEN")
-	if !isExist {
-		return nil, fmt.Errorf("can't get PNKL_CONSUL_TOKEN environment variable")
-	}
-
+func getConsulClient(envManager envManager.EnvironmentVariableManager, appSecrets map[string]any, storageName string, environmentName string) (consulClient.ConsulClient, error) {
 	return consulClient.New(&consulClient.ConsulConfig{
-		Address:         consulAddress, //appSecrets["consul-address"].(string),
+		Address:         appSecrets["consul-address"].(string),
 		EnvironmentName: environmentName,
 		StorageName:     storageName,
-		Token:           consulToken, //appSecrets["consul-token"].(string),
+		Token:           appSecrets["consul-token"].(string),
 	})
 }
 
-func getSecrets(envManager envManager.EnvironmentVariableManager, storeName string, secretName string) (map[string]any, error) {
+func getSecrets(envManager envManager.EnvironmentVariableManager, logger logger.Logger, storeName string, secretName string) map[string]any {
 	vaultAddress, isExist := envManager.TryGet("PNKL_VAULT_ADDR")
 	if !isExist {
-		return nil, fmt.Errorf("can't get PNKL_VAULT_ADDR environment variable")
+		err := errors.New("Can't get PNKL_VAULT_ADDR environment variable")
+		logger.LogFatal(err, err.Error())
 	}
 
 	vaultToken, isExist := envManager.TryGet("PNKL_VAULT_TOKEN")
 	if !isExist {
-		return nil, fmt.Errorf("can't get PNKL_VAULT_TOKEN environment variable")
+		err := errors.New("an't get PNKL_VAULT_TOKEN environment variable")
+		logger.LogFatal(err, err.Error())
 	}
 
-	vaultConfig := vault.DefaultConfig()
-	vaultConfig.Address = vaultAddress
-
-	vaultClient, err := vault.NewClient(vaultConfig)
-	if err != nil {
-		return nil, fmt.Errorf("can't initialize Vault: %s", err)
+	vaultConfig := &vaultClient.VaultClientOptions{
+		Endpoint: vaultAddress,
+		RoleName: secretName,
 	}
 
-	vaultClient.SetToken(vaultToken)
-
-	vaultCtx := context.Background()
-	serviceApiSettings, err := vaultClient.KVv2(storeName).Get(vaultCtx, secretName)
-	if err != nil {
-		return nil, fmt.Errorf("can't obtain app secrets: %s", err)
-	}
-
-	return serviceApiSettings.Data, nil
+	vaultClient := vaultClient.New(vaultConfig, logger)
+	return vaultClient.Get(vaultToken, storeName, secretName)
 }
 
 func getEnvironmentName(envManager envManager.EnvironmentVariableManager) string {
@@ -138,5 +116,5 @@ func getEnvironmentName(envManager envManager.EnvironmentVariableManager) string
 	return name
 }
 
-const SECRET_STORAGE_NAME = "secrets"
+const SECRET_ENGINE_NAME = "secrets"
 const SERVICE_NAME = "service-api"
