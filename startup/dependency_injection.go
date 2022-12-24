@@ -33,7 +33,7 @@ func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	spotifySettings := spotifySettingsValue.(map[string]any)
 	do.ProvideValue(injector, &tokenSpotifyPlatformModels.SpotifyClientConfig{
 		ClientId:     spotifySettings["ClientId"].(string),
-		ClientSecret: appSecrets["client-secret"].(string),
+		ClientSecret: appSecrets["spotify-client-secret"].(string),
 	})
 
 	natsSettingsValues, err := consul.Get("NatsSettings")

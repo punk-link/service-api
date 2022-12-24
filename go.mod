@@ -3,8 +3,8 @@ module main
 go 1.19
 
 require (
-	github.com/gin-gonic/gin v1.8.1
 	github.com/getsentry/sentry-go v0.14.0
+	github.com/gin-gonic/gin v1.8.1
 	github.com/nats-io/nats.go v1.21.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/punk-link/cache-manager v1.0.2
