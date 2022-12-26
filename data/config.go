@@ -15,8 +15,8 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
-func New(logger logger.Logger, consul consulClient.ConsulClient /*, appSecrets map[string]any*/) *gorm.DB {
-	connectionString, err := getConnectionString(consul /*, appSecrets*/)
+func New(logger logger.Logger, consul consulClient.ConsulClient, appSecrets map[string]any) *gorm.DB {
+	connectionString, err := getConnectionString(consul, appSecrets)
 	db, err := openConnection(err, connectionString, logger)
 	err = configureConnection(err, db)
 	if err != nil {
@@ -53,7 +53,7 @@ func configureConnection(err error, db *gorm.DB) error {
 	return err
 }
 
-func getConnectionString(consul consulClient.ConsulClient /*, appSecrets map[string]any*/) (string, error) {
+func getConnectionString(consul consulClient.ConsulClient, appSecrets map[string]any) (string, error) {
 	dbSettingsValue, err := consul.Get("DatabaseSettings")
 	if err != nil {
 		return "", fmt.Errorf("can't obtain Postgres configurations from Consul: %v", err.Error())
@@ -63,8 +63,8 @@ func getConnectionString(consul consulClient.ConsulClient /*, appSecrets map[str
 
 	host := dbSettings["Host"].(string)
 	port := dbSettings["Port"].(string)
-	userName := dbSettings["UserName"].(string) //appSecrets["database-username"].(string)
-	password := dbSettings["Password"].(string) //appSecrets["database-password"].(string)
+	userName := appSecrets["database-username"].(string)
+	password := appSecrets["database-password"].(string)
 
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=punklink sslmode=disable TimeZone=UTC", host, port, userName, password), nil
 }
