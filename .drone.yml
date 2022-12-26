@@ -14,12 +14,7 @@ steps:
   environment:
 
     GITHUB_TOKEN:
-      from_secret: GITHUB_TOKEN
-
-    PNKL_CONSUL_ADDR:
-      from_secret: PNKL_CONSUL_ADDR
-    PNKL_CONSUL_TOKEN:
-      from_secret: PNKL_CONSUL_TOKEN      
+      from_secret: GITHUB_TOKEN   
     GO_ENVIRONMENT:
       from_secret: GO_ENVIRONMENT
     LOG_LEVEL:
@@ -42,9 +37,7 @@ steps:
       from_secret: DOCKER_PASSWORD
     build_args_from_env:
       - GITHUB_TOKEN
-      - BUILD_VERSION
-      - PNKL_CONSUL_ADDR
-      - PNKL_CONSUL_TOKEN       
+      - BUILD_VERSION   
       - GO_ENVIRONMENT
       - LOG_LEVEL
       - PNKL_VAULT_TOKEN
