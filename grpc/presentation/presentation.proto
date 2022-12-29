@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "./grpc/presentation";
+
+service Presentation {
+    rpc GetArtist (ArtistRequest) returns (ArtistResponse) {}
+}
+
+message ArtistRequest {
+    int64 id = 1;
+}
+
+message ArtistResponse {
+    int64 id = 1;
+}
