@@ -6,12 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	consulClient "github.com/punk-link/consul-client"
 	"github.com/punk-link/logger"
+	"github.com/samber/do"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-func Configure(logger logger.Logger, consul consulClient.ConsulClient, appSecrets map[string]any, options *startupModels.StartupOptions) *gin.Engine {
-	diContainer := buildDependencies(logger, consul, appSecrets)
-
+func Configure(logger logger.Logger, consul consulClient.ConsulClient, injector *do.Injector, options *startupModels.StartupOptions) *gin.Engine {
 	gin.SetMode(options.GinMode)
 	app := gin.Default()
 
@@ -23,7 +22,7 @@ func Configure(logger logger.Logger, consul consulClient.ConsulClient, appSecret
 
 	initSentry(app, logger, consul, options.EnvironmentName)
 	configureOpenTelemetry(logger, consul, options)
-	setupRouts(app, diContainer)
+	setupRouts(app, injector)
 
 	return app
 }

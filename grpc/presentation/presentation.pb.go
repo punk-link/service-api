@@ -20,18 +20,89 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ImageDetails struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AltText string `protobuf:"bytes,1,opt,name=AltText,proto3" json:"AltText,omitempty"`
+	Height  int32  `protobuf:"varint,2,opt,name=Height,proto3" json:"Height,omitempty"`
+	Url     string `protobuf:"bytes,3,opt,name=Url,proto3" json:"Url,omitempty"`
+	Width   int32  `protobuf:"varint,4,opt,name=Width,proto3" json:"Width,omitempty"`
+}
+
+func (x *ImageDetails) Reset() {
+	*x = ImageDetails{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_presentation_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ImageDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageDetails) ProtoMessage() {}
+
+func (x *ImageDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_presentation_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageDetails.ProtoReflect.Descriptor instead.
+func (*ImageDetails) Descriptor() ([]byte, []int) {
+	return file_presentation_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ImageDetails) GetAltText() string {
+	if x != nil {
+		return x.AltText
+	}
+	return ""
+}
+
+func (x *ImageDetails) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *ImageDetails) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ImageDetails) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
 type ArtistRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id int32 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
 }
 
 func (x *ArtistRequest) Reset() {
 	*x = ArtistRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_presentation_proto_msgTypes[0]
+		mi := &file_presentation_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -44,7 +115,7 @@ func (x *ArtistRequest) String() string {
 func (*ArtistRequest) ProtoMessage() {}
 
 func (x *ArtistRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_presentation_proto_msgTypes[0]
+	mi := &file_presentation_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,10 +128,10 @@ func (x *ArtistRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtistRequest.ProtoReflect.Descriptor instead.
 func (*ArtistRequest) Descriptor() ([]byte, []int) {
-	return file_presentation_proto_rawDescGZIP(), []int{0}
+	return file_presentation_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ArtistRequest) GetId() int64 {
+func (x *ArtistRequest) GetId() int32 {
 	if x != nil {
 		return x.Id
 	}
@@ -72,13 +143,16 @@ type ArtistResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id           int32         `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	LabelId      int32         `protobuf:"varint,2,opt,name=LabelId,proto3" json:"LabelId,omitempty"`
+	Name         string        `protobuf:"bytes,3,opt,name=Name,proto3" json:"Name,omitempty"`
+	ImageDetails *ImageDetails `protobuf:"bytes,4,opt,name=ImageDetails,proto3" json:"ImageDetails,omitempty"`
 }
 
 func (x *ArtistResponse) Reset() {
 	*x = ArtistResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_presentation_proto_msgTypes[1]
+		mi := &file_presentation_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -91,7 +165,7 @@ func (x *ArtistResponse) String() string {
 func (*ArtistResponse) ProtoMessage() {}
 
 func (x *ArtistResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_presentation_proto_msgTypes[1]
+	mi := &file_presentation_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,31 +178,65 @@ func (x *ArtistResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtistResponse.ProtoReflect.Descriptor instead.
 func (*ArtistResponse) Descriptor() ([]byte, []int) {
-	return file_presentation_proto_rawDescGZIP(), []int{1}
+	return file_presentation_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ArtistResponse) GetId() int64 {
+func (x *ArtistResponse) GetId() int32 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
+func (x *ArtistResponse) GetLabelId() int32 {
+	if x != nil {
+		return x.LabelId
+	}
+	return 0
+}
+
+func (x *ArtistResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ArtistResponse) GetImageDetails() *ImageDetails {
+	if x != nil {
+		return x.ImageDetails
+	}
+	return nil
+}
+
 var File_presentation_proto protoreflect.FileDescriptor
 
 var file_presentation_proto_rawDesc = []byte{
 	0x0a, 0x12, 0x70, 0x72, 0x65, 0x73, 0x65, 0x6e, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x1f, 0x0a, 0x0d, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x03, 0x52, 0x02, 0x69, 0x64, 0x22, 0x20, 0x0a, 0x0e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x03, 0x52, 0x02, 0x69, 0x64, 0x32, 0x3e, 0x0a, 0x0c, 0x50, 0x72, 0x65, 0x73, 0x65,
-	0x6e, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2e, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x41, 0x72,
-	0x74, 0x69, 0x73, 0x74, 0x12, 0x0e, 0x2e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x0f, 0x2e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x15, 0x5a, 0x13, 0x2e, 0x2f, 0x67, 0x72, 0x70,
-	0x63, 0x2f, 0x70, 0x72, 0x65, 0x73, 0x65, 0x6e, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x6f, 0x74, 0x6f, 0x22, 0x68, 0x0a, 0x0c, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x65, 0x74,
+	0x61, 0x69, 0x6c, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x41, 0x6c, 0x74, 0x54, 0x65, 0x78, 0x74, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x41, 0x6c, 0x74, 0x54, 0x65, 0x78, 0x74, 0x12, 0x16,
+	0x0a, 0x06, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06,
+	0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x55, 0x72, 0x6c, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x72, 0x6c, 0x12, 0x14, 0x0a, 0x05, 0x57, 0x69, 0x64, 0x74,
+	0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x57, 0x69, 0x64, 0x74, 0x68, 0x22, 0x1f,
+	0x0a, 0x0d, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x49, 0x64, 0x22,
+	0x81, 0x01, 0x0a, 0x0e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02,
+	0x49, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x49, 0x64, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x07, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04,
+	0x4e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x4e, 0x61, 0x6d, 0x65,
+	0x12, 0x31, 0x0a, 0x0c, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x65,
+	0x74, 0x61, 0x69, 0x6c, 0x73, 0x52, 0x0c, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x65, 0x74, 0x61,
+	0x69, 0x6c, 0x73, 0x32, 0x3e, 0x0a, 0x0c, 0x50, 0x72, 0x65, 0x73, 0x65, 0x6e, 0x74, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x2e, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74,
+	0x12, 0x0e, 0x2e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x0f, 0x2e, 0x41, 0x72, 0x74, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x00, 0x42, 0x15, 0x5a, 0x13, 0x2e, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2f, 0x70, 0x72,
+	0x65, 0x73, 0x65, 0x6e, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -143,19 +251,21 @@ func file_presentation_proto_rawDescGZIP() []byte {
 	return file_presentation_proto_rawDescData
 }
 
-var file_presentation_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_presentation_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_presentation_proto_goTypes = []interface{}{
-	(*ArtistRequest)(nil),  // 0: ArtistRequest
-	(*ArtistResponse)(nil), // 1: ArtistResponse
+	(*ImageDetails)(nil),   // 0: ImageDetails
+	(*ArtistRequest)(nil),  // 1: ArtistRequest
+	(*ArtistResponse)(nil), // 2: ArtistResponse
 }
 var file_presentation_proto_depIdxs = []int32{
-	0, // 0: Presentation.GetArtist:input_type -> ArtistRequest
-	1, // 1: Presentation.GetArtist:output_type -> ArtistResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: ArtistResponse.ImageDetails:type_name -> ImageDetails
+	1, // 1: Presentation.GetArtist:input_type -> ArtistRequest
+	2, // 2: Presentation.GetArtist:output_type -> ArtistResponse
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_presentation_proto_init() }
@@ -165,7 +275,7 @@ func file_presentation_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_presentation_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArtistRequest); i {
+			switch v := v.(*ImageDetails); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -177,6 +287,18 @@ func file_presentation_proto_init() {
 			}
 		}
 		file_presentation_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ArtistRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_presentation_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ArtistResponse); i {
 			case 0:
 				return &v.state
@@ -195,7 +317,7 @@ func file_presentation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_presentation_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

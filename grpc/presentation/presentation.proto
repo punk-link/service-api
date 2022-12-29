@@ -6,10 +6,20 @@ service Presentation {
     rpc GetArtist (ArtistRequest) returns (ArtistResponse) {}
 }
 
+message ImageDetails {
+    string AltText = 1;
+    int32 Height = 2;
+    string Url = 3;
+    int32 Width = 4;
+}
+
 message ArtistRequest {
-    int64 id = 1;
+    int32 Id = 1;
 }
 
 message ArtistResponse {
-    int64 id = 1;
+    int32 Id = 1;
+	int32 LabelId = 2;
+    string Name = 3;
+    ImageDetails ImageDetails = 4;
 }

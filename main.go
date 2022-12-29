@@ -13,6 +13,7 @@ import (
 	envManager "github.com/punk-link/environment-variable-manager"
 	"github.com/punk-link/logger"
 	vaultClient "github.com/punk-link/vault-client"
+	"github.com/samber/do"
 	"google.golang.org/grpc"
 )
 
@@ -26,9 +27,10 @@ func main() {
 	appSecrets := getSecrets(envManager, logger, SECRET_ENGINE_NAME, constants.SERVICE_NAME)
 	consul := getConsulClient(envManager, logger, appSecrets, constants.SERVICE_NAME, environmentName)
 
-	go runGrpc(logger, consul)
+	injector := startup.BuildDependencies(logger, consul, appSecrets)
+	go runGrpc(logger, consul, injector)
 
-	runHttp(logger, consul, appSecrets, environmentName)
+	runHttp(logger, consul, injector, appSecrets, environmentName)
 }
 
 func getConsulClient(envManager envManager.EnvironmentVariableManager, logger logger.Logger, appSecrets map[string]any, storageName string, environmentName string) consulClient.ConsulClient {
@@ -77,7 +79,7 @@ func getEnvironmentName(envManager envManager.EnvironmentVariableManager) string
 	return name
 }
 
-func runGrpc(logger logger.Logger, consul consulClient.ConsulClient) {
+func runGrpc(logger logger.Logger, consul consulClient.ConsulClient, injector *do.Injector) {
 	grpcSettingsValues, err := consul.Get("GrpcSettings")
 	if err != nil {
 		logger.LogFatal(err, "Can't obtain host settings from Consul: '%s'", err.Error())
@@ -93,20 +95,22 @@ func runGrpc(logger logger.Logger, consul consulClient.ConsulClient) {
 	logger.LogInfo("Listening and serving TCP on :%s", grpcPresentationPort)
 
 	presentationServer := grpc.NewServer()
-	presentationGrpc.RegisterPresentationServer(presentationServer, &presentationGrpc.Server{})
+	presentationGrpc.RegisterPresentationServer(presentationServer, &presentationGrpc.Server{
+		Injector: injector,
+	})
 	if err := presentationServer.Serve(presentationPortListener); err != nil {
 		logger.LogFatal(err, "Failed to serve: %v", err)
 	}
 }
 
-func runHttp(logger logger.Logger, consul consulClient.ConsulClient, appSecrets map[string]any, environmentName string) {
+func runHttp(logger logger.Logger, consul consulClient.ConsulClient, injector *do.Injector, appSecrets map[string]any, environmentName string) {
 	hostSettingsValues, err := consul.Get("HostSettings")
 	if err != nil {
 		logger.LogFatal(err, "Can't obtain host settings from Consul: '%s'", err.Error())
 	}
 	hostSettings := hostSettingsValues.(map[string]any)
 
-	app := startup.Configure(logger, consul, appSecrets, &startupModels.StartupOptions{
+	app := startup.Configure(logger, consul, injector, &startupModels.StartupOptions{
 		EnvironmentName: environmentName,
 		GinMode:         hostSettings["Mode"].(string),
 		ServiceName:     constants.SERVICE_NAME,
