@@ -112,36 +112,6 @@ func runHttp(logger logger.Logger, consul consulClient.ConsulClient, appSecrets 
 		ServiceName:     constants.SERVICE_NAME,
 	})
 	app.Run(fmt.Sprintf(":%s", hostSettings["Port"]))
-
-	// hostAddress := hostSettings["Address"]
-	// hostPort := hostSettings["Port"]
-	// server := &http.Server{
-	// 	Addr:    fmt.Sprintf("%s:%s", hostAddress, hostPort),
-	// 	Handler: app,
-	// }
-
-	// go func() {
-	// 	logger.LogInfo("Starting...")
-	// 	err := server.ListenAndServe()
-	// 	if err != nil && errors.Is(err, http.ErrServerClosed) {
-	// 		logger.LogError(err, "Listen error: %s\n", err.Error())
-	// 	}
-	// }()
-
-	// quit := make(chan os.Signal, 1)
-	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// <-quit
-
-	// logger.LogInfo("Sutting down...")
-
-	// ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancelFunc()
-
-	// if err := server.Shutdown(ctx); err != nil {
-	// 	logger.LogError(err, "Server forced to shutdown: %s", err)
-	// }
-
-	// logger.LogInfo("Exiting")
 }
 
 const SECRET_ENGINE_NAME = "secrets"
