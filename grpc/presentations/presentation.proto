@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+option go_package = "./grpc/presentations";
+
+service Presentation {
+    rpc GetArtist (ArtistRequest) returns (ArtistResponse) {}
+}
+
+message ImageDetails {
+    string AltText = 1;
+    int32 Height = 2;
+    string Url = 3;
+    int32 Width = 4;
+}
+
+message ArtistRequest {
+    int32 Id = 1;
+}
+
+message ArtistResponse {
+    int32 Id = 1;
+    ImageDetails ImageDetails = 2;
+	int32 LabelId = 3;
+    string Name = 4;
+    repeated Release Releases = 5;
+}
+
+message Release {
+	int32 Id = 1;
+    repeated SlimArtist FeaturingArtists = 2;
+    ImageDetails ImageDetails = 3;
+    string Label = 4;
+    string Name = 5;
+    repeated SlimArtist ReleaseArtists = 6;
+    google.protobuf.Timestamp ReleaseDate = 7;
+    int32 TrackNumber = 8;
+    repeated Track Tracks = 9;
+    string Type = 10;
+}
+
+message SlimArtist {
+    int32 Id = 1;
+	int32 LabelId = 2;
+    string Name = 3;
+    ImageDetails ImageDetails = 4;
+}
+
+message Track {
+    repeated SlimArtist Artists = 1;
+    int32 DiscNumber = 2;
+    bool IsExplicit = 3;
+    string Name = 4;
+    int32 TrackNumber = 5;
+}

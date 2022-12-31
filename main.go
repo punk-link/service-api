@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"main/constants"
-	presentationGrpc "main/grpc/presentation"
+	grpcControllers "main/controllers/grpc"
+	presentationsGrpc "main/grpc/presentations"
 	startupModels "main/models/startup"
 	"main/startup"
 	"net"
@@ -95,7 +96,7 @@ func runGrpc(logger logger.Logger, consul consulClient.ConsulClient, injector *d
 	logger.LogInfo("Listening and serving TCP on :%s", grpcPresentationPort)
 
 	presentationServer := grpc.NewServer()
-	presentationGrpc.RegisterPresentationServer(presentationServer, &presentationGrpc.Server{
+	presentationsGrpc.RegisterPresentationServer(presentationServer, &grpcControllers.Server{
 		Injector: injector,
 	})
 	if err := presentationServer.Serve(presentationPortListener); err != nil {

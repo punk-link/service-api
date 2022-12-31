@@ -4,7 +4,7 @@
 // - protoc             v3.21.12
 // source: presentation.proto
 
-package presentation
+package presentations
 
 import (
 	context "context"

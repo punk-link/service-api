@@ -107,6 +107,21 @@ func (t *ArtistService) GetOne(id int) (artistModels.Artist, error) {
 	return artists[0], nil
 }
 
+func (t *ArtistService) GetOneWithReleases(id int) (artistModels.Artist, error) {
+	artist, err := t.GetOne(id)
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	releases, err := t.releaseService.GetByArtistId(artist.Id)
+	if err != nil {
+		return artistModels.Artist{}, err
+	}
+
+	artist.Releases = releases
+	return artist, nil
+}
+
 func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
 	const minimalQueryLength = 3
 	if len(query) < minimalQueryLength {

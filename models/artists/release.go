@@ -9,7 +9,7 @@ type Release struct {
 	Id               int                 `json:"id"`
 	FeaturingArtists []Artist            `json:"featuringArtists"`
 	ImageDetails     common.ImageDetails `json:"image"`
-	Lable            string              `json:"label"`
+	Label            string              `json:"label"`
 	Name             string              `json:"name"`
 	ReleaseArtists   []Artist            `json:"releaseArtists"`
 	ReleaseDate      time.Time           `json:"releaseDate"`
