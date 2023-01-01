@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"main/constants"
 	grpcControllers "main/controllers/grpc"
-	presentationsGrpc "main/grpc/presentations"
 	startupModels "main/models/startup"
 	"main/startup"
 	"net"
+
+	presentationContracts "github.com/punk-link/presentation-contracts"
 
 	consulClient "github.com/punk-link/consul-client"
 	envManager "github.com/punk-link/environment-variable-manager"
@@ -96,7 +97,7 @@ func runGrpc(logger logger.Logger, consul consulClient.ConsulClient, injector *d
 	logger.LogInfo("Listening and serving TCP on :%s", grpcPresentationPort)
 
 	presentationServer := grpc.NewServer()
-	presentationsGrpc.RegisterPresentationServer(presentationServer, &grpcControllers.Server{
+	presentationContracts.RegisterPresentationServer(presentationServer, &grpcControllers.Server{
 		Injector: injector,
 	})
 	if err := presentationServer.Serve(presentationPortListener); err != nil {

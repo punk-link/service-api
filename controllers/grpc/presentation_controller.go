@@ -3,19 +3,20 @@ package grpc
 import (
 	"context"
 
-	presentationGrpcs "main/grpc/presentations"
 	artistServices "main/services/artists"
 	artistConverter "main/services/artists/converters"
+
+	presentationContracts "github.com/punk-link/presentation-contracts"
 
 	"github.com/samber/do"
 )
 
 type Server struct {
 	Injector *do.Injector
-	presentationGrpcs.UnimplementedPresentationServer
+	presentationContracts.UnimplementedPresentationServer
 }
 
-func (t *Server) GetArtist(ctx context.Context, request *presentationGrpcs.ArtistRequest) (*presentationGrpcs.Artist, error) {
+func (t *Server) GetArtist(ctx context.Context, request *presentationContracts.ArtistRequest) (*presentationContracts.Artist, error) {
 	artistService := t.getArtistService()
 	artist, err := artistService.GetOneWithReleases(int(request.Id))
 	if err != nil {
@@ -25,7 +26,7 @@ func (t *Server) GetArtist(ctx context.Context, request *presentationGrpcs.Artis
 	return artistConverter.ToArtistMessage(artist), nil
 }
 
-func (t *Server) GetRelease(ctx context.Context, request *presentationGrpcs.ReleaseRequest) (*presentationGrpcs.Release, error) {
+func (t *Server) GetRelease(ctx context.Context, request *presentationContracts.ReleaseRequest) (*presentationContracts.Release, error) {
 	releaseService := t.getReleaseService()
 	release, err := releaseService.GetOne(int(request.Id))
 	if err != nil {

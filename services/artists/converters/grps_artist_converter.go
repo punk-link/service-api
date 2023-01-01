@@ -1,13 +1,14 @@
 package converters
 
 import (
-	presentationGrpcs "main/grpc/presentations"
 	artistModels "main/models/artists"
 	commonModels "main/models/common"
+
+	presentationContracts "github.com/punk-link/presentation-contracts"
 )
 
-func ToArtistMessage(artist artistModels.Artist) *presentationGrpcs.Artist {
-	return &presentationGrpcs.Artist{
+func ToArtistMessage(artist artistModels.Artist) *presentationContracts.Artist {
+	return &presentationContracts.Artist{
 		Id:           int32(artist.Id),
 		LabelId:      int32(artist.LabelId),
 		Name:         artist.Name,
@@ -16,8 +17,8 @@ func ToArtistMessage(artist artistModels.Artist) *presentationGrpcs.Artist {
 	}
 }
 
-func toImageDetailsMessage(imageDetails commonModels.ImageDetails) *presentationGrpcs.ImageDetails {
-	return &presentationGrpcs.ImageDetails{
+func toImageDetailsMessage(imageDetails commonModels.ImageDetails) *presentationContracts.ImageDetails {
+	return &presentationContracts.ImageDetails{
 		AltText: imageDetails.AltText,
 		Height:  int32(imageDetails.Width),
 		Url:     imageDetails.Url,
@@ -25,8 +26,8 @@ func toImageDetailsMessage(imageDetails commonModels.ImageDetails) *presentation
 	}
 }
 
-func ToReleaseMessage(release artistModels.Release) *presentationGrpcs.Release {
-	return &presentationGrpcs.Release{
+func ToReleaseMessage(release artistModels.Release) *presentationContracts.Release {
+	return &presentationContracts.Release{
 		Id:               int32(release.Id),
 		FeaturingArtists: toSlimArtistMessages(release.FeaturingArtists),
 		ImageDetails:     toImageDetailsMessage(release.ImageDetails),
@@ -39,8 +40,8 @@ func ToReleaseMessage(release artistModels.Release) *presentationGrpcs.Release {
 	}
 }
 
-func toReleaseMessages(releases []artistModels.Release) []*presentationGrpcs.Release {
-	results := make([]*presentationGrpcs.Release, len(releases))
+func toReleaseMessages(releases []artistModels.Release) []*presentationContracts.Release {
+	results := make([]*presentationContracts.Release, len(releases))
 	for i, release := range releases {
 		results[i] = ToReleaseMessage(release)
 	}
@@ -48,8 +49,8 @@ func toReleaseMessages(releases []artistModels.Release) []*presentationGrpcs.Rel
 	return results
 }
 
-func toSlimArtistMessage(artist artistModels.Artist) *presentationGrpcs.SlimArtist {
-	return &presentationGrpcs.SlimArtist{
+func toSlimArtistMessage(artist artistModels.Artist) *presentationContracts.SlimArtist {
+	return &presentationContracts.SlimArtist{
 		Id:           int32(artist.Id),
 		LabelId:      int32(artist.LabelId),
 		Name:         artist.Name,
@@ -57,8 +58,8 @@ func toSlimArtistMessage(artist artistModels.Artist) *presentationGrpcs.SlimArti
 	}
 }
 
-func toSlimArtistMessages(artists []artistModels.Artist) []*presentationGrpcs.SlimArtist {
-	results := make([]*presentationGrpcs.SlimArtist, len(artists))
+func toSlimArtistMessages(artists []artistModels.Artist) []*presentationContracts.SlimArtist {
+	results := make([]*presentationContracts.SlimArtist, len(artists))
 	for i, artist := range artists {
 		results[i] = toSlimArtistMessage(artist)
 	}
@@ -66,8 +67,8 @@ func toSlimArtistMessages(artists []artistModels.Artist) []*presentationGrpcs.Sl
 	return results
 }
 
-func toTrackMessage(track artistModels.Track) *presentationGrpcs.Track {
-	return &presentationGrpcs.Track{
+func toTrackMessage(track artistModels.Track) *presentationContracts.Track {
+	return &presentationContracts.Track{
 		Artists:     toSlimArtistMessages(track.Artists),
 		DiscNumber:  int32(track.DiscNumber),
 		IsExplicit:  track.IsExplicit,
@@ -76,8 +77,8 @@ func toTrackMessage(track artistModels.Track) *presentationGrpcs.Track {
 	}
 }
 
-func toTrackMessages(tracks []artistModels.Track) []*presentationGrpcs.Track {
-	results := make([]*presentationGrpcs.Track, len(tracks))
+func toTrackMessages(tracks []artistModels.Track) []*presentationContracts.Track {
+	results := make([]*presentationContracts.Track, len(tracks))
 	for i, track := range tracks {
 		results[i] = toTrackMessage(track)
 	}

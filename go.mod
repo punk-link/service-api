@@ -13,6 +13,7 @@ require (
 	github.com/punk-link/http-client v1.0.2
 	github.com/punk-link/logger v1.0.6
 	github.com/punk-link/platform-contracts v1.0.7
+	github.com/punk-link/presentation-contracts v1.0.0
 	github.com/punk-link/vault-client v1.0.0
 	github.com/samber/do v1.4.1
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.1.17
@@ -23,8 +24,7 @@ require (
 	go.opentelemetry.io/otel/metric v0.33.0
 	go.opentelemetry.io/otel/sdk v1.11.1
 	go.opentelemetry.io/otel/sdk/metric v0.33.0
-	google.golang.org/grpc v1.41.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/grpc v1.51.0
 	gorm.io/driver/postgres v1.4.4
 	gorm.io/gorm v1.24.0
 )
@@ -112,6 +112,7 @@ require (
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
