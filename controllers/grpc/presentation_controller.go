@@ -15,11 +15,24 @@ type Server struct {
 	presentationGrpcs.UnimplementedPresentationServer
 }
 
-func (t *Server) GetArtist(ctx context.Context, request *presentationGrpcs.ArtistRequest) (*presentationGrpcs.ArtistResponse, error) {
+func (t *Server) GetArtist(ctx context.Context, request *presentationGrpcs.ArtistRequest) (*presentationGrpcs.Artist, error) {
 	artistService := t.getArtistService()
-	artist, _ := artistService.GetOneWithReleases(int(request.Id))
+	artist, err := artistService.GetOneWithReleases(int(request.Id))
+	if err != nil {
+		return nil, err
+	}
 
-	return artistConverter.ToArtistResponseMessage(artist), nil
+	return artistConverter.ToArtistMessage(artist), nil
+}
+
+func (t *Server) GetRelease(ctx context.Context, request *presentationGrpcs.ReleaseRequest) (*presentationGrpcs.Release, error) {
+	releaseService := t.getReleaseService()
+	release, err := releaseService.GetOne(int(request.Id))
+	if err != nil {
+		return nil, err
+	}
+
+	return artistConverter.ToReleaseMessage(release), nil
 }
 
 func (t *Server) getArtistService() *artistServices.ArtistService {
@@ -30,4 +43,13 @@ func (t *Server) getArtistService() *artistServices.ArtistService {
 	return _artistService
 }
 
+func (t *Server) getReleaseService() *artistServices.ReleaseService {
+	if _artistService == nil {
+		_releaseService = do.MustInvoke[*artistServices.ReleaseService](t.Injector)
+	}
+
+	return _releaseService
+}
+
 var _artistService *artistServices.ArtistService
+var _releaseService *artistServices.ReleaseService

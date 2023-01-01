@@ -6,8 +6,8 @@ import (
 	commonModels "main/models/common"
 )
 
-func ToArtistResponseMessage(artist artistModels.Artist) *presentationGrpcs.ArtistResponse {
-	return &presentationGrpcs.ArtistResponse{
+func ToArtistMessage(artist artistModels.Artist) *presentationGrpcs.Artist {
+	return &presentationGrpcs.Artist{
 		Id:           int32(artist.Id),
 		LabelId:      int32(artist.LabelId),
 		Name:         artist.Name,
@@ -25,7 +25,7 @@ func toImageDetailsMessage(imageDetails commonModels.ImageDetails) *presentation
 	}
 }
 
-func toReleaseMessage(release artistModels.Release) *presentationGrpcs.Release {
+func ToReleaseMessage(release artistModels.Release) *presentationGrpcs.Release {
 	return &presentationGrpcs.Release{
 		Id:               int32(release.Id),
 		FeaturingArtists: toSlimArtistMessages(release.FeaturingArtists),
@@ -42,7 +42,7 @@ func toReleaseMessage(release artistModels.Release) *presentationGrpcs.Release {
 func toReleaseMessages(releases []artistModels.Release) []*presentationGrpcs.Release {
 	results := make([]*presentationGrpcs.Release, len(releases))
 	for i, release := range releases {
-		results[i] = toReleaseMessage(release)
+		results[i] = ToReleaseMessage(release)
 	}
 
 	return results

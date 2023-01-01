@@ -4,7 +4,8 @@ import "google/protobuf/timestamp.proto";
 option go_package = "./grpc/presentations";
 
 service Presentation {
-    rpc GetArtist (ArtistRequest) returns (ArtistResponse) {}
+    rpc GetArtist (ArtistRequest) returns (Artist) {}
+    rpc GetRelease (ReleaseRequest) returns (Release) {}
 }
 
 message ImageDetails {
@@ -18,7 +19,7 @@ message ArtistRequest {
     int32 Id = 1;
 }
 
-message ArtistResponse {
+message Artist {
     int32 Id = 1;
     ImageDetails ImageDetails = 2;
 	int32 LabelId = 3;
@@ -37,6 +38,10 @@ message Release {
     int32 TrackNumber = 8;
     repeated Track Tracks = 9;
     string Type = 10;
+}
+
+message ReleaseRequest {
+    int32 Id = 1;
 }
 
 message SlimArtist {

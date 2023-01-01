@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.12
-// source: presentation.proto
+// source: grpc/presentations/presentation.proto
 
 package presentations
 
@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PresentationClient interface {
-	GetArtist(ctx context.Context, in *ArtistRequest, opts ...grpc.CallOption) (*ArtistResponse, error)
+	GetArtist(ctx context.Context, in *ArtistRequest, opts ...grpc.CallOption) (*Artist, error)
+	GetRelease(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*Release, error)
 }
 
 type presentationClient struct {
@@ -33,9 +34,18 @@ func NewPresentationClient(cc grpc.ClientConnInterface) PresentationClient {
 	return &presentationClient{cc}
 }
 
-func (c *presentationClient) GetArtist(ctx context.Context, in *ArtistRequest, opts ...grpc.CallOption) (*ArtistResponse, error) {
-	out := new(ArtistResponse)
+func (c *presentationClient) GetArtist(ctx context.Context, in *ArtistRequest, opts ...grpc.CallOption) (*Artist, error) {
+	out := new(Artist)
 	err := c.cc.Invoke(ctx, "/Presentation/GetArtist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *presentationClient) GetRelease(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*Release, error) {
+	out := new(Release)
+	err := c.cc.Invoke(ctx, "/Presentation/GetRelease", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,8 @@ func (c *presentationClient) GetArtist(ctx context.Context, in *ArtistRequest, o
 // All implementations must embed UnimplementedPresentationServer
 // for forward compatibility
 type PresentationServer interface {
-	GetArtist(context.Context, *ArtistRequest) (*ArtistResponse, error)
+	GetArtist(context.Context, *ArtistRequest) (*Artist, error)
+	GetRelease(context.Context, *ReleaseRequest) (*Release, error)
 	mustEmbedUnimplementedPresentationServer()
 }
 
@@ -54,8 +65,11 @@ type PresentationServer interface {
 type UnimplementedPresentationServer struct {
 }
 
-func (UnimplementedPresentationServer) GetArtist(context.Context, *ArtistRequest) (*ArtistResponse, error) {
+func (UnimplementedPresentationServer) GetArtist(context.Context, *ArtistRequest) (*Artist, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetArtist not implemented")
+}
+func (UnimplementedPresentationServer) GetRelease(context.Context, *ReleaseRequest) (*Release, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRelease not implemented")
 }
 func (UnimplementedPresentationServer) mustEmbedUnimplementedPresentationServer() {}
 
@@ -88,6 +102,24 @@ func _Presentation_GetArtist_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Presentation_GetRelease_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PresentationServer).GetRelease(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Presentation/GetRelease",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PresentationServer).GetRelease(ctx, req.(*ReleaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Presentation_ServiceDesc is the grpc.ServiceDesc for Presentation service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -99,7 +131,11 @@ var Presentation_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetArtist",
 			Handler:    _Presentation_GetArtist_Handler,
 		},
+		{
+			MethodName: "GetRelease",
+			Handler:    _Presentation_GetRelease_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "presentation.proto",
+	Metadata: "grpc/presentations/presentation.proto",
 }
