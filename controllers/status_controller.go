@@ -5,6 +5,8 @@ import (
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
 	"gorm.io/gorm"
+
+	templates "github.com/punk-link/gin-generic-http-templates"
 )
 
 type StatusController struct {
@@ -26,16 +28,16 @@ func (t *StatusController) CheckHealth(ctx *gin.Context) {
 	sqlDb, err := t.db.DB()
 	if err != nil {
 		t.logger.LogError(err, "Postgres initialization failed: %v", err.Error())
-		InternalServerError(ctx, err.Error())
+		templates.InternalServerError(ctx, err.Error())
 		return
 	}
 
 	err = sqlDb.Ping()
 	if err != nil {
 		t.logger.LogError(err, "Can't reach any database instances: %v", err.Error())
-		InternalServerError(ctx, err.Error())
+		templates.InternalServerError(ctx, err.Error())
 		return
 	}
 
-	Ok(ctx, "OK")
+	templates.Ok(ctx, "OK")
 }

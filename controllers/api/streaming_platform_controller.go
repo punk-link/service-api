@@ -1,8 +1,9 @@
 package api
 
 import (
-	base "main/controllers"
 	"main/services/platforms"
+
+	templates "github.com/punk-link/gin-generic-http-templates"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
@@ -23,11 +24,11 @@ func NewStreamingPlatformController(injector *do.Injector) (*StreamingPlatformCo
 func (t *StreamingPlatformController) RequestUrlSync(ctx *gin.Context) {
 	t.streamingPlatformService.PublishPlatforeUrlRequests()
 
-	base.NoContent(ctx)
+	templates.NoContent(ctx)
 }
 
 func (t *StreamingPlatformController) ProcessUrlSyncResults(ctx *gin.Context) {
 	t.streamingPlatformService.ProcessPlatforeUrlResults()
 
-	base.NoContent(ctx)
+	templates.NoContent(ctx)
 }

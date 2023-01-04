@@ -7,7 +7,6 @@ import (
 	artistModels "main/models/artists"
 	tokenSpotifyPlatformModels "main/models/platforms/spotify/tokens"
 	artistServices "main/services/artists"
-	commonServices "main/services/common"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
 	spotifyPlatformServices "main/services/platforms/spotify"
@@ -60,8 +59,6 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, registerCacheManager[[]artistModels.Release]())
 	do.Provide(injector, registerCacheManager[map[string]any]())
 
-	do.Provide(injector, commonServices.NewHashCoder)
-
 	do.Provide(injector, labelServices.NewLabelRepository)
 	do.Provide(injector, labelServices.NewLabelService)
 	do.Provide(injector, labelServices.NewManagerRepository)
@@ -81,7 +78,6 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, controllers.NewStatusController)
 
 	do.Provide(injector, apiControllers.NewArtistController)
-	do.Provide(injector, apiControllers.NewHashController)
 	do.Provide(injector, apiControllers.NewLabelController)
 	do.Provide(injector, apiControllers.NewManagerController)
 	do.Provide(injector, apiControllers.NewStreamingPlatformController)

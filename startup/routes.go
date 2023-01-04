@@ -19,11 +19,6 @@ func setupRouts(app *gin.Engine, injector *do.Injector) {
 
 	v1 := app.Group("/v1")
 
-	registerRoutes(injector, func(controller *apiControllers.HashController) {
-		v1.GET("/hashes/:target/decode", controller.Decode)
-		v1.GET("/hashes/:target/encode", controller.Encode)
-	})
-
 	registerRoutes(injector, func(controller *apiControllers.ManagerController) {
 		v1.POST("/managers", controller.Add)
 		v1.POST("/managers/master", controller.AddMaster)

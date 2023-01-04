@@ -1,11 +1,11 @@
 package api
 
 import (
-	base "main/controllers"
 	"main/services/artists"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	templates "github.com/punk-link/gin-generic-http-templates"
 	"github.com/samber/do"
 )
 
@@ -24,21 +24,21 @@ func NewReleaseController(injector *do.Injector) (*ReleaseController, error) {
 func (t *ReleaseController) GetOne(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	result, err := t.releaseService.GetOne(id)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ReleaseController) Get(ctx *gin.Context) {
 	artistId, err := strconv.Atoi(ctx.Param("artist-id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	result, err := t.releaseService.GetByArtistId(artistId)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }

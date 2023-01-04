@@ -8,7 +8,6 @@ import (
 	artistModels "main/models/artists"
 	"main/models/artists/enums"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
-	commonServices "main/services/common"
 	"main/services/common/converters"
 	"time"
 )
@@ -70,21 +69,6 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 	}
 
 	return results, err
-}
-
-func ToSlimRelease(hashCoder *commonServices.HashCoder, source []artistModels.Release) []artistModels.SlimRelease {
-	results := make([]artistModels.SlimRelease, len(source))
-	for i, release := range source {
-		results[i] = artistModels.SlimRelease{
-			Slug:         hashCoder.Encode(release.Id),
-			ImageDetails: release.ImageDetails,
-			Name:         release.Name,
-			ReleaseDate:  release.ReleaseDate,
-			Type:         release.Type,
-		}
-	}
-
-	return results
 }
 
 func getFeaturingArtistIds(release releaseSpotifyPlatformModels.Release, artists map[string]artistData.Artist) []int {

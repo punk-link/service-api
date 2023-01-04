@@ -17,9 +17,6 @@ func Configure(logger logger.Logger, consul consulClient.ConsulClient, injector 
 	app.Use(metricsMiddleware(options.ServiceName))
 	app.Use(otelgin.Middleware(options.ServiceName))
 
-	app.LoadHTMLGlob("./var/www/templates/**/*.go.tmpl")
-	app.Static("/assets", "./var/www/assets")
-
 	initSentry(app, logger, consul, options.EnvironmentName)
 	configureOpenTelemetry(logger, consul, options)
 	setupRouts(app, injector)

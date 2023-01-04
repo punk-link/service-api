@@ -1,10 +1,13 @@
 package api
 
 import (
-	base "main/controllers"
 	"main/services/artists"
 	"main/services/labels"
 	"strconv"
+
+	base "main/controllers"
+
+	templates "github.com/punk-link/gin-generic-http-templates"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
@@ -30,49 +33,49 @@ func (t *ArtistController) Add(ctx *gin.Context) {
 
 	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
-		base.NotFound(ctx, err.Error())
+		templates.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.artistService.Add(currentManager, spotifyId)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ArtistController) Get(ctx *gin.Context) {
 	labelId, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	if err != nil {
-		base.NotFound(ctx, err.Error())
+		templates.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.artistService.Get(labelId)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ArtistController) GetOne(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("artist-id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	if err != nil {
-		base.NotFound(ctx, err.Error())
+		templates.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.artistService.GetOne(id)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *ArtistController) Search(ctx *gin.Context) {
 	query := ctx.Query("query")
 
 	result := t.artistService.Search(query)
-	base.Ok(ctx, result)
+	templates.Ok(ctx, result)
 }

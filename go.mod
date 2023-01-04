@@ -4,12 +4,13 @@ go 1.19
 
 require (
 	github.com/getsentry/sentry-go v0.14.0
-	github.com/gin-gonic/gin v1.8.1
+	github.com/gin-gonic/gin v1.8.2
 	github.com/nats-io/nats.go v1.21.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/punk-link/cache-manager v1.0.2
 	github.com/punk-link/consul-client v1.0.3
 	github.com/punk-link/environment-variable-manager v1.0.2
+	github.com/punk-link/gin-generic-http-templates v1.0.0
 	github.com/punk-link/http-client v1.0.2
 	github.com/punk-link/logger v1.0.6
 	github.com/punk-link/platform-contracts v1.0.7
@@ -94,7 +95,7 @@ require (
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/oklog/run v1.0.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
@@ -107,7 +108,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.11.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
-	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect

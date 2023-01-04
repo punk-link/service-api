@@ -1,10 +1,13 @@
 package api
 
 import (
-	base "main/controllers"
 	"main/models/labels"
 	service "main/services/labels"
 	"strconv"
+
+	base "main/controllers"
+
+	templates "github.com/punk-link/gin-generic-http-templates"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
@@ -28,39 +31,39 @@ func NewLabelController(injector *do.Injector) (*LabelController, error) {
 func (t *LabelController) Get(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
-		base.NotFound(ctx, err.Error())
+		templates.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.labelService.GetLabel(currentManager, id)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
 
 func (t *LabelController) Modify(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		base.BadRequest(ctx, err.Error())
+		templates.BadRequest(ctx, err.Error())
 		return
 	}
 
 	var label labels.Label
 	if err := ctx.ShouldBindJSON(&label); err != nil {
-		base.UnprocessableEntity(ctx, err)
+		templates.UnprocessableEntity(ctx, err)
 		return
 	}
 
 	currentManager, err := base.GetCurrentManagerContext(ctx, t.managerService)
 	if err != nil {
-		base.NotFound(ctx, err.Error())
+		templates.NotFound(ctx, err.Error())
 		return
 	}
 
 	result, err := t.labelService.ModifyLabel(currentManager, label, id)
-	base.OkOrBadRequest(ctx, result, err)
+	templates.OkOrBadRequest(ctx, result, err)
 }
