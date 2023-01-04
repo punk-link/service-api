@@ -30,7 +30,7 @@ steps:
       - ${DRONE_COMMIT_SHA:0:7}
       - ${DRONE_COMMIT_BRANCH}
     force_tag: true
-    use_cache: true
+    no_cache: true
     username:
       from_secret: DOCKER_LOGIN
     password:
