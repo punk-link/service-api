@@ -44,7 +44,7 @@ service:
   type: ClusterIP
   port: 80
   grpc:
-    port: 9000  
+    port: 9000
 
 ingress:
   enabled: true
