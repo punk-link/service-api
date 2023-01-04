@@ -3,12 +3,10 @@ package startup
 import (
 	controllers "main/controllers"
 	apiControllers "main/controllers/api"
-	staticControllers "main/controllers/static"
 	"main/data"
 	artistModels "main/models/artists"
 	tokenSpotifyPlatformModels "main/models/platforms/spotify/tokens"
 	artistServices "main/services/artists"
-	staticArtistServices "main/services/artists/static"
 	commonServices "main/services/common"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
@@ -74,9 +72,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, artistServices.NewArtistRepository)
 	do.Provide(injector, artistServices.NewReleaseRepository)
 	do.Provide(injector, artistServices.NewReleaseService)
-	do.Provide(injector, staticArtistServices.NewStaticReleaseService)
 	do.Provide(injector, artistServices.NewArtistService)
-	do.Provide(injector, staticArtistServices.NewStaticArtistService)
 
 	do.Provide(injector, platformServices.NewPlatformReleaseUrlRepository)
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
@@ -90,9 +86,6 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, apiControllers.NewManagerController)
 	do.Provide(injector, apiControllers.NewStreamingPlatformController)
 	do.Provide(injector, apiControllers.NewReleaseController)
-
-	do.Provide(injector, staticControllers.NewStaticArtistController)
-	do.Provide(injector, staticControllers.NewStaticReleaseController)
 
 	return injector
 }
