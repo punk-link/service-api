@@ -20,5 +20,5 @@ RUN apk update && \
 WORKDIR /
 COPY --from=builder /bin .
 COPY --from=builder /var /var
-EXPOSE 8080 9000
+EXPOSE 8080 
 CMD ["./service-api.exe"]
