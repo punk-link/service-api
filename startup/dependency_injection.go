@@ -22,7 +22,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func buildDependencies(logger loggerService.Logger, consul consulClient.ConsulClient, appSecrets map[string]any) *do.Injector {
+func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulClient, appSecrets map[string]any) *do.Injector {
 	injector := do.New()
 
 	spotifySettingsValue, err := consul.Get("SpotifySettings")

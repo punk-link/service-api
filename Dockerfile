@@ -1,6 +1,5 @@
 FROM golang:alpine AS builder
 
-
 WORKDIR /
 ADD go.mod .
 COPY . .
@@ -11,6 +10,7 @@ FROM alpine
 ARG PNKL_VAULT_TOKEN
 ARG GO_ENVIRONMENT
 ARG LOG_LEVEL
+
 ENV PNKL_VAULT_TOKEN=$PNKL_VAULT_TOKEN
 ENV GO_ENVIRONMENT=$GO_ENVIRONMENT
 ENV LOG_LEVEL=$LOG_LEVEL
@@ -20,5 +20,5 @@ RUN apk update && \
 WORKDIR /
 COPY --from=builder /bin .
 COPY --from=builder /var /var
-EXPOSE 8080
+EXPOSE 8080 9000
 CMD ["./service-api.exe"]

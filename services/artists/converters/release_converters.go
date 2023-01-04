@@ -59,7 +59,7 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 			Id:               dbRelease.Id,
 			FeaturingArtists: featuringArtists,
 			ImageDetails:     imageDetails,
-			Lable:            dbRelease.Label,
+			Label:            dbRelease.Label,
 			Name:             dbRelease.Name,
 			ReleaseArtists:   releaseArtists,
 			ReleaseDate:      dbRelease.ReleaseDate,
