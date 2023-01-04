@@ -19,5 +19,5 @@ RUN apk update && \
     apk add --no-cache curl
 WORKDIR /
 COPY --from=builder /bin .
-EXPOSE 8080
+EXPOSE 8080 15170
 CMD ["./service-api.exe"]

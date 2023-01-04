@@ -5,7 +5,7 @@ services:
     env_file: .env
     ports: 
       - 8080:8080
-      - 9000:9000
+      - 15170:15170
     image: registry.punk.link/service-api:latest
     healthcheck:
       test: curl --fail http://127.0.0.1/health || exit 1
