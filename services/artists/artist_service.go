@@ -2,7 +2,6 @@ package artists
 
 import (
 	"errors"
-	"fmt"
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
@@ -107,21 +106,6 @@ func (t *ArtistService) GetOne(id int) (artistModels.Artist, error) {
 	return artists[0], nil
 }
 
-func (t *ArtistService) GetOneWithReleases(id int) (artistModels.Artist, error) {
-	artist, err := t.GetOne(id)
-	if err != nil {
-		return artistModels.Artist{}, err
-	}
-
-	releases, err := t.releaseService.GetByArtistId(artist.Id)
-	if err != nil {
-		return artistModels.Artist{}, err
-	}
-
-	artist.Releases = releases
-	return artist, nil
-}
-
 func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
 	const minimalQueryLength = 3
 	if len(query) < minimalQueryLength {
@@ -188,7 +172,7 @@ func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []strin
 }
 
 func (t *ArtistService) buildCacheKey(id int) string {
-	return fmt.Sprintf("Artist::%v", id)
+	return helpers.BuildCacheKey("Artist", id)
 }
 
 func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {

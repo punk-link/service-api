@@ -1,8 +1,8 @@
 package artists
 
 import (
-	"fmt"
 	artistData "main/data/artists"
+	"main/helpers"
 	artistModels "main/models/artists"
 	labelModels "main/models/labels"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
@@ -19,32 +19,32 @@ import (
 )
 
 type ReleaseService struct {
-	artistRepository  *ArtistRepository
-	releaseCache      cacheManager.CacheManager[artistModels.Release]
-	releaseArrayCache cacheManager.CacheManager[[]artistModels.Release]
-	db                *gorm.DB
-	logger            logger.Logger
-	repository        *ReleaseRepository
-	spotifyService    *spotifyPlatformServices.SpotifyService
+	artistRepository *ArtistRepository
+	db               *gorm.DB
+	logger           logger.Logger
+	releaseCache     cacheManager.CacheManager[artistModels.Release]
+	releasesCache    cacheManager.CacheManager[[]artistModels.Release]
+	repository       *ReleaseRepository
+	spotifyService   *spotifyPlatformServices.SpotifyService
 }
 
 func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
 	artistRepository := do.MustInvoke[*ArtistRepository](injector)
-	releaseCache := do.MustInvoke[cacheManager.CacheManager[artistModels.Release]](injector)
-	releaseArrayCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
+	releaseCache := do.MustInvoke[cacheManager.CacheManager[artistModels.Release]](injector)
+	releasesCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
 	repository := do.MustInvoke[*ReleaseRepository](injector)
 	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
 
 	return &ReleaseService{
-		artistRepository:  artistRepository,
-		releaseCache:      releaseCache,
-		releaseArrayCache: releaseArrayCache,
-		db:                db,
-		logger:            logger,
-		repository:        repository,
-		spotifyService:    spotifyService,
+		artistRepository: artistRepository,
+		db:               db,
+		logger:           logger,
+		releaseCache:     releaseCache,
+		releasesCache:    releasesCache,
+		repository:       repository,
+		spotifyService:   spotifyService,
 	}, nil
 }
 
@@ -62,7 +62,7 @@ func (t *ReleaseService) GetCount() int {
 
 func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, error) {
 	cacheKey := t.buildArtistReleasesCacheKey(artistId)
-	value, isCached := t.releaseArrayCache.TryGet(cacheKey)
+	value, isCached := t.releasesCache.TryGet(cacheKey)
 	if isCached {
 		return value, nil
 	}
@@ -71,7 +71,7 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 	artists, err := t.getReleasesArtists(err, dbReleases)
 	releases, err := t.toReleases(err, dbReleases, artists)
 	if err == nil {
-		t.releaseArrayCache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
+		t.releasesCache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 	}
 
 	return releases, err
@@ -122,11 +122,11 @@ func (t *ReleaseService) MarkAsUpdated(ids []int, timestamp time.Time) error {
 }
 
 func (t *ReleaseService) buildCacheKey(id int) string {
-	return fmt.Sprintf("Release::%v", id)
+	return helpers.BuildCacheKey("Release", id)
 }
 
 func (t *ReleaseService) buildArtistReleasesCacheKey(artistId int) string {
-	return fmt.Sprintf("ArtistReleases::%v", artistId)
+	return helpers.BuildCacheKey("ArtistReleases", artistId)
 }
 
 func (t *ReleaseService) buildDbReleases(artists map[string]artistData.Artist, releases []releaseSpotifyPlatformModels.Release, timeStamp time.Time) []artistData.Release {

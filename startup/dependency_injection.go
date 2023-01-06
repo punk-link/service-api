@@ -71,6 +71,9 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, artistServices.NewReleaseService)
 	do.Provide(injector, artistServices.NewArtistService)
 
+	do.Provide(injector, artistServices.NewGrpcArtistService)
+	do.Provide(injector, artistServices.NewGrpcReleaseService)
+
 	do.Provide(injector, platformServices.NewPlatformReleaseUrlRepository)
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 

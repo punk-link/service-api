@@ -1,6 +1,7 @@
 package converters
 
 import (
+	"encoding/json"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	artistSpotifyPlatformModels "main/models/platforms/spotify/artists"
@@ -19,6 +20,23 @@ func ToArtist(dbArtist artistData.Artist, releases []artistModels.Release) (arti
 		Name:         dbArtist.Name,
 		Releases:     releases,
 	}, err
+}
+
+func ToArtistsFromIds(artistIdJson string, artists map[int]artistModels.Artist) ([]artistModels.Artist, error) {
+	var artistIds []int
+	err := json.Unmarshal([]byte(artistIdJson), &artistIds)
+	if err != nil {
+		return make([]artistModels.Artist, 0), err
+	}
+
+	results := make([]artistModels.Artist, 0)
+	for _, id := range artistIds {
+		if artist, isExists := artists[id]; isExists {
+			results = append(results, artist)
+		}
+	}
+
+	return results, err
 }
 
 func ToArtistsFromSpotifyTrack(track releaseSpotifyPlatformModels.Track, artists map[string]artistData.Artist) []artistModels.Artist {

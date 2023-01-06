@@ -41,17 +41,43 @@ func (t *ArtistRepository) CreateInBatches(err error, artists *[]artistData.Arti
 	return t.handleError(err)
 }
 
-func (t *ArtistRepository) GetOne(err error, id int) (artistData.Artist, error) {
+func (t *ArtistRepository) Get(err error, ids []int) ([]artistData.Artist, error) {
 	if err != nil {
-		return artistData.Artist{}, err
+		return make([]artistData.Artist, 0), err
 	}
 
-	var artist artistData.Artist
+	var artists []artistData.Artist
 	err = t.db.Model(&artistData.Artist{}).
-		First(&artist, id).
+		Find(&artists, ids).
 		Error
 
-	return artist, t.handleError(err)
+	return artists, t.handleError(err)
+}
+
+func (t *ArtistRepository) GetSlim(err error, ids []int) ([]artistData.SlimArtist, error) {
+	if err != nil {
+		return make([]artistData.SlimArtist, 0), err
+	}
+
+	var artists []artistData.SlimArtist
+	err = t.db.Model(&artistData.Artist{}).
+		Find(&artists, ids).
+		Error
+
+	return artists, t.handleError(err)
+}
+
+func (t *ArtistRepository) GetBySpotifyIds(err error, spotifyIds []string) ([]artistData.Artist, error) {
+	if err != nil {
+		return make([]artistData.Artist, 0), err
+	}
+
+	var artists []artistData.Artist
+	err = t.db.Where("spotify_id IN ?", spotifyIds).
+		Find(&artists).
+		Error
+
+	return artists, t.handleError(err)
 }
 
 func (t *ArtistRepository) GetIdsByLabelId(err error, labelId int) ([]int, error) {
@@ -69,17 +95,17 @@ func (t *ArtistRepository) GetIdsByLabelId(err error, labelId int) ([]int, error
 	return artistIds, t.handleError(err)
 }
 
-func (t *ArtistRepository) Get(err error, ids []int) ([]artistData.Artist, error) {
+func (t *ArtistRepository) GetOne(err error, id int) (artistData.Artist, error) {
 	if err != nil {
-		return make([]artistData.Artist, 0), err
+		return artistData.Artist{}, err
 	}
 
-	var artists []artistData.Artist
+	var artist artistData.Artist
 	err = t.db.Model(&artistData.Artist{}).
-		Find(&artists, ids).
+		First(&artist, id).
 		Error
 
-	return artists, t.handleError(err)
+	return artist, t.handleError(err)
 }
 
 func (t *ArtistRepository) GetOneBySpotifyId(err error, spotifyId string) (artistData.Artist, error) {
@@ -96,17 +122,17 @@ func (t *ArtistRepository) GetOneBySpotifyId(err error, spotifyId string) (artis
 	return artist, t.handleError(err)
 }
 
-func (t *ArtistRepository) GetBySpotifyIds(err error, spotifyIds []string) ([]artistData.Artist, error) {
+func (t *ArtistRepository) GetOneSlim(err error, id int) (artistData.SlimArtist, error) {
 	if err != nil {
-		return make([]artistData.Artist, 0), err
+		return artistData.SlimArtist{}, err
 	}
 
-	var artists []artistData.Artist
-	err = t.db.Where("spotify_id IN ?", spotifyIds).
-		Find(&artists).
+	var artist artistData.SlimArtist
+	err = t.db.Model(&artistData.Artist{}).
+		First(&artist, id).
 		Error
 
-	return artists, t.handleError(err)
+	return artist, t.handleError(err)
 }
 
 func (t *ArtistRepository) Update(err error, artist *artistData.Artist) error {

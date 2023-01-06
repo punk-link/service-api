@@ -87,6 +87,25 @@ func (t *ReleaseRepository) GetByArtistId(err error, artistId int) ([]artistData
 	return releases, t.handleError(err)
 }
 
+func (t *ReleaseRepository) GetSlimByArtistId(err error, artistId int) ([]artistData.SlimRelease, error) {
+	if err != nil {
+		return make([]artistData.SlimRelease, 0), err
+	}
+
+	subQuery := t.db.Select("release_id").
+		Where("artist_id = ?", artistId).
+		Table("artist_release_relations")
+
+	var releases []artistData.SlimRelease
+	err = t.db.Model(&artistData.Release{}).
+		Where("id IN (?)", subQuery).
+		Order("release_date").
+		Find(&releases).
+		Error
+
+	return releases, t.handleError(err)
+}
+
 func (t *ReleaseRepository) GetUpcContainers(err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {
 	if err != nil {
 		return make([]artistData.Release, 0), err

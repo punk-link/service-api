@@ -47,8 +47,8 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 
 	results := make([]artistModels.Release, len(dbReleases))
 	for i, dbRelease := range dbReleases {
-		featuringArtists, featuringArtistErr := toArtists(dbRelease.FeaturingArtistIds, artists)
-		releaseArtists, releaseArtistErr := toArtists(dbRelease.ReleaseArtistIds, artists)
+		featuringArtists, featuringArtistErr := ToArtistsFromIds(dbRelease.FeaturingArtistIds, artists)
+		releaseArtists, releaseArtistErr := ToArtistsFromIds(dbRelease.ReleaseArtistIds, artists)
 		tracks, tracksErr := getTracks(dbRelease.Tracks)
 		imageDetails, imageErr := converters.FromJson(dbRelease.ImageDetails)
 
@@ -208,21 +208,4 @@ func getTracksJson(err error, tracks []artistModels.Track) (string, error) {
 	}
 
 	return string(tracksBytes), nil
-}
-
-func toArtists(artistIdJson string, artists map[int]artistModels.Artist) ([]artistModels.Artist, error) {
-	var artistIds []int
-	err := json.Unmarshal([]byte(artistIdJson), &artistIds)
-	if err != nil {
-		return make([]artistModels.Artist, 0), err
-	}
-
-	results := make([]artistModels.Artist, 0)
-	for _, id := range artistIds {
-		if artist, isExists := artists[id]; isExists {
-			results = append(results, artist)
-		}
-	}
-
-	return results, err
 }
