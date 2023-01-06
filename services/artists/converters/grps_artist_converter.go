@@ -5,6 +5,7 @@ import (
 	commonModels "main/models/common"
 
 	presentationContracts "github.com/punk-link/presentation-contracts"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func ToArtistMessage(artist artistModels.Artist) *presentationContracts.Artist {
@@ -34,6 +35,7 @@ func ToReleaseMessage(release artistModels.Release) *presentationContracts.Relea
 		Label:            release.Label,
 		Name:             release.Name,
 		ReleaseArtists:   toSlimArtistMessages(release.ReleaseArtists),
+		ReleaseDate:      timestamppb.New(release.ReleaseDate),
 		TrackNumber:      int32(release.TrackNumber),
 		Tracks:           toTrackMessages(release.Tracks),
 		Type:             release.Type,
