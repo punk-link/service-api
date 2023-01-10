@@ -1,4 +1,4 @@
-package platforms
+package repositories
 
 import (
 	platformData "main/data/platforms"
@@ -9,22 +9,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type PlatformReleaseUrlRepository struct {
+type PlatformUrlRepository struct {
 	db     *gorm.DB
 	logger logger.Logger
 }
 
-func NewPlatformReleaseUrlRepository(injector *do.Injector) (*PlatformReleaseUrlRepository, error) {
+func NewPlatformUrlRepository(injector *do.Injector) (*PlatformUrlRepository, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 
-	return &PlatformReleaseUrlRepository{
+	return &PlatformUrlRepository{
 		db:     db,
 		logger: logger,
 	}, nil
 }
 
-func (t *PlatformReleaseUrlRepository) CreatelsInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
+func (t *PlatformUrlRepository) CreatelsInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil {
 		return err
 	}
@@ -33,11 +33,11 @@ func (t *PlatformReleaseUrlRepository) CreatelsInBatches(err error, urls []platf
 	return t.handleError(err)
 }
 
-func (t *PlatformReleaseUrlRepository) GetByReleaseId(err error, id int) ([]platformData.PlatformReleaseUrl, error) {
+func (t *PlatformUrlRepository) GetByReleaseId(err error, id int) ([]platformData.PlatformReleaseUrl, error) {
 	return t.GetByReleaseIds(err, []int{id})
 }
 
-func (t *PlatformReleaseUrlRepository) GetByReleaseIds(err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
+func (t *PlatformUrlRepository) GetByReleaseIds(err error, ids []int) ([]platformData.PlatformReleaseUrl, error) {
 	if err != nil {
 		return make([]platformData.PlatformReleaseUrl, 0), err
 	}
@@ -50,7 +50,7 @@ func (t *PlatformReleaseUrlRepository) GetByReleaseIds(err error, ids []int) ([]
 	return results, t.handleError(err)
 }
 
-func (t *PlatformReleaseUrlRepository) UpdateInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
+func (t *PlatformUrlRepository) UpdateInBatches(err error, urls []platformData.PlatformReleaseUrl) error {
 	if err != nil || len(urls) == 0 {
 		return err
 	}
@@ -67,7 +67,7 @@ func (t *PlatformReleaseUrlRepository) UpdateInBatches(err error, urls []platfor
 	return t.handleError(err)
 }
 
-func (t *PlatformReleaseUrlRepository) handleError(err error) error {
+func (t *PlatformUrlRepository) handleError(err error) error {
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 	}

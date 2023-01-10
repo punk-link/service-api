@@ -46,6 +46,10 @@ func (t *ArtistRepository) Get(err error, ids []int) ([]artistData.Artist, error
 		return make([]artistData.Artist, 0), err
 	}
 
+	if len(ids) == 0 {
+		return make([]artistData.Artist, 0), err
+	}
+
 	var artists []artistData.Artist
 	err = t.db.Model(&artistData.Artist{}).
 		Find(&artists, ids).
@@ -56,6 +60,10 @@ func (t *ArtistRepository) Get(err error, ids []int) ([]artistData.Artist, error
 
 func (t *ArtistRepository) GetSlim(err error, ids []int) ([]artistData.SlimArtist, error) {
 	if err != nil {
+		return make([]artistData.SlimArtist, 0), err
+	}
+
+	if len(ids) == 0 {
 		return make([]artistData.SlimArtist, 0), err
 	}
 

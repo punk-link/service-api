@@ -9,6 +9,7 @@ import (
 	artistServices "main/services/artists"
 	labelServices "main/services/labels"
 	platformServices "main/services/platforms"
+	platformRepositories "main/services/platforms/repositories"
 	spotifyPlatformServices "main/services/platforms/spotify"
 
 	"github.com/nats-io/nats.go"
@@ -74,7 +75,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, artistServices.NewGrpcArtistService)
 	do.Provide(injector, artistServices.NewGrpcReleaseService)
 
-	do.Provide(injector, platformServices.NewPlatformReleaseUrlRepository)
+	do.Provide(injector, platformRepositories.NewPlatformUrlRepository)
 	do.Provide(injector, platformServices.NewStreamingPlatformService)
 
 	do.Provide(injector, controllers.NewMetricsController)

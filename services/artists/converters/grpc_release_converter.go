@@ -2,6 +2,7 @@ package converters
 
 import (
 	artistData "main/data/artists"
+	platformData "main/data/platforms"
 	artistModels "main/models/artists"
 	commonConverters "main/services/common/converters"
 
@@ -9,10 +10,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist) (*presentationContracts.Release, error) {
+func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl) (*presentationContracts.Release, error) {
 	imageDetails, err := commonConverters.ToMessageFromJson(err, release.ImageDetails)
 	slimArtists, err := ToSlimArtistMessages(err, artists)
 	tracks, err := toTrackMessages(err, release.Tracks)
+	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
 	if err != nil {
 		return &presentationContracts.Release{}, err
 	}
@@ -22,6 +24,7 @@ func ToReleaseMessage(err error, release artistData.Release, artists []artistDat
 		ImageDetails:   imageDetails,
 		Label:          release.Label,
 		Name:           release.Name,
+		PlatformUrls:   platformUrlMessages,
 		ReleaseArtists: slimArtists,
 		ReleaseDate:    timestamppb.New(release.ReleaseDate),
 		Tracks:         tracks,
@@ -37,6 +40,26 @@ func ToSlimReleaseMessages(err error, dbReleases []artistData.SlimRelease) ([]*p
 	results := make([]*presentationContracts.SlimRelease, len(dbReleases))
 	for i, dbRelease := range dbReleases {
 		results[i] = toSlimReleaseMessage(dbRelease)
+	}
+
+	return results, nil
+}
+
+func toPlatformUrlMessage(platformUrl platformData.PlatformReleaseUrl) *presentationContracts.PlatformUrl {
+	return &presentationContracts.PlatformUrl{
+		PlatformId: platformUrl.PlatformName,
+		Url:        platformUrl.Url,
+	}
+}
+
+func toPlatformUrlMessages(err error, platformUrls []platformData.PlatformReleaseUrl) ([]*presentationContracts.PlatformUrl, error) {
+	if err != nil {
+		return make([]*presentationContracts.PlatformUrl, 0), err
+	}
+
+	results := make([]*presentationContracts.PlatformUrl, len(platformUrls))
+	for i, url := range platformUrls {
+		results[i] = toPlatformUrlMessage(url)
 	}
 
 	return results, nil

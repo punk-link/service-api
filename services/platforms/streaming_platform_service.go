@@ -7,6 +7,7 @@ import (
 	platformData "main/data/platforms"
 	platformModels "main/models/platforms"
 	artistServices "main/services/artists"
+	platformRepositories "main/services/platforms/repositories"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -23,7 +24,7 @@ type StreamingPlatformService struct {
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService *artistServices.ReleaseService
-	repository     *PlatformReleaseUrlRepository
+	repository     *platformRepositories.PlatformUrlRepository
 	urlsInProcess  syncint64.UpDownCounter
 }
 
@@ -32,7 +33,7 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
-	repository := do.MustInvoke[*PlatformReleaseUrlRepository](injector)
+	repository := do.MustInvoke[*platformRepositories.PlatformUrlRepository](injector)
 
 	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)
 	urlsInProcess, _ := meter.SyncInt64().UpDownCounter("release_urls_in_process")
