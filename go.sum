@@ -479,6 +479,8 @@ github.com/punk-link/consul-client v1.0.3 h1:o20mpiNN9u5XcEa2UUMyFUbLelk/9op/I+S
 github.com/punk-link/consul-client v1.0.3/go.mod h1:pHNBrFWp1yii8mJLEfcNREwsiNDBZqNAsg8Sh6Szt0Y=
 github.com/punk-link/environment-variable-manager v1.0.2 h1:UX/4axoZTSCai7R4P3oMcjsCTfgwA0NhzH6gi9toymc=
 github.com/punk-link/environment-variable-manager v1.0.2/go.mod h1:PfA0QpU1F5IfCUcp00S84PQ1I1BbES58P/rLabx8d4M=
+github.com/punk-link/environment-variable-manager v1.0.3 h1:NeoZ+W6RLYYnfXS85kvT1dx9K4Im7eZU1Z8EyBeK/v4=
+github.com/punk-link/environment-variable-manager v1.0.3/go.mod h1:PfA0QpU1F5IfCUcp00S84PQ1I1BbES58P/rLabx8d4M=
 github.com/punk-link/gin-generic-http-templates v1.0.0 h1:s3I1VdSv6D5fuBxKC+EuJdWScewtpHr1mljySVglKhk=
 github.com/punk-link/gin-generic-http-templates v1.0.0/go.mod h1:0aVT3D0dy8ssQ1XMktYBi8fwqoca3gtOxe5si9sI2Tg=
 github.com/punk-link/http-client v1.0.2 h1:1El49/4jBY4kcCyGBTobpUBD4VBi5Hu6OLL6ZW79hdk=
@@ -493,6 +495,8 @@ github.com/punk-link/presentation-contracts v1.0.3 h1:RchSdxSPddEUFOTtZeMxw/TFHg
 github.com/punk-link/presentation-contracts v1.0.3/go.mod h1:q6/PB009KVB1gtX3J/+Ni5jUQmR7jKk+ngwH8tvc9j8=
 github.com/punk-link/presentation-contracts v1.0.4 h1:cLG3tQB+ef2zlhJDIaCz1OitxuhqMAzMlQoPK+iHn3k=
 github.com/punk-link/presentation-contracts v1.0.4/go.mod h1:q6/PB009KVB1gtX3J/+Ni5jUQmR7jKk+ngwH8tvc9j8=
+github.com/punk-link/presentation-contracts v1.0.5 h1:xd8yeEZ+1vPI8Xj1pM7azwPTJAYnxKWtR8EoCzLxvVY=
+github.com/punk-link/presentation-contracts v1.0.5/go.mod h1:q6/PB009KVB1gtX3J/+Ni5jUQmR7jKk+ngwH8tvc9j8=
 github.com/punk-link/vault-client v1.0.0 h1:NAyqrs5s22fhLpOphU12QaMzHxgXWKt5GoXxBxlTPg8=
 github.com/punk-link/vault-client v1.0.0/go.mod h1:zPLCGDIYv2jxl3mM+JDvnCEimLuuk/R6uwrV12pmrUE=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=

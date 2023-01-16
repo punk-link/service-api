@@ -9,12 +9,12 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/punk-link/cache-manager v1.0.2
 	github.com/punk-link/consul-client v1.0.3
-	github.com/punk-link/environment-variable-manager v1.0.2
+	github.com/punk-link/environment-variable-manager v1.0.3
 	github.com/punk-link/gin-generic-http-templates v1.0.0
 	github.com/punk-link/http-client v1.0.2
 	github.com/punk-link/logger v1.0.6
 	github.com/punk-link/platform-contracts v1.0.7
-	github.com/punk-link/presentation-contracts v1.0.4
+	github.com/punk-link/presentation-contracts v1.0.5
 	github.com/punk-link/vault-client v1.0.0
 	github.com/samber/do v1.4.1
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.1.17

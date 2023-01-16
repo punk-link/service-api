@@ -15,6 +15,10 @@ type Server struct {
 	presentationContracts.UnimplementedPresentationServer
 }
 
+func (t *Server) CheckHealth(ctx context.Context, request *presentationContracts.HealthCheckRequest) (*presentationContracts.HealthCheckResponse, error) {
+	return &presentationContracts.HealthCheckResponse{}, nil
+}
+
 func (t *Server) GetArtist(ctx context.Context, request *presentationContracts.ArtistRequest) (*presentationContracts.Artist, error) {
 	grpcArtistService := t.getGrpcArtistService()
 	return grpcArtistService.GetOne(request)
