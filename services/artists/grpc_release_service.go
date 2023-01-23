@@ -36,14 +36,14 @@ func (t *GrpcReleaseService) GetOne(request *presentationContracts.ReleaseReques
 	id := int(request.Id)
 
 	dbRelease, err := t.releaseRepository.GetOne(nil, id)
-	releaseArtistIds, err := t.getReleaseArtistIds(err, dbRelease.ReleaseArtistIds)
+	releaseArtistIds, err := t.unmarshalArtistIds(err, dbRelease.ReleaseArtistIds)
 	slimDbArtists, err := t.artistRepository.GetSlim(err, releaseArtistIds)
 	platformUrls, err := t.platformUrlRepository.GetByReleaseId(err, id)
 
 	return converters.ToReleaseMessage(err, dbRelease, slimDbArtists, platformUrls)
 }
 
-func (t *GrpcReleaseService) getReleaseArtistIds(err error, idJson string) ([]int, error) {
+func (t *GrpcReleaseService) unmarshalArtistIds(err error, idJson string) ([]int, error) {
 	if err != nil {
 		return make([]int, 0), err
 	}
