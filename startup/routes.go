@@ -15,6 +15,7 @@ func setupRouts(app *gin.Engine, injector *do.Injector) {
 
 	registerRoutes(injector, func(controller *controllers.StatusController) {
 		app.GET("/health", controller.CheckHealth)
+		app.GET("/error", controller.ThrowError)
 	})
 
 	v1 := app.Group("/v1")
