@@ -18,14 +18,14 @@ type LabelService struct {
 	db             *gorm.DB
 	logger         logger.Logger
 	repository     *LabelRepository
-	spotifyService *spotifyPlatformServices.SpotifyService
+	spotifyService *spotifyPlatformServices.SpotifyArtistService
 }
 
 func NewLabelService(injector *do.Injector) (*LabelService, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	repository := do.MustInvoke[*LabelRepository](injector)
-	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
+	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyArtistService](injector)
 
 	return &LabelService{
 		db:             db,

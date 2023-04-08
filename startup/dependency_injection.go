@@ -15,6 +15,7 @@ import (
 	"github.com/nats-io/nats.go"
 	cacheManager "github.com/punk-link/cache-manager"
 	consulClient "github.com/punk-link/consul-client"
+	httpClient "github.com/punk-link/http-client"
 	loggerService "github.com/punk-link/logger"
 	"github.com/samber/do"
 	"gorm.io/gorm"
@@ -48,6 +49,9 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 
 	do.ProvideValue(injector, natsConnection)
 
+	httpConfig := httpClient.DefaultConfig(logger)
+	do.ProvideValue(injector, &httpConfig)
+
 	do.Provide(injector, func(i *do.Injector) (loggerService.Logger, error) {
 		return loggerService.New(), nil
 	})
@@ -65,12 +69,14 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, labelServices.NewManagerRepository)
 	do.Provide(injector, labelServices.NewManagerService)
 
-	do.Provide(injector, spotifyPlatformServices.NewSpotifyService)
+	do.Provide(injector, spotifyPlatformServices.NewSpotifyClient)
+	do.Provide(injector, spotifyPlatformServices.NewSpotifyArtistService)
+	do.Provide(injector, spotifyPlatformServices.NewSpotifyReleaseService)
 
 	do.Provide(injector, artistServices.NewArtistRepository)
 	do.Provide(injector, artistServices.NewReleaseRepository)
-	do.Provide(injector, artistServices.NewReleaseService)
 	do.Provide(injector, artistServices.NewArtistService)
+	do.Provide(injector, artistServices.NewReleaseService)
 
 	do.Provide(injector, artistServices.NewGrpcArtistService)
 	do.Provide(injector, artistServices.NewGrpcReleaseService)

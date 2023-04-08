@@ -15,36 +15,32 @@ import (
 	"github.com/punk-link/logger"
 	platformContracts "github.com/punk-link/platform-contracts"
 	"github.com/samber/do"
-	"gorm.io/gorm"
 )
 
 type ReleaseService struct {
-	artistRepository *ArtistRepository
-	db               *gorm.DB
-	logger           logger.Logger
-	releaseCache     cacheManager.CacheManager[artistModels.Release]
-	releasesCache    cacheManager.CacheManager[[]artistModels.Release]
-	repository       *ReleaseRepository
-	spotifyService   *spotifyPlatformServices.SpotifyService
+	artistRepository      *ArtistRepository
+	logger                logger.Logger
+	releaseCache          cacheManager.CacheManager[artistModels.Release]
+	releasesCache         cacheManager.CacheManager[[]artistModels.Release]
+	repository            *ReleaseRepository
+	spotifyReleaseService spotifyPlatformServices.SpotifyReleaseServer
 }
 
 func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
 	artistRepository := do.MustInvoke[*ArtistRepository](injector)
-	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseCache := do.MustInvoke[cacheManager.CacheManager[artistModels.Release]](injector)
 	releasesCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
 	repository := do.MustInvoke[*ReleaseRepository](injector)
-	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
+	spotifyReleaseService := do.MustInvoke[spotifyPlatformServices.SpotifyReleaseServer](injector)
 
 	return &ReleaseService{
-		artistRepository: artistRepository,
-		db:               db,
-		logger:           logger,
-		releaseCache:     releaseCache,
-		releasesCache:    releasesCache,
-		repository:       repository,
-		spotifyService:   spotifyService,
+		artistRepository:      artistRepository,
+		logger:                logger,
+		releaseCache:          releaseCache,
+		releasesCache:         releasesCache,
+		repository:            repository,
+		spotifyReleaseService: spotifyReleaseService,
 	}, nil
 }
 
@@ -172,7 +168,7 @@ func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []ar
 		dbReleaseIds[release.SpotifyId] = 0
 	}
 
-	spotifyReleases := t.spotifyService.GetArtistReleases(artistSpotifyId)
+	spotifyReleases := t.spotifyReleaseService.GetByArtistId(artistSpotifyId)
 	missingReleaseSpotifyIds := make([]string, 0)
 	for _, spotifyRelease := range spotifyReleases {
 		if _, isContains := dbReleaseIds[spotifyRelease.Id]; !isContains {
@@ -188,7 +184,7 @@ func (t *ReleaseService) getReleaseDetails(err error, missingReleaseSpotifyIds [
 		return make([]releaseSpotifyPlatformModels.Release, 0), err
 	}
 
-	details := t.spotifyService.GetReleasesDetails(missingReleaseSpotifyIds)
+	details := t.spotifyReleaseService.Get(missingReleaseSpotifyIds)
 	return details, err
 }
 

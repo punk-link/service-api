@@ -15,33 +15,29 @@ import (
 	cacheManager "github.com/punk-link/cache-manager"
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
-	"gorm.io/gorm"
 )
 
 type ArtistService struct {
-	cache          cacheManager.CacheManager[artistModels.Artist]
-	db             *gorm.DB
-	logger         logger.Logger
-	releaseService *ReleaseService
-	repository     *ArtistRepository
-	spotifyService *spotifyPlatformServices.SpotifyService
+	cache                cacheManager.CacheManager[artistModels.Artist]
+	logger               logger.Logger
+	releaseService       *ReleaseService
+	repository           *ArtistRepository
+	spotifyArtistService spotifyPlatformServices.SpotifyArtistServer
 }
 
 func NewArtistService(injector *do.Injector) (*ArtistService, error) {
 	cache := do.MustInvoke[cacheManager.CacheManager[artistModels.Artist]](injector)
-	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	releaseService := do.MustInvoke[*spotifyPlatformServices.SpotifyService](injector)
+	releaseService := do.MustInvoke[*ReleaseService](injector)
 	repository := do.MustInvoke[*ArtistRepository](injector)
-	spotifyService := do.MustInvoke[*ReleaseService](injector)
+	spotifyArtistService := do.MustInvoke[spotifyPlatformServices.SpotifyArtistServer](injector)
 
 	return &ArtistService{
-		cache:          cache,
-		db:             db,
-		logger:         logger,
-		releaseService: spotifyService,
-		repository:     repository,
-		spotifyService: releaseService,
+		cache:                cache,
+		logger:               logger,
+		releaseService:       releaseService,
+		repository:           repository,
+		spotifyArtistService: spotifyArtistService,
 	}, nil
 }
 
@@ -112,7 +108,7 @@ func (t *ArtistService) Search(query string) []artistModels.ArtistSearchResult {
 		return make([]artistModels.ArtistSearchResult, 0)
 	}
 
-	searchResults := t.spotifyService.SearchArtist(query)
+	searchResults := t.spotifyArtistService.Search(query)
 	return converters.ToArtistSearchResults(searchResults)
 }
 
@@ -121,7 +117,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 		return artistData.Artist{}, err
 	}
 
-	spotifyArtist, err := t.spotifyService.GetArtist(spotifyId)
+	spotifyArtist, err := t.spotifyArtistService.GetOne(spotifyId)
 	if err != nil {
 		return artistData.Artist{}, err
 	}
@@ -133,7 +129,7 @@ func (t *ArtistService) addArtist(err error, spotifyId string, labelId int, time
 }
 
 func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Time) ([]artistData.Artist, error) {
-	missingArtists := t.spotifyService.GetArtists(spotifyIds)
+	missingArtists := t.spotifyArtistService.Get(spotifyIds)
 
 	var err error
 	dbArtists := make([]artistData.Artist, len(missingArtists))
