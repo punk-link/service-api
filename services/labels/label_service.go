@@ -5,59 +5,51 @@ import (
 	"main/helpers"
 	labelModels "main/models/labels"
 	"main/services/labels/validators"
-	spotifyPlatformServices "main/services/platforms/spotify"
 	"strings"
 	"time"
 
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
-	"gorm.io/gorm"
 )
 
 type LabelService struct {
-	db             *gorm.DB
-	logger         logger.Logger
-	repository     *LabelRepository
-	spotifyService *spotifyPlatformServices.SpotifyArtistService
+	logger     logger.Logger
+	repository LabelRepository
 }
 
-func NewLabelService(injector *do.Injector) (*LabelService, error) {
-	db := do.MustInvoke[*gorm.DB](injector)
+func NewLabelService(injector *do.Injector) (LabelServer, error) {
 	logger := do.MustInvoke[logger.Logger](injector)
-	repository := do.MustInvoke[*LabelRepository](injector)
-	spotifyService := do.MustInvoke[*spotifyPlatformServices.SpotifyArtistService](injector)
+	repository := do.MustInvoke[LabelRepository](injector)
 
 	return &LabelService{
-		db:             db,
-		logger:         logger,
-		repository:     repository,
-		spotifyService: spotifyService,
+		logger:     logger,
+		repository: repository,
 	}, nil
 }
 
-func (t *LabelService) AddLabel(labelName string) (labelModels.Label, error) {
+func (t *LabelService) Add(labelName string) (labelModels.Label, error) {
 	trimmedName := strings.TrimSpace(labelName)
 	err := validators.NameNotEmpty(trimmedName)
 
-	return t.addLabelInternal(err, trimmedName)
+	return t.addInternal(err, trimmedName)
 }
 
-func (t *LabelService) GetLabel(currentManager labelModels.ManagerContext, id int) (labelModels.Label, error) {
+func (t *LabelService) GetOne(currentManager labelModels.ManagerContext, id int) (labelModels.Label, error) {
 	err := validators.CurrentManagerBelongsToLabel(currentManager, id)
-	return t.getLabelWithoutContextCheck(err, id)
+	return t.getWithoutContextCheck(err, id)
 }
 
-func (t *LabelService) ModifyLabel(currentManager labelModels.ManagerContext, label labelModels.Label, id int) (labelModels.Label, error) {
+func (t *LabelService) Modify(currentManager labelModels.ManagerContext, label labelModels.Label, id int) (labelModels.Label, error) {
 	err1 := validators.CurrentManagerBelongsToLabel(currentManager, id)
 	err2 := validators.IdConsistsOverRequest(label.Id, id)
 
 	trimmedName := strings.TrimSpace(label.Name)
 	err3 := validators.NameNotEmpty(trimmedName)
 
-	return t.modifyLabelInternal(helpers.AccumulateErrors(err1, err2, err3), currentManager, trimmedName)
+	return t.modifyInternal(helpers.AccumulateErrors(err1, err2, err3), currentManager, trimmedName)
 }
 
-func (t *LabelService) addLabelInternal(err error, labelName string) (labelModels.Label, error) {
+func (t *LabelService) addInternal(err error, labelName string) (labelModels.Label, error) {
 	if err != nil {
 		return labelModels.Label{}, err
 	}
@@ -70,10 +62,10 @@ func (t *LabelService) addLabelInternal(err error, labelName string) (labelModel
 	}
 
 	err = t.repository.Create(err, &dbLabel)
-	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
+	return t.getWithoutContextCheck(err, dbLabel.Id)
 }
 
-func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labelModels.Label, error) {
+func (t *LabelService) getWithoutContextCheck(err error, id int) (labelModels.Label, error) {
 	if err != nil {
 		return labelModels.Label{}, err
 	}
@@ -85,7 +77,7 @@ func (t *LabelService) getLabelWithoutContextCheck(err error, id int) (labelMode
 	}, err
 }
 
-func (t *LabelService) modifyLabelInternal(err error, currentManager labelModels.ManagerContext, lebelName string) (labelModels.Label, error) {
+func (t *LabelService) modifyInternal(err error, currentManager labelModels.ManagerContext, lebelName string) (labelModels.Label, error) {
 	if err != nil {
 		return labelModels.Label{}, err
 	}
@@ -94,5 +86,5 @@ func (t *LabelService) modifyLabelInternal(err error, currentManager labelModels
 
 	dbLabel.Name = lebelName
 	err = t.repository.Update(err, &dbLabel)
-	return t.getLabelWithoutContextCheck(err, dbLabel.Id)
+	return t.getWithoutContextCheck(err, dbLabel.Id)
 }

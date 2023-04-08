@@ -14,13 +14,13 @@ import (
 )
 
 type LabelController struct {
-	labelService   *service.LabelService
-	managerService *service.ManagerService
+	labelService   service.LabelServer
+	managerService service.ManagerServer
 }
 
 func NewLabelController(injector *do.Injector) (*LabelController, error) {
-	labelService := do.MustInvoke[*service.LabelService](injector)
-	managerService := do.MustInvoke[*service.ManagerService](injector)
+	labelService := do.MustInvoke[service.LabelServer](injector)
+	managerService := do.MustInvoke[service.ManagerServer](injector)
 
 	return &LabelController{
 		labelService:   labelService,
@@ -41,7 +41,7 @@ func (t *LabelController) Get(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.labelService.GetLabel(currentManager, id)
+	result, err := t.labelService.GetOne(currentManager, id)
 	templates.OkOrBadRequest(ctx, result, err)
 }
 
@@ -64,6 +64,6 @@ func (t *LabelController) Modify(ctx *gin.Context) {
 		return
 	}
 
-	result, err := t.labelService.ModifyLabel(currentManager, label, id)
+	result, err := t.labelService.Modify(currentManager, label, id)
 	templates.OkOrBadRequest(ctx, result, err)
 }

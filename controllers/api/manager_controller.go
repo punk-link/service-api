@@ -14,11 +14,11 @@ import (
 )
 
 type ManagerController struct {
-	managerService *service.ManagerService
+	managerService service.ManagerServer
 }
 
 func NewManagerController(injector *do.Injector) (*ManagerController, error) {
-	managerService := do.MustInvoke[*service.ManagerService](injector)
+	managerService := do.MustInvoke[service.ManagerServer](injector)
 
 	return &ManagerController{
 		managerService: managerService,

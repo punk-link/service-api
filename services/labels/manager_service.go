@@ -10,24 +10,20 @@ import (
 
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
-	"gorm.io/gorm"
 )
 
 type ManagerService struct {
-	db           *gorm.DB
-	labelService *LabelService
+	labelService LabelServer
 	logger       logger.Logger
-	repository   *ManagerRepository
+	repository   ManagerRepository
 }
 
-func NewManagerService(injector *do.Injector) (*ManagerService, error) {
-	db := do.MustInvoke[*gorm.DB](injector)
-	labelService := do.MustInvoke[*LabelService](injector)
+func NewManagerService(injector *do.Injector) (ManagerServer, error) {
+	labelService := do.MustInvoke[LabelServer](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	repository := do.MustInvoke[*ManagerRepository](injector)
+	repository := do.MustInvoke[ManagerRepository](injector)
 
 	return &ManagerService{
-		db:           db,
 		labelService: labelService,
 		logger:       logger,
 		repository:   repository,
@@ -48,7 +44,7 @@ func (t *ManagerService) AddMaster(request labelModels.AddMasterManagerRequest) 
 		return labelModels.Manager{}, err
 	}
 
-	label, err := t.labelService.AddLabel(request.LabelName)
+	label, err := t.labelService.Add(request.LabelName)
 	return t.addInternal(err, labelModels.ManagerContext{LabelId: label.Id}, trimmedName)
 }
 

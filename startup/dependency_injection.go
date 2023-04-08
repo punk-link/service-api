@@ -50,7 +50,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.ProvideValue(injector, natsConnection)
 
 	httpConfig := httpClient.DefaultConfig(logger)
-	do.ProvideValue(injector, &httpConfig)
+	do.ProvideValue(injector, httpConfig)
 
 	do.Provide(injector, func(i *do.Injector) (loggerService.Logger, error) {
 		return loggerService.New(), nil
