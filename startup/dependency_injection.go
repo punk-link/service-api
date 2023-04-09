@@ -73,6 +73,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyArtistService)
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyReleaseService)
 
+	do.Provide(injector, artistServices.NewArtistIdExtractor)
 	do.Provide(injector, artistServices.NewArtistRepository)
 	do.Provide(injector, artistServices.NewReleaseRepository)
 	do.Provide(injector, artistServices.NewArtistService)

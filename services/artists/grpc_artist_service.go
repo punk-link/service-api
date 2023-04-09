@@ -9,13 +9,13 @@ import (
 )
 
 type GrpcArtistService struct {
-	artistRepository  *ArtistRepository
-	releaseRepository *ReleaseRepository
+	artistRepository  ArtistRepository
+	releaseRepository ReleaseRepository
 }
 
-func NewGrpcArtistService(injector *do.Injector) (*GrpcArtistService, error) {
-	artistRepository := do.MustInvoke[*ArtistRepository](injector)
-	releaseRepository := do.MustInvoke[*ReleaseRepository](injector)
+func NewGrpcArtistService(injector *do.Injector) (GrpcArtistServer, error) {
+	artistRepository := do.MustInvoke[ArtistRepository](injector)
+	releaseRepository := do.MustInvoke[ReleaseRepository](injector)
 
 	return &GrpcArtistService{
 		artistRepository:  artistRepository,

@@ -12,17 +12,17 @@ import (
 )
 
 type GrpcReleaseService struct {
-	artistRepository      *ArtistRepository
+	artistRepository      *ArtistRepositoryService
 	logger                logger.Logger
 	platformUrlRepository *platformRepositories.PlatformUrlRepository
-	releaseRepository     *ReleaseRepository
+	releaseRepository     *ReleaseRepositoryService
 }
 
 func NewGrpcReleaseService(injector *do.Injector) (*GrpcReleaseService, error) {
-	artistRepository := do.MustInvoke[*ArtistRepository](injector)
+	artistRepository := do.MustInvoke[*ArtistRepositoryService](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformUrlRepository := do.MustInvoke[*platformRepositories.PlatformUrlRepository](injector)
-	releaseRepository := do.MustInvoke[*ReleaseRepository](injector)
+	releaseRepository := do.MustInvoke[*ReleaseRepositoryService](injector)
 
 	return &GrpcReleaseService{
 		artistRepository:      artistRepository,

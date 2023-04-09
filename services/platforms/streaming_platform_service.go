@@ -23,7 +23,7 @@ type StreamingPlatformService struct {
 	db             *gorm.DB
 	logger         logger.Logger
 	natsConnection *nats.Conn
-	releaseService *artistServices.ReleaseService
+	releaseService artistServices.ReleaseServer
 	repository     *platformRepositories.PlatformUrlRepository
 	urlsInProcess  syncint64.UpDownCounter
 }
@@ -32,7 +32,7 @@ func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformServi
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
-	releaseService := do.MustInvoke[*artistServices.ReleaseService](injector)
+	releaseService := do.MustInvoke[artistServices.ReleaseServer](injector)
 	repository := do.MustInvoke[*platformRepositories.PlatformUrlRepository](injector)
 
 	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)

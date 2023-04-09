@@ -20,16 +20,16 @@ import (
 type ArtistService struct {
 	cache                cacheManager.CacheManager[artistModels.Artist]
 	logger               logger.Logger
-	releaseService       *ReleaseService
-	repository           *ArtistRepository
+	releaseService       ReleaseServer
+	repository           ArtistRepository
 	spotifyArtistService spotifyPlatformServices.SpotifyArtistServer
 }
 
-func NewArtistService(injector *do.Injector) (*ArtistService, error) {
+func NewArtistService(injector *do.Injector) (ArtistServer, error) {
 	cache := do.MustInvoke[cacheManager.CacheManager[artistModels.Artist]](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	releaseService := do.MustInvoke[*ReleaseService](injector)
-	repository := do.MustInvoke[*ArtistRepository](injector)
+	releaseService := do.MustInvoke[ReleaseServer](injector)
+	repository := do.MustInvoke[ArtistRepository](injector)
 	spotifyArtistService := do.MustInvoke[spotifyPlatformServices.SpotifyArtistServer](injector)
 
 	return &ArtistService{
@@ -57,35 +57,13 @@ func (t *ArtistService) Add(currentManager labelModels.ManagerContext, spotifyId
 		dbArtist, err = t.addArtist(err, spotifyId, currentManager.LabelId, now)
 	}
 
-	err = t.FindAndAddMissingReleases(err, currentManager, dbArtist, now)
+	err = t.findAndAddMissingReleases(err, currentManager, dbArtist, now)
 	artist, err := t.getInternal(err, []int{dbArtist.Id})
 	if err != nil {
 		return artistModels.Artist{}, err
 	}
 
 	return artist[0], nil
-}
-
-func (t *ArtistService) FindAndAddMissingReleases(err error, currentManager labelModels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
-	if err != nil {
-		return err
-	}
-
-	missingReleases, err := t.releaseService.GetMissing(dbArtist.Id, dbArtist.SpotifyId)
-	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
-	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
-	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
-	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
-
-	if err != nil {
-		return err
-	}
-
-	for key, artist := range addedArtists {
-		artists[key] = artist
-	}
-
-	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
 func (t *ArtistService) Get(labelId int) ([]artistModels.Artist, error) {
@@ -184,6 +162,28 @@ func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistDa
 	}
 
 	return results, err
+}
+
+func (t *ArtistService) findAndAddMissingReleases(err error, currentManager labelModels.ManagerContext, dbArtist artistData.Artist, timeStamp time.Time) error {
+	if err != nil {
+		return err
+	}
+
+	missingReleases, err := t.releaseService.GetMissing(dbArtist.Id, dbArtist.SpotifyId)
+	artistSpotifyIds, err := t.getFeaturingArtistSpotifyIds(err, missingReleases)
+	artists, err := t.getExistingFeaturingArtists(err, dbArtist, artistSpotifyIds, timeStamp)
+	missingFeaturingArtistsSpotifyIds, err := t.getMissingFeaturingArtistsSpotifyIds(err, artists, artistSpotifyIds)
+	addedArtists, err := t.addMissingFeaturingArtists(err, missingFeaturingArtistsSpotifyIds, timeStamp)
+
+	if err != nil {
+		return err
+	}
+
+	for key, artist := range addedArtists {
+		artists[key] = artist
+	}
+
+	return t.releaseService.Add(currentManager, artists, missingReleases, timeStamp)
 }
 
 func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []releaseSpotifyPlatformModels.Release) ([]string, error) {

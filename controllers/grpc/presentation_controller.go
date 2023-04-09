@@ -29,21 +29,21 @@ func (t *Server) GetRelease(ctx context.Context, request *presentationContracts.
 	return grpcReleaseService.GetOne(request)
 }
 
-func (t *Server) getGrpcArtistService() *artistServices.GrpcArtistService {
+func (t *Server) getGrpcArtistService() artistServices.GrpcArtistServer {
 	if _artistService == nil {
-		_artistService = do.MustInvoke[*artistServices.GrpcArtistService](t.Injector)
+		_artistService = do.MustInvoke[artistServices.GrpcArtistServer](t.Injector)
 	}
 
 	return _artistService
 }
 
-func (t *Server) getGrpcReleaseService() *artistServices.GrpcReleaseService {
+func (t *Server) getGrpcReleaseService() artistServices.GrpcReleaseServer {
 	if _artistService == nil {
-		_releaseService = do.MustInvoke[*artistServices.GrpcReleaseService](t.Injector)
+		_releaseService = do.MustInvoke[artistServices.GrpcReleaseServer](t.Injector)
 	}
 
 	return _releaseService
 }
 
-var _artistService *artistServices.GrpcArtistService
-var _releaseService *artistServices.GrpcReleaseService
+var _artistService artistServices.GrpcArtistServer
+var _releaseService artistServices.GrpcReleaseServer

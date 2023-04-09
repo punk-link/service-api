@@ -8,6 +8,7 @@ import (
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
 	spotifyPlatformServices "main/services/platforms/spotify"
+	"sort"
 	"sync"
 	"time"
 
@@ -18,23 +19,26 @@ import (
 )
 
 type ReleaseService struct {
-	artistRepository      *ArtistRepository
+	artistIdExtractor     ArtistIdExtractor
+	artistRepository      ArtistRepository
 	logger                logger.Logger
 	releaseCache          cacheManager.CacheManager[artistModels.Release]
 	releasesCache         cacheManager.CacheManager[[]artistModels.Release]
-	repository            *ReleaseRepository
+	repository            ReleaseRepository
 	spotifyReleaseService spotifyPlatformServices.SpotifyReleaseServer
 }
 
-func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
-	artistRepository := do.MustInvoke[*ArtistRepository](injector)
+func NewReleaseService(injector *do.Injector) (ReleaseServer, error) {
+	artistIdExtractor := do.MustInvoke[ArtistIdExtractor](injector)
+	artistRepository := do.MustInvoke[ArtistRepository](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseCache := do.MustInvoke[cacheManager.CacheManager[artistModels.Release]](injector)
 	releasesCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
-	repository := do.MustInvoke[*ReleaseRepository](injector)
+	repository := do.MustInvoke[ReleaseRepository](injector)
 	spotifyReleaseService := do.MustInvoke[spotifyPlatformServices.SpotifyReleaseServer](injector)
 
 	return &ReleaseService{
+		artistIdExtractor:     artistIdExtractor,
 		artistRepository:      artistRepository,
 		logger:                logger,
 		releaseCache:          releaseCache,
@@ -46,24 +50,19 @@ func NewReleaseService(injector *do.Injector) (*ReleaseService, error) {
 
 func (t *ReleaseService) Add(currentManager labelModels.ManagerContext, artists map[string]artistData.Artist, releases []releaseSpotifyPlatformModels.Release, timeStamp time.Time) error {
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
-	orderDbReleasesChronologically(dbReleases)
+	t.orderDbReleasesChronologically(dbReleases)
 
 	return t.repository.CreateInBatches(nil, &dbReleases)
 }
 
-func (t *ReleaseService) GetCount() int {
-	count, _ := t.repository.GetCount(nil)
-	return int(count)
-}
-
-func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, error) {
+func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
 	cacheKey := t.buildArtistReleasesCacheKey(artistId)
 	value, isCached := t.releasesCache.TryGet(cacheKey)
 	if isCached {
 		return value, nil
 	}
 
-	dbReleases, err := t.repository.GetByArtistId(nil, artistId)
+	dbReleases, err := t.repository.Get(nil, artistId)
 	artists, err := t.getReleasesArtists(err, dbReleases)
 	releases, err := t.toReleases(err, dbReleases, artists)
 	if err == nil {
@@ -73,8 +72,13 @@ func (t *ReleaseService) GetByArtistId(artistId int) ([]artistModels.Release, er
 	return releases, err
 }
 
+func (t *ReleaseService) GetCount() int {
+	count, _ := t.repository.GetCount(nil)
+	return int(count)
+}
+
 func (t *ReleaseService) GetMissing(artistId int, artistSpotifyId string) ([]releaseSpotifyPlatformModels.Release, error) {
-	dbReleases, err := t.repository.GetByArtistId(nil, artistId)
+	dbReleases, err := t.repository.Get(nil, artistId)
 	missingReleaseSpotifyIds, err := t.getMissingReleasesSpotifyIds(err, dbReleases, artistSpotifyId)
 
 	return t.getReleaseDetails(err, missingReleaseSpotifyIds)
@@ -193,7 +197,7 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 		return make(map[int]artistModels.Artist, 0), err
 	}
 
-	artistIds := getArtistsIdsFromDbReleases(t.logger, releases)
+	artistIds := t.artistIdExtractor.Extract(releases)
 	artists, err := t.artistRepository.Get(err, artistIds)
 
 	results := make(map[int]artistModels.Artist, len(artists))
@@ -205,6 +209,12 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	}
 
 	return results, err
+}
+
+func (t *ReleaseService) orderDbReleasesChronologically(target []artistData.Release) {
+	sort.Slice(target, func(i, j int) bool {
+		return target[i].ReleaseDate.Before(target[j].ReleaseDate)
+	})
 }
 
 func (t *ReleaseService) toReleases(err error, releases []artistData.Release, artists map[int]artistModels.Artist) ([]artistModels.Release, error) {
