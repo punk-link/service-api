@@ -28,7 +28,7 @@ type StreamingPlatformService struct {
 	urlsInProcess  syncint64.UpDownCounter
 }
 
-func NewStreamingPlatformService(injector *do.Injector) (*StreamingPlatformService, error) {
+func NewStreamingPlatformService(injector *do.Injector) (StreamingPlatformServer, error) {
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)

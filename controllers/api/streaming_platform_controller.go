@@ -10,11 +10,11 @@ import (
 )
 
 type StreamingPlatformController struct {
-	streamingPlatformService *platforms.StreamingPlatformService
+	streamingPlatformService platforms.StreamingPlatformServer
 }
 
 func NewStreamingPlatformController(injector *do.Injector) (*StreamingPlatformController, error) {
-	streamingPlatformService := do.MustInvoke[*platforms.StreamingPlatformService](injector)
+	streamingPlatformService := do.MustInvoke[platforms.StreamingPlatformServer](injector)
 
 	return &StreamingPlatformController{
 		streamingPlatformService: streamingPlatformService,
