@@ -3,17 +3,17 @@ package converters
 import (
 	"encoding/json"
 	"fmt"
+	commonConverters "main/converters/common"
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
 	"main/models/artists/enums"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
-	"main/services/common/converters"
 	"time"
 )
 
 func ToDbReleaseFromSpotify(release releaseSpotifyPlatformModels.Release, artists map[string]artistData.Artist, timeStamp time.Time) (artistData.Release, error) {
-	imageDetailsJson, err := converters.ToJsonFromSpotify(release.ImageDetails, release.Name)
+	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(release.ImageDetails, release.Name)
 
 	tracks := ToTracksFromSpotify(release.Tracks.Items, artists)
 	tracksJson, err := getTracksJson(err, tracks)
@@ -50,7 +50,7 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 		featuringArtists, featuringArtistErr := ToArtistsFromIds(dbRelease.FeaturingArtistIds, artists)
 		releaseArtists, releaseArtistErr := ToArtistsFromIds(dbRelease.ReleaseArtistIds, artists)
 		tracks, tracksErr := getTracks(dbRelease.Tracks)
-		imageDetails, imageErr := converters.FromJson(dbRelease.ImageDetails)
+		imageDetails, imageErr := commonConverters.FromJson(dbRelease.ImageDetails)
 
 		err = helpers.CombineErrors(err, helpers.AccumulateErrors(featuringArtistErr, releaseArtistErr, tracksErr, imageErr))
 

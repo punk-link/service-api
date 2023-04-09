@@ -1,10 +1,10 @@
 package converters
 
 import (
+	commonConverters "main/converters/common"
 	artistData "main/data/artists"
 	platformData "main/data/platforms"
 	artistModels "main/models/artists"
-	commonConverters "main/services/common/converters"
 
 	presentationContracts "github.com/punk-link/presentation-contracts"
 	"google.golang.org/protobuf/types/known/timestamppb"

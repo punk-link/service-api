@@ -1,4 +1,4 @@
-package converters
+package common
 
 import (
 	presentationContracts "github.com/punk-link/presentation-contracts"

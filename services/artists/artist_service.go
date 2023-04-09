@@ -145,10 +145,6 @@ func (t *ArtistService) addMissingFeaturingArtists(err error, spotifyIds []strin
 	return results, err
 }
 
-func (t *ArtistService) buildCacheKey(id int) string {
-	return helpers.BuildCacheKey("Artist", id)
-}
-
 func (t *ArtistService) getExistingFeaturingArtists(err error, dbArtist artistData.Artist, spotifyIds []string, timeStamp time.Time) (map[string]artistData.Artist, error) {
 	if err != nil {
 		return make(map[string]artistData.Artist, 0), err
@@ -223,7 +219,7 @@ func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist
 
 	artists := make([]artistModels.Artist, len(ids))
 	for i, id := range ids {
-		cacheKey := t.buildCacheKey(id)
+		cacheKey := helpers.BuildCacheKey(ARTIST_CACHE_SLUG, id)
 		value, isCached := t.cache.TryGet(cacheKey)
 		if isCached {
 			artists[i] = value
@@ -276,8 +272,9 @@ func (t *ArtistService) updateLabelIfNeeded(err error, dbArtist artistData.Artis
 		err = t.repository.Update(err, &dbArtist)
 	}
 
-	t.cache.Remove(t.buildCacheKey(dbArtist.Id))
+	t.cache.Remove(helpers.BuildCacheKey(ARTIST_CACHE_SLUG, dbArtist.Id))
 	return dbArtist, err
 }
 
 const ARTIST_CACHE_DURATION = time.Hour * 24
+const ARTIST_CACHE_SLUG = "Artist"

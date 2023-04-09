@@ -2,16 +2,16 @@ package converters
 
 import (
 	"encoding/json"
+	commonConverters "main/converters/common"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	artistSpotifyPlatformModels "main/models/platforms/spotify/artists"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
-	"main/services/common/converters"
 	"time"
 )
 
 func ToArtist(dbArtist artistData.Artist, releases []artistModels.Release) (artistModels.Artist, error) {
-	imageDetails, err := converters.FromJson(dbArtist.ImageDetails)
+	imageDetails, err := commonConverters.FromJson(dbArtist.ImageDetails)
 
 	return artistModels.Artist{
 		Id:           dbArtist.Id,
@@ -44,7 +44,7 @@ func ToArtistsFromSpotifyTrack(track releaseSpotifyPlatformModels.Track, artists
 	for i, artist := range track.Artists {
 		trackArtists[i] = artistModels.Artist{
 			Id:           artists[artist.Id].Id,
-			ImageDetails: converters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
+			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
 			Name:         artist.Name,
 			Releases:     make([]artistModels.Release, 0),
 		}
@@ -57,7 +57,7 @@ func ToArtistSearchResults(spotifyArtists []artistSpotifyPlatformModels.SlimArti
 	results := make([]artistModels.ArtistSearchResult, len(spotifyArtists))
 	for i, artist := range spotifyArtists {
 		results[i] = artistModels.ArtistSearchResult{
-			ImageDetails: converters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
+			ImageDetails: commonConverters.ToImageDetailsFromSpotify(artist.ImageDetails, artist.Name),
 			Name:         artist.Name,
 			SpotifyId:    artist.Id,
 		}
@@ -67,7 +67,7 @@ func ToArtistSearchResults(spotifyArtists []artistSpotifyPlatformModels.SlimArti
 }
 
 func ToDbArtist(artist *artistSpotifyPlatformModels.Artist, labelId int, timeStamp time.Time) (artistData.Artist, error) {
-	imageDetailsJson, err := converters.ToJsonFromSpotify(artist.ImageDetails, artist.Name)
+	imageDetailsJson, err := commonConverters.ToJsonFromSpotify(artist.ImageDetails, artist.Name)
 
 	return artistData.Artist{
 		Created:      timeStamp,
