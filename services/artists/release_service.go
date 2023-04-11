@@ -1,6 +1,7 @@
 package artists
 
 import (
+	dataStructures "main/data-structures"
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
@@ -167,15 +168,15 @@ func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []ar
 		return make([]string, 0), err
 	}
 
-	dbReleaseIds := make(map[string]int, len(dbReleases))
+	dbReleaseIds := dataStructures.MakeHashSet([]string{})
 	for _, release := range dbReleases {
-		dbReleaseIds[release.SpotifyId] = 0
+		dbReleaseIds.Add(release.SpotifyId)
 	}
 
 	spotifyReleases := t.spotifyReleaseService.GetByArtistId(artistSpotifyId)
 	missingReleaseSpotifyIds := make([]string, 0)
 	for _, spotifyRelease := range spotifyReleases {
-		if _, isContains := dbReleaseIds[spotifyRelease.Id]; !isContains {
+		if !dbReleaseIds.Contains(spotifyRelease.Id) {
 			missingReleaseSpotifyIds = append(missingReleaseSpotifyIds, spotifyRelease.Id)
 		}
 	}

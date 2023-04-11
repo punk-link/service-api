@@ -1,5 +1,7 @@
 package helpers
 
+import dataStructures "main/data-structures"
+
 func Chunk[T any](source []T, chunkSize int) [][]T {
 	chunkCount := (len(source) / chunkSize) + 1
 
@@ -17,10 +19,10 @@ func Chunk[T any](source []T, chunkSize int) [][]T {
 
 func Distinct[T comparable](source []T) []T {
 	distincted := make([]T, 0)
-	distinctionMap := make(map[T]int, 0)
+	distinctionSet := dataStructures.MakeHashSet([]T{})
 	for _, item := range source {
-		if _, isDuplicated := distinctionMap[item]; !isDuplicated {
-			distinctionMap[item] = 0
+		if !distinctionSet.Contains(item) {
+			distinctionSet.Add(item)
 			distincted = append(distincted, item)
 		}
 	}

@@ -2,6 +2,7 @@ package artists
 
 import (
 	"errors"
+	dataStructures "main/data-structures"
 	artistData "main/data/artists"
 	"main/helpers"
 	artistModels "main/models/artists"
@@ -187,26 +188,26 @@ func (t *ArtistService) getFeaturingArtistSpotifyIds(err error, releases []relea
 		return make([]string, 0), err
 	}
 
-	artistIds := make(map[string]int)
+	artistIds := dataStructures.MakeEmptyHashSet[string]()
 	for _, release := range releases {
 		for _, artist := range release.Artists {
-			if _, isExists := artistIds[artist.Id]; !isExists {
-				artistIds[artist.Id] = 0
+			if !artistIds.Contains(artist.Id) {
+				artistIds.Add(artist.Id)
 			}
 		}
 
 		for _, track := range release.Tracks.Items {
 			for _, artist := range track.Artists {
-				if _, isExists := artistIds[artist.Id]; !isExists {
-					artistIds[artist.Id] = 0
+				if !artistIds.Contains(artist.Id) {
+					artistIds.Add(artist.Id)
 				}
 			}
 		}
 	}
 
 	spotifyIds := make([]string, 0)
-	for i := range artistIds {
-		spotifyIds = append(spotifyIds, i)
+	for i := range artistIds.AsMap() {
+		spotifyIds = append(spotifyIds, i.(string))
 	}
 
 	return spotifyIds, nil
@@ -247,14 +248,14 @@ func (t *ArtistService) getMissingFeaturingArtistsSpotifyIds(err error, existing
 		return make([]string, 0), err
 	}
 
-	existingArtistSpotifyIds := make(map[string]int, len(existingArtists))
+	existingArtistSpotifyIds := dataStructures.MakeEmptyHashSet[string]()
 	for _, artist := range existingArtists {
-		existingArtistSpotifyIds[artist.SpotifyId] = 0
+		existingArtistSpotifyIds.Add(artist.SpotifyId)
 	}
 
 	missingSpotifyIds := make([]string, 0)
 	for _, id := range artistSpotifyIds {
-		if _, isExists := existingArtistSpotifyIds[id]; !isExists {
+		if !existingArtistSpotifyIds.Contains(id) {
 			missingSpotifyIds = append(missingSpotifyIds, id)
 		}
 	}

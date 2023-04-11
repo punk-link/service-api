@@ -1,6 +1,8 @@
 package startup
 
 import (
+	dataStructures "main/data-structures"
+
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/global"
@@ -8,7 +10,7 @@ import (
 
 func metricsMiddleware(instrumentationName string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if _exceptionalRoutes[ctx.Request.URL.Path] {
+		if _exceptionalRoutes.Contains(ctx.Request.URL.Path) {
 			ctx.Next()
 			return
 		}
@@ -26,13 +28,13 @@ func metricsMiddleware(instrumentationName string) gin.HandlerFunc {
 	}
 }
 
-var _exceptionalRoutes map[string]bool = map[string]bool{
-	"/favicon.ico":                     true,
-	"/health":                          true,
-	"/metrics":                         true,
-	"/metrics/api/v1/query":            true,
-	"/metrics/api/v1/query_range":      true,
-	"/metrics/api/v1/rules":            true,
-	"/metrics/api/v1/series":           true,
-	"/metrics/api/v1/status/buildinfo": true,
-}
+var _exceptionalRoutes dataStructures.HashSet[string] = dataStructures.MakeHashSet([]string{
+	"/favicon.ico",
+	"/health",
+	"/metrics",
+	"/metrics/api/v1/query",
+	"/metrics/api/v1/query_range",
+	"/metrics/api/v1/rules",
+	"/metrics/api/v1/series",
+	"/metrics/api/v1/status/buildinfo",
+})
