@@ -35,8 +35,7 @@ func (t *ReleaseRepositoryService) CreateInBatches(err error, releases *[]artist
 	return t.db.Transaction(func(tx *gorm.DB) error {
 		err = t.db.CreateInBatches(&releases, CREATE_RELEASES_BATCH_SIZE).Error
 		if err != nil {
-			t.logger.LogError(err, err.Error())
-			return err
+			return t.handleError(err)
 		}
 
 		relations := make([]artistData.ArtistReleaseRelation, 0)

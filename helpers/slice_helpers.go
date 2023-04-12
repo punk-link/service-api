@@ -19,7 +19,7 @@ func Chunk[T any](source []T, chunkSize int) [][]T {
 
 func Distinct[T comparable](source []T) []T {
 	distincted := make([]T, 0)
-	distinctionSet := dataStructures.MakeHashSet([]T{})
+	distinctionSet := dataStructures.MakeEmptyHashSet[T]()
 	for _, item := range source {
 		if !distinctionSet.Contains(item) {
 			distinctionSet.Add(item)

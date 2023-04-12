@@ -27,6 +27,7 @@ func ToDbReleaseFromSpotify(release releaseSpotifyPlatformModels.Release, artist
 
 	return artistData.Release{
 		Created:            timeStamp,
+		Description:        "",
 		FeaturingArtistIds: featuringArtistIdsJson,
 		ImageDetails:       imageDetailsJson,
 		Label:              getLabelName(release),
@@ -56,6 +57,7 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 
 		results[i] = artistModels.Release{
 			Id:               dbRelease.Id,
+			Description:      dbRelease.Description,
 			FeaturingArtists: featuringArtists,
 			ImageDetails:     imageDetails,
 			Label:            dbRelease.Label,

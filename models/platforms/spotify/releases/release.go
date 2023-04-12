@@ -10,6 +10,7 @@ type Release struct {
 	Artists              []artists.SlimArtist   `json:"artists"`
 	ExternalIds          ExternalIds            `json:"external_ids"`
 	ExternalUrls         ExternalUrls           `json:"external_urls"`
+	Genres               []string               `json:"genres"`
 	ImageDetails         []spotify.ImageDetails `json:"images"`
 	Label                string                 `json:"label"`
 	Name                 string                 `json:"name"`

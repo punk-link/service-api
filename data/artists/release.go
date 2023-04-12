@@ -7,6 +7,7 @@ import (
 type Release struct {
 	Id                 int       `gorm:"primaryKey,autoIncrement"`
 	Created            time.Time `gorm:"not null"`
+	Description        string    `gorm:"not null;default:''"`
 	FeaturingArtistIds string    `gorm:"type:jsonb;default:'[]';not null"`
 	ImageDetails       string    `gorm:"type:jsonb;default:'{}';not null"`
 	Label              string    `gorm:"not null"`

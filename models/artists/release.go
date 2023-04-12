@@ -7,6 +7,7 @@ import (
 
 type Release struct {
 	Id               int                 `json:"id"`
+	Description      string              `json:"description"`
 	FeaturingArtists []Artist            `json:"featuringArtists"`
 	ImageDetails     common.ImageDetails `json:"image"`
 	Label            string              `json:"label"`

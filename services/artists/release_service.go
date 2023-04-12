@@ -168,7 +168,7 @@ func (t *ReleaseService) getMissingReleasesSpotifyIds(err error, dbReleases []ar
 		return make([]string, 0), err
 	}
 
-	dbReleaseIds := dataStructures.MakeHashSet([]string{})
+	dbReleaseIds := dataStructures.MakeEmptyHashSet[string]()
 	for _, release := range dbReleases {
 		dbReleaseIds.Add(release.SpotifyId)
 	}

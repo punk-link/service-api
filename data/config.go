@@ -33,7 +33,8 @@ func New(logger logger.Logger, consul consulClient.ConsulClient, appSecrets map[
 func autoMigrate(logger logger.Logger, db *gorm.DB) {
 	err := migrateInternal(logger, nil, db, &labels.Label{}, &labels.Manager{})
 	err = migrateInternal(logger, err, db, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
-	_ = migrateInternal(logger, err, db, &platforms.PlatformReleaseUrl{})
+	err = migrateInternal(logger, err, db, &platforms.PlatformReleaseUrl{})
+	_ = migrateInternal(logger, err, db, &artists.Tag{}, &artists.ReleaseTagRelation{})
 }
 
 func configureConnection(err error, db *gorm.DB) error {
