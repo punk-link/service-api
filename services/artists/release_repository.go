@@ -6,6 +6,7 @@ import (
 )
 
 type ReleaseRepository interface {
+	AddTags(err error, relations *[]artistData.ReleaseTagRelation) error
 	CreateInBatches(err error, releases *[]artistData.Release) error
 	Get(err error, artistId int) ([]artistData.Release, error)
 	GetCount(err error) (int64, error)

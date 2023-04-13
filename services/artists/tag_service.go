@@ -30,6 +30,10 @@ func NewTagService(injector *do.Injector) (TagServer, error) {
 }
 
 func (t *TagService) GetOrAdd(tagNames []string) []artistModels.Tag {
+	if len(tagNames) == 0 {
+		return make([]artistModels.Tag, 0)
+	}
+
 	cache, isCached := t.tagCache.TryGet(TAG_CACHE_SLUG)
 	if !isCached {
 		cache = make(map[string]artistModels.Tag)
