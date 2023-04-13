@@ -27,6 +27,10 @@ func NewReleaseRepository(injector *do.Injector) (ReleaseRepository, error) {
 	}, nil
 }
 
+func (t *ReleaseRepositoryService) AddTags(err error, relations *[]artistData.ReleaseTagRelation) error {
+	return nil
+}
+
 func (t *ReleaseRepositoryService) CreateInBatches(err error, releases *[]artistData.Release) error {
 	if err != nil || len(*releases) == 0 {
 		return err

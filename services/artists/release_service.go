@@ -27,6 +27,7 @@ type ReleaseService struct {
 	releasesCache         cacheManager.CacheManager[[]artistModels.Release]
 	repository            ReleaseRepository
 	spotifyReleaseService spotifyPlatformServices.SpotifyReleaseServer
+	tagService            TagServer
 }
 
 func NewReleaseService(injector *do.Injector) (ReleaseServer, error) {
@@ -37,6 +38,7 @@ func NewReleaseService(injector *do.Injector) (ReleaseServer, error) {
 	releasesCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
 	repository := do.MustInvoke[ReleaseRepository](injector)
 	spotifyReleaseService := do.MustInvoke[spotifyPlatformServices.SpotifyReleaseServer](injector)
+	tagService := do.MustInvoke[TagServer](injector)
 
 	return &ReleaseService{
 		artistIdExtractor:     artistIdExtractor,
@@ -46,6 +48,7 @@ func NewReleaseService(injector *do.Injector) (ReleaseServer, error) {
 		releasesCache:         releasesCache,
 		repository:            repository,
 		spotifyReleaseService: spotifyReleaseService,
+		tagService:            tagService,
 	}, nil
 }
 
@@ -53,7 +56,28 @@ func (t *ReleaseService) Add(currentManager labelModels.ManagerContext, artists 
 	dbReleases := t.buildDbReleases(artists, releases, timeStamp)
 	t.orderDbReleasesChronologically(dbReleases)
 
-	return t.repository.CreateInBatches(nil, &dbReleases)
+	err := t.repository.CreateInBatches(nil, &dbReleases)
+	if err != nil {
+		return err
+	}
+
+	spotifyReleaseTags := make(map[string][]string, len(releases))
+	for _, release := range releases {
+		spotifyReleaseTags[release.Id] = release.Genres
+	}
+
+	releaseTagRelations := make([]artistData.ReleaseTagRelation, 0)
+	for _, dbRelease := range dbReleases {
+		tagSlugs := spotifyReleaseTags[dbRelease.SpotifyId]
+		tags := t.tagService.GetOrAdd(tagSlugs)
+		for _, tag := range tags {
+			releaseTagRelations = append(releaseTagRelations, converters.ToDbReleaseTagRelation(dbRelease.Id, tag.Id))
+		}
+	}
+
+	err = t.repository.AddTags(err, &releaseTagRelations)
+
+	return err
 }
 
 func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
