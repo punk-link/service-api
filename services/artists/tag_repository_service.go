@@ -1,6 +1,7 @@
 package artists
 
 import (
+	"fmt"
 	artistData "main/data/artists"
 	"main/helpers"
 
@@ -30,7 +31,7 @@ func (t *TagRepositoryService) Create(err error, tags *[]artistData.Tag) error {
 	}
 
 	for _, tag := range *tags {
-		insertionErr := t.db.Exec("insert into tags (name, normalized_name, normalized_vector) values (?, ?, to_tsvector(?))", tag.Name, tag.NormalizedName, tag.NormalizedName).Error
+		insertionErr := t.db.Exec("insert into tags (name, normalized_name, name_tokens) values (?, ?, to_tsvector(?))", tag.Name, tag.NormalizedName, tag.Name).Error
 		if insertionErr != nil {
 			err = helpers.CombineErrors(err, insertionErr)
 		}
@@ -39,13 +40,38 @@ func (t *TagRepositoryService) Create(err error, tags *[]artistData.Tag) error {
 	return t.handleError(err)
 }
 
-func (t *TagRepositoryService) Get(err error, names []string) []artistData.Tag {
+func (t *TagRepositoryService) Get(err error, normalizedNames []string) []artistData.Tag {
+	if err != nil {
+		return make([]artistData.Tag, 0)
+	}
+
+	var tags []artistData.Tag
+	err = t.db.Where("normalized_name IN (?)", normalizedNames).
+		Find(&tags).
+		Error
+
+	t.handleError(err)
+
+	return tags
+}
+
+func (t *TagRepositoryService) Search(err error, query string) []artistData.Tag {
 	if err != nil {
 		return make([]artistData.Tag, 0)
 	}
 
 	tags := make([]artistData.Tag, 0)
-	//var tag artistData.Tag
+	var tag artistData.Tag
+	rows, err := t.db.Raw(fmt.Sprintf("id, select name, normalized_name from tags where name_tokens @@ to_tsquery('%s')", query)).Rows()
+	if err != nil {
+		return make([]artistData.Tag, 0)
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		t.db.ScanRows(rows, &tag)
+		tags = append(tags, tag)
+	}
 
 	return tags
 }
