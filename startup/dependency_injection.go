@@ -62,6 +62,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, registerCacheManager[artistModels.Artist]())
 	do.Provide(injector, registerCacheManager[artistModels.Release]())
 	do.Provide(injector, registerCacheManager[[]artistModels.Release]())
+	do.Provide(injector, registerCacheManager[map[string]artistModels.Tag]())
 	do.Provide(injector, registerCacheManager[map[string]any]())
 
 	do.Provide(injector, labelServices.NewLabelRepository)
