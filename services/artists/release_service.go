@@ -236,6 +236,32 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	return results, err
 }
 
+// func (t *ReleaseService) getReleasesTags(err error, releases []artistData.Release) (map[int][]artistModels.Tag, error) {
+// 	if err != nil {
+// 		return make(map[int][]artistModels.Tag, 0), err
+// 	}
+
+// 	releaseIds := make([]int, len(releases))
+// 	for i, release := range releases {
+// 		releaseIds[i] = release.Id
+// 	}
+
+// 	dbTags, err := t.repository.GetTags(err, releaseIds)
+// 	if err != nil {
+// 		return make(map[int][]artistModels.Tag, 0), err
+// 	}
+
+// 	tags := make(map[int][]artistModels.Tag, len(dbTags))
+// 	// for key, dbTagArray := range dbTags {
+// 	// 	// TODO: convert db tags to tags
+// 	// 	tagArray := make([]artistModels.Tag, 0)
+
+// 	// 	tags[key] = tagArray
+// 	// }
+
+// 	return tags, nil
+// }
+
 func (t *ReleaseService) orderDbReleasesChronologically(target []artistData.Release) {
 	sort.Slice(target, func(i, j int) bool {
 		return target[i].ReleaseDate.Before(target[j].ReleaseDate)

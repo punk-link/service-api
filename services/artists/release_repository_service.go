@@ -28,7 +28,12 @@ func NewReleaseRepository(injector *do.Injector) (ReleaseRepository, error) {
 }
 
 func (t *ReleaseRepositoryService) AddTags(err error, relations *[]artistData.ReleaseTagRelation) error {
-	return nil
+	if err != nil || len(*relations) == 0 {
+		return err
+	}
+
+	err = t.db.CreateInBatches(&relations, CREATE_RELATION_BATCH_SIZE).Error
+	return t.handleError(err)
 }
 
 func (t *ReleaseRepositoryService) CreateInBatches(err error, releases *[]artistData.Release) error {
@@ -122,6 +127,59 @@ func (t *ReleaseRepositoryService) GetSlimByArtistId(err error, artistId int) ([
 		Error
 
 	return releases, t.handleError(err)
+}
+
+func (t *ReleaseRepositoryService) GetTags(err error, releaseIds []int) (map[int][]artistData.Tag, error) {
+	if err != nil {
+		return make(map[int][]artistData.Tag, 0), err
+	}
+
+	var relations []artistData.ReleaseTagRelation
+	err = t.db.Model(&artistData.ReleaseTagRelation{}).
+		Where("release_id in (?)", releaseIds).
+		Find(&relations).
+		Error
+	if err != nil {
+		return make(map[int][]artistData.Tag, 0), t.handleError(err)
+	}
+
+	tagIds := make([]int, len(relations))
+	for i, relation := range relations {
+		tagIds[i] = relation.TagId
+	}
+
+	var tags []artistData.Tag
+	err = t.db.Model(&artistData.Tag{}).
+		Where("id in (?)", tagIds).
+		Find(&tags).
+		Error
+	if err != nil {
+		return make(map[int][]artistData.Tag, 0), t.handleError(err)
+	}
+
+	tagMap := make(map[int]artistData.Tag)
+	for _, tag := range tags {
+		tagMap[tag.Id] = tag
+	}
+
+	result := make(map[int][]artistData.Tag)
+	for _, relation := range relations {
+		tag, exists := tagMap[relation.TagId]
+		if !exists {
+			continue
+		}
+
+		value := result[relation.ReleaseId]
+		if value != nil {
+			value = append(result[relation.ReleaseId], tag)
+		} else {
+			value = []artistData.Tag{tag}
+		}
+
+		result[relation.ReleaseId] = value
+	}
+
+	return result, err
 }
 
 func (t *ReleaseRepositoryService) GetUpcContainers(err error, top int, skip int, updateTreshold time.Time) ([]artistData.Release, error) {

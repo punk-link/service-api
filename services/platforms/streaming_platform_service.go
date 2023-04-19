@@ -24,7 +24,7 @@ type StreamingPlatformService struct {
 	logger         logger.Logger
 	natsConnection *nats.Conn
 	releaseService artistServices.ReleaseServer
-	repository     *platformRepositories.PlatformUrlRepository
+	repository     platformRepositories.PlatformUrlRepository
 	urlsInProcess  syncint64.UpDownCounter
 }
 
@@ -33,7 +33,7 @@ func NewStreamingPlatformService(injector *do.Injector) (StreamingPlatformServer
 	logger := do.MustInvoke[logger.Logger](injector)
 	natsConnection := do.MustInvoke[*nats.Conn](injector)
 	releaseService := do.MustInvoke[artistServices.ReleaseServer](injector)
-	repository := do.MustInvoke[*platformRepositories.PlatformUrlRepository](injector)
+	repository := do.MustInvoke[platformRepositories.PlatformUrlRepository](injector)
 
 	meter := global.MeterProvider().Meter(constants.SERVICE_NAME)
 	urlsInProcess, _ := meter.SyncInt64().UpDownCounter("release_urls_in_process")
