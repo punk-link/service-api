@@ -43,7 +43,7 @@ func ToDbReleaseFromSpotify(release releaseSpotifyPlatformModels.Release, artist
 	}, nil
 }
 
-func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Artist) ([]artistModels.Release, error) {
+func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Artist, tags map[int][]artistModels.Tag) ([]artistModels.Release, error) {
 	var err error
 
 	results := make([]artistModels.Release, len(dbReleases))
@@ -55,6 +55,8 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 
 		err = helpers.CombineErrors(err, helpers.AccumulateErrors(featuringArtistErr, releaseArtistErr, tracksErr, imageErr))
 
+		releaseTags := getReleaseTags(tags, dbRelease.Id)
+
 		results[i] = artistModels.Release{
 			Id:               dbRelease.Id,
 			Description:      dbRelease.Description,
@@ -64,6 +66,7 @@ func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Ar
 			Name:             dbRelease.Name,
 			ReleaseArtists:   releaseArtists,
 			ReleaseDate:      dbRelease.ReleaseDate,
+			Tags:             releaseTags,
 			TrackNumber:      dbRelease.TrackNumber,
 			Tracks:           tracks,
 			Type:             dbRelease.Type,
@@ -167,6 +170,14 @@ func getReleaseDate(err error, release releaseSpotifyPlatformModels.Release) (ti
 	}
 
 	return releaseDate, nil
+}
+
+func getReleaseTags(tags map[int][]artistModels.Tag, dbReleaseId int) []artistModels.Tag {
+	if result, isExist := tags[dbReleaseId]; isExist {
+		return result
+	}
+
+	return make([]artistModels.Tag, 0)
 }
 
 func getReleaseType(err error, target string) (string, error) {

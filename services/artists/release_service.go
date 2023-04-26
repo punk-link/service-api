@@ -88,8 +88,7 @@ func (t *ReleaseService) Get(artistId int) ([]artistModels.Release, error) {
 	}
 
 	dbReleases, err := t.repository.Get(nil, artistId)
-	artists, err := t.getReleasesArtists(err, dbReleases)
-	releases, err := t.toReleases(err, dbReleases, artists)
+	releases, err := t.getReleasesInternal(err, dbReleases)
 	if err == nil {
 		t.releasesCache.Set(cacheKey, releases, RELEASE_CACHE_DURATION)
 	}
@@ -118,9 +117,7 @@ func (t *ReleaseService) GetOne(id int) (artistModels.Release, error) {
 
 	dbRelease, err := t.repository.GetOne(nil, id)
 	dbReleasesOfOne := []artistData.Release{dbRelease}
-
-	artists, err := t.getReleasesArtists(err, dbReleasesOfOne)
-	releases, err := t.toReleases(err, dbReleasesOfOne, artists)
+	releases, err := t.getReleasesInternal(err, dbReleasesOfOne)
 	if err == nil {
 		t.releaseCache.Set(cacheKey, releases[0], RELEASE_CACHE_DURATION)
 	}
@@ -217,6 +214,16 @@ func (t *ReleaseService) getReleaseDetails(err error, missingReleaseSpotifyIds [
 	return details, err
 }
 
+func (t *ReleaseService) getReleasesInternal(err error, dbReleases []artistData.Release) ([]artistModels.Release, error) {
+	if err != nil {
+		return make([]artistModels.Release, 0), err
+	}
+
+	artists, err := t.getReleasesArtists(err, dbReleases)
+	tags, err := t.getReleasesTags(err, dbReleases)
+	return t.toReleases(err, dbReleases, artists, tags)
+}
+
 func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Release) (map[int]artistModels.Artist, error) {
 	if err != nil {
 		return make(map[int]artistModels.Artist, 0), err
@@ -236,31 +243,37 @@ func (t *ReleaseService) getReleasesArtists(err error, releases []artistData.Rel
 	return results, err
 }
 
-// func (t *ReleaseService) getReleasesTags(err error, releases []artistData.Release) (map[int][]artistModels.Tag, error) {
-// 	if err != nil {
-// 		return make(map[int][]artistModels.Tag, 0), err
-// 	}
+func (t *ReleaseService) getReleasesTags(err error, releases []artistData.Release) (map[int][]artistModels.Tag, error) {
+	if err != nil {
+		return make(map[int][]artistModels.Tag, 0), err
+	}
 
-// 	releaseIds := make([]int, len(releases))
-// 	for i, release := range releases {
-// 		releaseIds[i] = release.Id
-// 	}
+	releaseIds := make([]int, len(releases))
+	for i, release := range releases {
+		releaseIds[i] = release.Id
+	}
 
-// 	dbTags, err := t.repository.GetTags(err, releaseIds)
-// 	if err != nil {
-// 		return make(map[int][]artistModels.Tag, 0), err
-// 	}
+	dbTags, err := t.repository.GetTags(err, releaseIds)
+	if err != nil {
+		return make(map[int][]artistModels.Tag, 0), err
+	}
 
-// 	tags := make(map[int][]artistModels.Tag, len(dbTags))
-// 	// for key, dbTagArray := range dbTags {
-// 	// 	// TODO: convert db tags to tags
-// 	// 	tagArray := make([]artistModels.Tag, 0)
+	tags := make(map[int][]artistModels.Tag, len(dbTags))
+	for key, dbTagArray := range dbTags {
+		releaseTags := make([]artistModels.Tag, len(dbTagArray))
+		for i, dbTag := range dbTagArray {
+			releaseTags[i] = artistModels.Tag{
+				Id:             dbTag.Id,
+				Name:           dbTag.Name,
+				NormalizedName: dbTag.NormalizedName,
+			}
+		}
 
-// 	// 	tags[key] = tagArray
-// 	// }
+		tags[key] = releaseTags
+	}
 
-// 	return tags, nil
-// }
+	return tags, nil
+}
 
 func (t *ReleaseService) orderDbReleasesChronologically(target []artistData.Release) {
 	sort.Slice(target, func(i, j int) bool {
@@ -268,12 +281,12 @@ func (t *ReleaseService) orderDbReleasesChronologically(target []artistData.Rele
 	})
 }
 
-func (t *ReleaseService) toReleases(err error, releases []artistData.Release, artists map[int]artistModels.Artist) ([]artistModels.Release, error) {
+func (t *ReleaseService) toReleases(err error, releases []artistData.Release, artists map[int]artistModels.Artist, tags map[int][]artistModels.Tag) ([]artistModels.Release, error) {
 	if err != nil {
 		return make([]artistModels.Release, 0), err
 	}
 
-	results, err := converters.ToReleases(releases, artists)
+	results, err := converters.ToReleases(releases, artists, tags)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 	}

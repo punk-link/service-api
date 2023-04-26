@@ -14,6 +14,7 @@ type Release struct {
 	Name             string              `json:"name"`
 	ReleaseArtists   []Artist            `json:"releaseArtists"`
 	ReleaseDate      time.Time           `json:"releaseDate"`
+	Tags             []Tag               `json:"tags"`
 	TrackNumber      int                 `json:"trackNumber"`
 	Tracks           []Track             `json:"tracks"`
 	Type             string              `json:"type"`

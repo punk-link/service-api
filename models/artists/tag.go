@@ -1,7 +1,7 @@
 package artists
 
 type Tag struct {
-	Id             int
-	Name           string
-	NormalizedName string
+	Id             int    `json:"id"`
+	Name           string `json:"name"`
+	NormalizedName string `json:"normalizedName"`
 }
