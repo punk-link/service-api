@@ -286,7 +286,7 @@ func (t *ReleaseService) toReleases(err error, releases []artistData.Release, ar
 		return make([]artistModels.Release, 0), err
 	}
 
-	results, err := converters.ToReleases(releases, artists, tags)
+	results := converters.ToReleases(t.logger, releases, artists, tags)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 	}

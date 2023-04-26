@@ -9,7 +9,10 @@ import (
 	artistModels "main/models/artists"
 	"main/models/artists/enums"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
+	"sync"
 	"time"
+
+	"github.com/punk-link/logger"
 )
 
 func ToDbReleaseFromSpotify(release releaseSpotifyPlatformModels.Release, artists map[string]artistData.Artist, timeStamp time.Time) (artistData.Release, error) {
@@ -43,37 +46,56 @@ func ToDbReleaseFromSpotify(release releaseSpotifyPlatformModels.Release, artist
 	}, nil
 }
 
-func ToReleases(dbReleases []artistData.Release, artists map[int]artistModels.Artist, tags map[int][]artistModels.Tag) ([]artistModels.Release, error) {
-	var err error
-
-	results := make([]artistModels.Release, len(dbReleases))
-	for i, dbRelease := range dbReleases {
-		featuringArtists, featuringArtistErr := ToArtistsFromIds(dbRelease.FeaturingArtistIds, artists)
-		releaseArtists, releaseArtistErr := ToArtistsFromIds(dbRelease.ReleaseArtistIds, artists)
-		tracks, tracksErr := getTracks(dbRelease.Tracks)
-		imageDetails, imageErr := commonConverters.FromJson(dbRelease.ImageDetails)
-
-		err = helpers.CombineErrors(err, helpers.AccumulateErrors(featuringArtistErr, releaseArtistErr, tracksErr, imageErr))
-
-		releaseTags := getReleaseTags(tags, dbRelease.Id)
-
-		results[i] = artistModels.Release{
-			Id:               dbRelease.Id,
-			Description:      dbRelease.Description,
-			FeaturingArtists: featuringArtists,
-			ImageDetails:     imageDetails,
-			Label:            dbRelease.Label,
-			Name:             dbRelease.Name,
-			ReleaseArtists:   releaseArtists,
-			ReleaseDate:      dbRelease.ReleaseDate,
-			Tags:             releaseTags,
-			TrackNumber:      dbRelease.TrackNumber,
-			Tracks:           tracks,
-			Type:             dbRelease.Type,
-		}
+func ToReleases(logger logger.Logger, dbReleases []artistData.Release, artists map[int]artistModels.Artist, tags map[int][]artistModels.Tag) []artistModels.Release {
+	var wg sync.WaitGroup
+	chanResults := make(chan artistModels.Release)
+	for _, release := range dbReleases {
+		wg.Add(1)
+		go buildRelease(&wg, chanResults, logger, release, artists, tags)
 	}
 
-	return results, err
+	go func() {
+		wg.Wait()
+		close(chanResults)
+	}()
+
+	releases := make([]artistModels.Release, 0)
+	for result := range chanResults {
+		releases = append(releases, result)
+	}
+
+	return releases
+}
+
+func buildRelease(wg *sync.WaitGroup, results chan<- artistModels.Release, logger logger.Logger, dbRelease artistData.Release, artists map[int]artistModels.Artist, tags map[int][]artistModels.Tag) {
+	defer wg.Done()
+
+	releaseTags := getReleaseTags(tags, dbRelease.Id)
+
+	featuringArtists, featuringArtistErr := ToArtistsFromIds(dbRelease.FeaturingArtistIds, artists)
+	releaseArtists, releaseArtistErr := ToArtistsFromIds(dbRelease.ReleaseArtistIds, artists)
+	tracks, tracksErr := getTracks(dbRelease.Tracks)
+	imageDetails, imageErr := commonConverters.FromJson(dbRelease.ImageDetails)
+
+	err := helpers.AccumulateErrors(featuringArtistErr, releaseArtistErr, tracksErr, imageErr)
+	if err != nil {
+		logger.LogError(err, err.Error())
+	}
+
+	results <- artistModels.Release{
+		Id:               dbRelease.Id,
+		Description:      dbRelease.Description,
+		FeaturingArtists: featuringArtists,
+		ImageDetails:     imageDetails,
+		Label:            dbRelease.Label,
+		Name:             dbRelease.Name,
+		ReleaseArtists:   releaseArtists,
+		ReleaseDate:      dbRelease.ReleaseDate,
+		Tags:             releaseTags,
+		TrackNumber:      dbRelease.TrackNumber,
+		Tracks:           tracks,
+		Type:             dbRelease.Type,
+	}
 }
 
 func getFeaturingArtistIds(release releaseSpotifyPlatformModels.Release, artists map[string]artistData.Artist) []int {
