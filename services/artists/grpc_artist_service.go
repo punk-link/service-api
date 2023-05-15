@@ -1,6 +1,7 @@
 package artists
 
 import (
+	artistModels "main/models/artists"
 	"main/services/artists/converters"
 
 	presentationContracts "github.com/punk-link/presentation-contracts"
@@ -9,17 +10,20 @@ import (
 )
 
 type GrpcArtistService struct {
-	artistRepository  ArtistRepository
-	releaseRepository ReleaseRepository
+	artistRepository          ArtistRepository
+	presentationConfigService PresentationConfigServer
+	releaseRepository         ReleaseRepository
 }
 
 func NewGrpcArtistService(injector *do.Injector) (GrpcArtistServer, error) {
 	artistRepository := do.MustInvoke[ArtistRepository](injector)
+	presentationConfigService := do.MustInvoke[PresentationConfigServer](injector)
 	releaseRepository := do.MustInvoke[ReleaseRepository](injector)
 
 	return &GrpcArtistService{
-		artistRepository:  artistRepository,
-		releaseRepository: releaseRepository,
+		artistRepository:          artistRepository,
+		presentationConfigService: presentationConfigService,
+		releaseRepository:         releaseRepository,
 	}, nil
 }
 
@@ -28,7 +32,8 @@ func (t *GrpcArtistService) GetOne(request *presentationContracts.ArtistRequest)
 
 	dbArtist, err := t.artistRepository.GetOneSlim(nil, id)
 	dbSlimReleases, err := t.releaseRepository.GetSlimByArtistId(err, id)
-	artist, err := converters.ToArtistMessage(err, dbArtist)
+	presentationConfig, err := t.getPresentationConfig(err, id)
+	artist, err := converters.ToArtistMessage(err, dbArtist, presentationConfig)
 	slimReleases, err := converters.ToSlimReleaseMessages(err, dbSlimReleases)
 	if err != nil {
 		return &presentationContracts.Artist{}, err
@@ -36,4 +41,12 @@ func (t *GrpcArtistService) GetOne(request *presentationContracts.ArtistRequest)
 
 	artist.Releases = slimReleases
 	return artist, nil
+}
+
+func (t *GrpcArtistService) getPresentationConfig(err error, artistId int) (artistModels.PresentationConfig, error) {
+	if err != nil {
+		return artistModels.PresentationConfig{}, err
+	}
+
+	return t.presentationConfigService.Get(artistId), nil
 }

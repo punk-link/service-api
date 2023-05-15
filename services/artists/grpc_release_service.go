@@ -2,6 +2,7 @@ package artists
 
 import (
 	"encoding/json"
+	artistModels "main/models/artists"
 	"main/services/artists/converters"
 	platformRepositories "main/services/platforms/repositories"
 
@@ -12,23 +13,26 @@ import (
 )
 
 type GrpcReleaseService struct {
-	artistRepository      ArtistRepository
-	logger                logger.Logger
-	platformUrlRepository platformRepositories.PlatformUrlRepository
-	releaseRepository     ReleaseRepository
+	artistRepository          ArtistRepository
+	logger                    logger.Logger
+	platformUrlRepository     platformRepositories.PlatformUrlRepository
+	presentationConfigService PresentationConfigServer
+	releaseRepository         ReleaseRepository
 }
 
 func NewGrpcReleaseService(injector *do.Injector) (GrpcReleaseServer, error) {
 	artistRepository := do.MustInvoke[ArtistRepository](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformUrlRepository := do.MustInvoke[platformRepositories.PlatformUrlRepository](injector)
+	presentationConfigService := do.MustInvoke[PresentationConfigServer](injector)
 	releaseRepository := do.MustInvoke[ReleaseRepository](injector)
 
 	return &GrpcReleaseService{
-		artistRepository:      artistRepository,
-		logger:                logger,
-		platformUrlRepository: platformUrlRepository,
-		releaseRepository:     releaseRepository,
+		artistRepository:          artistRepository,
+		logger:                    logger,
+		platformUrlRepository:     platformUrlRepository,
+		presentationConfigService: presentationConfigService,
+		releaseRepository:         releaseRepository,
 	}, nil
 }
 
@@ -37,10 +41,11 @@ func (t *GrpcReleaseService) GetOne(request *presentationContracts.ReleaseReques
 
 	dbRelease, err := t.releaseRepository.GetOne(nil, id)
 	releaseArtistIds, err := t.unmarshalArtistIds(err, dbRelease.ReleaseArtistIds)
+	presentationConfig, err := t.getPresentationConfig(err, releaseArtistIds)
 	slimDbArtists, err := t.artistRepository.GetSlim(err, releaseArtistIds)
 	platformUrls, err := t.platformUrlRepository.GetByReleaseId(err, id)
 
-	return converters.ToReleaseMessage(err, dbRelease, slimDbArtists, platformUrls)
+	return converters.ToReleaseMessage(err, dbRelease, slimDbArtists, platformUrls, presentationConfig)
 }
 
 func (t *GrpcReleaseService) unmarshalArtistIds(err error, idJson string) ([]int, error) {
@@ -56,4 +61,13 @@ func (t *GrpcReleaseService) unmarshalArtistIds(err error, idJson string) ([]int
 	}
 
 	return results, nil
+}
+
+func (t *GrpcReleaseService) getPresentationConfig(err error, artistIds []int) (artistModels.PresentationConfig, error) {
+	if err != nil || len(artistIds) < 1 {
+		return artistModels.PresentationConfig{}, err
+	}
+
+	primaryArtistId := artistIds[0]
+	return t.presentationConfigService.Get(primaryArtistId), nil
 }

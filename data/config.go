@@ -34,6 +34,7 @@ func autoMigrate(logger logger.Logger, db *gorm.DB) {
 	err := migrateInternal(logger, nil, db, &labels.Label{}, &labels.Manager{})
 	err = migrateInternal(logger, err, db, &artists.Artist{}, &artists.Release{}, &artists.ArtistReleaseRelation{})
 	err = migrateInternal(logger, err, db, &platforms.PlatformReleaseUrl{})
+	err = migrateInternal(logger, err, db, &artists.ArtistPresentationConfig{})
 	_ = migrateInternal(logger, err, db, &artists.Tag{}, &artists.ReleaseTagRelation{})
 }
 

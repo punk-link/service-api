@@ -7,18 +7,18 @@ import (
 	presentationContracts "github.com/punk-link/presentation-contracts"
 )
 
-func ToArtistMessage(err error, artist artistData.SlimArtist) (*presentationContracts.Artist, error) {
+func ToArtistMessage(err error, artist artistData.SlimArtist, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Artist, error) {
+	presentationConfigMessage, err := ToPresentationConfigMessage(err, presentationConfig)
 	if err != nil {
 		return &presentationContracts.Artist{}, err
 	}
 
-	// TODO: add presentation config
 	// TODO: add release stats
 	// TODO: add artist social networks
 	return &presentationContracts.Artist{
 		Id:                 int32(artist.Id),
 		Name:               artist.Name,
-		PresentationConfig: &presentationContracts.PresentationConfig{},
+		PresentationConfig: presentationConfigMessage,
 		Releases:           nil,
 		ReleaseStats:       &presentationContracts.ReleaseStats{},
 		SocialNetworks:     nil,

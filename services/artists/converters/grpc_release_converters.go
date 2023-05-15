@@ -10,18 +10,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl) (*presentationContracts.Release, error) {
+func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Release, error) {
 	imageDetails, err := commonConverters.ToMessageFromJson(err, release.ImageDetails)
+	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
+	presentationConfigMessage, err := ToPresentationConfigMessage(err, presentationConfig)
 	slimArtists, err := ToSlimArtistMessages(err, artists)
 	tracks, err := toTrackMessages(err, release.Tracks)
-	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
 	tags := []string{"indie", "post-punk"}
 	if err != nil {
 		return &presentationContracts.Release{}, err
 	}
 
 	// TODO: add release Stats
-	// TODO: add presentation config
 	// TODO: add tags
 	return &presentationContracts.Release{
 		Id:                 int32(release.Id),
@@ -30,7 +30,7 @@ func ToReleaseMessage(err error, release artistData.Release, artists []artistDat
 		Label:              release.Label,
 		Name:               release.Name,
 		PlatformUrls:       platformUrlMessages,
-		PresentationConfig: &presentationContracts.PresentationConfig{},
+		PresentationConfig: presentationConfigMessage,
 		ReleaseArtists:     slimArtists,
 		ReleaseDate:        timestamppb.New(release.ReleaseDate),
 		ReleaseStats: &presentationContracts.ReleaseStats{

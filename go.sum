@@ -491,6 +491,8 @@ github.com/punk-link/platform-contracts v1.0.7 h1:wV6vBMoBYNNEfL4WFxpCUTROMxSQxJ
 github.com/punk-link/platform-contracts v1.0.7/go.mod h1:o/eF03OndK/uoKwxCIBS6JJwNF2vvYUNzRias2vq/Sg=
 github.com/punk-link/presentation-contracts v1.0.7 h1:fERUBgusHby42ntX7a021nzY6cUEpqosRcLkEcgDuOM=
 github.com/punk-link/presentation-contracts v1.0.7/go.mod h1:q6/PB009KVB1gtX3J/+Ni5jUQmR7jKk+ngwH8tvc9j8=
+github.com/punk-link/presentation-contracts v1.0.8 h1:E4xrSvmvWHtCx9KdbHAMKiuD/O6f76DCUOo7d/JPK/U=
+github.com/punk-link/presentation-contracts v1.0.8/go.mod h1:q6/PB009KVB1gtX3J/+Ni5jUQmR7jKk+ngwH8tvc9j8=
 github.com/punk-link/vault-client v1.0.0 h1:NAyqrs5s22fhLpOphU12QaMzHxgXWKt5GoXxBxlTPg8=
 github.com/punk-link/vault-client v1.0.0/go.mod h1:zPLCGDIYv2jxl3mM+JDvnCEimLuuk/R6uwrV12pmrUE=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
