@@ -12,10 +12,16 @@ func ToArtistMessage(err error, artist artistData.SlimArtist) (*presentationCont
 		return &presentationContracts.Artist{}, err
 	}
 
+	// TODO: add presentation config
+	// TODO: add release stats
+	// TODO: add artist social networks
 	return &presentationContracts.Artist{
-		Id:       int32(artist.Id),
-		Name:     artist.Name,
-		Releases: nil,
+		Id:                 int32(artist.Id),
+		Name:               artist.Name,
+		PresentationConfig: &presentationContracts.PresentationConfig{},
+		Releases:           nil,
+		ReleaseStats:       &presentationContracts.ReleaseStats{},
+		SocialNetworks:     nil,
 	}, nil
 }
 

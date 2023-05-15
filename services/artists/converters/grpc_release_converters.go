@@ -15,26 +15,32 @@ func ToReleaseMessage(err error, release artistData.Release, artists []artistDat
 	slimArtists, err := ToSlimArtistMessages(err, artists)
 	tracks, err := toTrackMessages(err, release.Tracks)
 	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
+	tags := []string{"indie", "post-punk"}
 	if err != nil {
 		return &presentationContracts.Release{}, err
 	}
 
+	// TODO: add release Stats
+	// TODO: add presentation config
+	// TODO: add tags
 	return &presentationContracts.Release{
-		Id: int32(release.Id),
-		ArtistStats: &presentationContracts.ArtistStats{
+		Id:                 int32(release.Id),
+		Description:        release.Description,
+		ImageDetails:       imageDetails,
+		Label:              release.Label,
+		Name:               release.Name,
+		PlatformUrls:       platformUrlMessages,
+		PresentationConfig: &presentationContracts.PresentationConfig{},
+		ReleaseArtists:     slimArtists,
+		ReleaseDate:        timestamppb.New(release.ReleaseDate),
+		ReleaseStats: &presentationContracts.ReleaseStats{
+			AlbumNumber:       int32(1),
 			CompilationNumber: int32(3),
-			SoleReleaseNumber: int32(1),
+			SingleNumber:      int32(1),
 		},
-		Description:    release.Description,
-		ImageDetails:   imageDetails,
-		Label:          release.Label,
-		Name:           release.Name,
-		PlatformUrls:   platformUrlMessages,
-		ReleaseArtists: slimArtists,
-		ReleaseDate:    timestamppb.New(release.ReleaseDate),
-		Tags:           []string{"indie", "post-punk"},
-		Tracks:         tracks,
-		Type:           release.Type,
+		Tags:   tags,
+		Tracks: tracks,
+		Type:   release.Type,
 	}, nil
 }
 
