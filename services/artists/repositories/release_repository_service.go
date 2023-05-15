@@ -1,7 +1,8 @@
-package artists
+package repositories
 
 import (
 	artistData "main/data/artists"
+	"main/services/artists/extractors"
 	"time"
 
 	"github.com/punk-link/logger"
@@ -10,13 +11,13 @@ import (
 )
 
 type ReleaseRepositoryService struct {
-	artistIdExtractor ArtistIdExtractor
+	artistIdExtractor extractors.ArtistIdExtractor
 	db                *gorm.DB
 	logger            logger.Logger
 }
 
 func NewReleaseRepository(injector *do.Injector) (ReleaseRepository, error) {
-	artistIdExtractor := do.MustInvoke[ArtistIdExtractor](injector)
+	artistIdExtractor := do.MustInvoke[extractors.ArtistIdExtractor](injector)
 	db := do.MustInvoke[*gorm.DB](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 

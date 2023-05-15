@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	artistModels "main/models/artists"
 	"main/services/artists/converters"
+	"main/services/artists/repositories"
 	platformRepositories "main/services/platforms/repositories"
 
 	"github.com/punk-link/logger"
@@ -13,19 +14,19 @@ import (
 )
 
 type GrpcReleaseService struct {
-	artistRepository          ArtistRepository
+	artistRepository          repositories.ArtistRepository
 	logger                    logger.Logger
 	platformUrlRepository     platformRepositories.PlatformUrlRepository
 	presentationConfigService PresentationConfigServer
-	releaseRepository         ReleaseRepository
+	releaseRepository         repositories.ReleaseRepository
 }
 
 func NewGrpcReleaseService(injector *do.Injector) (GrpcReleaseServer, error) {
-	artistRepository := do.MustInvoke[ArtistRepository](injector)
+	artistRepository := do.MustInvoke[repositories.ArtistRepository](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	platformUrlRepository := do.MustInvoke[platformRepositories.PlatformUrlRepository](injector)
 	presentationConfigService := do.MustInvoke[PresentationConfigServer](injector)
-	releaseRepository := do.MustInvoke[ReleaseRepository](injector)
+	releaseRepository := do.MustInvoke[repositories.ReleaseRepository](injector)
 
 	return &GrpcReleaseService{
 		artistRepository:          artistRepository,

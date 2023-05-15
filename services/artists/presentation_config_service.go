@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
+	"main/services/artists/repositories"
 
 	"github.com/punk-link/logger"
 	presentationContractsConstants "github.com/punk-link/presentation-contracts/constants"
@@ -12,12 +13,12 @@ import (
 
 type PresentationConfigService struct {
 	logger     logger.Logger
-	repository PresentationConfigRepository
+	repository repositories.PresentationConfigRepository
 }
 
 func NewPresentationConfigService(injector *do.Injector) (PresentationConfigServer, error) {
 	logger := do.MustInvoke[logger.Logger](injector)
-	repository := do.MustInvoke[PresentationConfigRepository](injector)
+	repository := do.MustInvoke[repositories.PresentationConfigRepository](injector)
 
 	return &PresentationConfigService{
 		logger:     logger,

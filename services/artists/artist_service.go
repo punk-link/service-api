@@ -9,6 +9,7 @@ import (
 	labelModels "main/models/labels"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
+	"main/services/artists/repositories"
 	"main/services/artists/validators"
 	spotifyPlatformServices "main/services/platforms/spotify"
 	"time"
@@ -22,7 +23,7 @@ type ArtistService struct {
 	cache                cacheManager.CacheManager[artistModels.Artist]
 	logger               logger.Logger
 	releaseService       ReleaseServer
-	repository           ArtistRepository
+	repository           repositories.ArtistRepository
 	spotifyArtistService spotifyPlatformServices.SpotifyArtistServer
 }
 
@@ -30,7 +31,7 @@ func NewArtistService(injector *do.Injector) (ArtistServer, error) {
 	cache := do.MustInvoke[cacheManager.CacheManager[artistModels.Artist]](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseService := do.MustInvoke[ReleaseServer](injector)
-	repository := do.MustInvoke[ArtistRepository](injector)
+	repository := do.MustInvoke[repositories.ArtistRepository](injector)
 	spotifyArtistService := do.MustInvoke[spotifyPlatformServices.SpotifyArtistServer](injector)
 
 	return &ArtistService{

@@ -1,4 +1,4 @@
-package labels
+package repositories
 
 import (
 	labelData "main/data/labels"

@@ -5,6 +5,7 @@ import (
 	labelModels "main/models/labels"
 
 	"main/services/labels/converters"
+	"main/services/labels/repositories"
 	"main/services/labels/validators"
 	"strings"
 
@@ -15,13 +16,13 @@ import (
 type ManagerService struct {
 	labelService LabelServer
 	logger       logger.Logger
-	repository   ManagerRepository
+	repository   repositories.ManagerRepository
 }
 
 func NewManagerService(injector *do.Injector) (ManagerServer, error) {
 	labelService := do.MustInvoke[LabelServer](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
-	repository := do.MustInvoke[ManagerRepository](injector)
+	repository := do.MustInvoke[repositories.ManagerRepository](injector)
 
 	return &ManagerService{
 		labelService: labelService,

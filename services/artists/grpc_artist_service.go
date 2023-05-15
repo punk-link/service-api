@@ -3,6 +3,7 @@ package artists
 import (
 	artistModels "main/models/artists"
 	"main/services/artists/converters"
+	"main/services/artists/repositories"
 
 	presentationContracts "github.com/punk-link/presentation-contracts"
 
@@ -10,15 +11,15 @@ import (
 )
 
 type GrpcArtistService struct {
-	artistRepository          ArtistRepository
+	artistRepository          repositories.ArtistRepository
 	presentationConfigService PresentationConfigServer
-	releaseRepository         ReleaseRepository
+	releaseRepository         repositories.ReleaseRepository
 }
 
 func NewGrpcArtistService(injector *do.Injector) (GrpcArtistServer, error) {
-	artistRepository := do.MustInvoke[ArtistRepository](injector)
+	artistRepository := do.MustInvoke[repositories.ArtistRepository](injector)
 	presentationConfigService := do.MustInvoke[PresentationConfigServer](injector)
-	releaseRepository := do.MustInvoke[ReleaseRepository](injector)
+	releaseRepository := do.MustInvoke[repositories.ReleaseRepository](injector)
 
 	return &GrpcArtistService{
 		artistRepository:          artistRepository,

@@ -8,6 +8,8 @@ import (
 	labelModels "main/models/labels"
 	releaseSpotifyPlatformModels "main/models/platforms/spotify/releases"
 	"main/services/artists/converters"
+	"main/services/artists/extractors"
+	"main/services/artists/repositories"
 	spotifyPlatformServices "main/services/platforms/spotify"
 	"sort"
 	"sync"
@@ -20,23 +22,23 @@ import (
 )
 
 type ReleaseService struct {
-	artistIdExtractor     ArtistIdExtractor
-	artistRepository      ArtistRepository
+	artistIdExtractor     extractors.ArtistIdExtractor
+	artistRepository      repositories.ArtistRepository
 	logger                logger.Logger
 	releaseCache          cacheManager.CacheManager[artistModels.Release]
 	releasesCache         cacheManager.CacheManager[[]artistModels.Release]
-	repository            ReleaseRepository
+	repository            repositories.ReleaseRepository
 	spotifyReleaseService spotifyPlatformServices.SpotifyReleaseServer
 	tagService            TagServer
 }
 
 func NewReleaseService(injector *do.Injector) (ReleaseServer, error) {
-	artistIdExtractor := do.MustInvoke[ArtistIdExtractor](injector)
-	artistRepository := do.MustInvoke[ArtistRepository](injector)
+	artistIdExtractor := do.MustInvoke[extractors.ArtistIdExtractor](injector)
+	artistRepository := do.MustInvoke[repositories.ArtistRepository](injector)
 	logger := do.MustInvoke[logger.Logger](injector)
 	releaseCache := do.MustInvoke[cacheManager.CacheManager[artistModels.Release]](injector)
 	releasesCache := do.MustInvoke[cacheManager.CacheManager[[]artistModels.Release]](injector)
-	repository := do.MustInvoke[ReleaseRepository](injector)
+	repository := do.MustInvoke[repositories.ReleaseRepository](injector)
 	spotifyReleaseService := do.MustInvoke[spotifyPlatformServices.SpotifyReleaseServer](injector)
 	tagService := do.MustInvoke[TagServer](injector)
 

@@ -1,4 +1,4 @@
-package artists
+package extractors
 
 import artistData "main/data/artists"
 

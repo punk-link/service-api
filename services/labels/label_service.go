@@ -4,6 +4,7 @@ import (
 	labelData "main/data/labels"
 	"main/helpers"
 	labelModels "main/models/labels"
+	"main/services/labels/repositories"
 	"main/services/labels/validators"
 	"strings"
 	"time"
@@ -14,12 +15,12 @@ import (
 
 type LabelService struct {
 	logger     logger.Logger
-	repository LabelRepository
+	repository repositories.LabelRepository
 }
 
 func NewLabelService(injector *do.Injector) (LabelServer, error) {
 	logger := do.MustInvoke[logger.Logger](injector)
-	repository := do.MustInvoke[LabelRepository](injector)
+	repository := do.MustInvoke[repositories.LabelRepository](injector)
 
 	return &LabelService{
 		logger:     logger,

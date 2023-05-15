@@ -5,6 +5,7 @@ import (
 	artistData "main/data/artists"
 	artistModels "main/models/artists"
 	"main/services/artists/converters"
+	"main/services/artists/repositories"
 	"strings"
 	"sync"
 	"time"
@@ -16,12 +17,12 @@ import (
 type TagService struct {
 	mutex         sync.Mutex
 	tagCache      cacheManager.CacheManager[map[string]artistModels.Tag]
-	tagRepository TagRepository
+	tagRepository repositories.TagRepository
 }
 
 func NewTagService(injector *do.Injector) (TagServer, error) {
 	tagCache := do.MustInvoke[cacheManager.CacheManager[map[string]artistModels.Tag]](injector)
-	tagRepository := do.MustInvoke[TagRepository](injector)
+	tagRepository := do.MustInvoke[repositories.TagRepository](injector)
 
 	return &TagService{
 		tagCache:      tagCache,

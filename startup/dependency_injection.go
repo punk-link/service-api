@@ -7,7 +7,10 @@ import (
 	artistModels "main/models/artists"
 	tokenSpotifyPlatformModels "main/models/platforms/spotify/tokens"
 	artistServices "main/services/artists"
+	artistExtractors "main/services/artists/extractors"
+	artistRepositories "main/services/artists/repositories"
 	labelServices "main/services/labels"
+	labelRepositories "main/services/labels/repositories"
 	platformServices "main/services/platforms"
 	platformRepositories "main/services/platforms/repositories"
 	spotifyPlatformServices "main/services/platforms/spotify"
@@ -65,19 +68,20 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, registerCacheManager[map[string]artistModels.Tag]())
 	do.Provide(injector, registerCacheManager[map[string]any]())
 
-	do.Provide(injector, labelServices.NewLabelRepository)
+	do.Provide(injector, labelRepositories.NewLabelRepository)
+	do.Provide(injector, labelRepositories.NewManagerRepository)
 	do.Provide(injector, labelServices.NewLabelService)
-	do.Provide(injector, labelServices.NewManagerRepository)
 	do.Provide(injector, labelServices.NewManagerService)
 
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyClient)
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyArtistService)
 	do.Provide(injector, spotifyPlatformServices.NewSpotifyReleaseService)
 
-	do.Provide(injector, artistServices.NewArtistIdExtractor)
-	do.Provide(injector, artistServices.NewTagRepository)
-	do.Provide(injector, artistServices.NewArtistRepository)
-	do.Provide(injector, artistServices.NewReleaseRepository)
+	do.Provide(injector, artistExtractors.NewArtistIdExtractor)
+	do.Provide(injector, artistRepositories.NewPresentationConfigRepository)
+	do.Provide(injector, artistRepositories.NewTagRepository)
+	do.Provide(injector, artistRepositories.NewArtistRepository)
+	do.Provide(injector, artistRepositories.NewReleaseRepository)
 	do.Provide(injector, artistServices.NewPresentationConfigService)
 	do.Provide(injector, artistServices.NewTagService)
 	do.Provide(injector, artistServices.NewArtistService)
