@@ -33,5 +33,13 @@ func (t *PresentationConfigRepositoryService) Get(err error, artistId int) (arti
 		First(&config, artistId).
 		Error
 
-	return config, err
+	return config, t.handleError(err)
+}
+
+func (t *PresentationConfigRepositoryService) handleError(err error) error {
+	if err != nil {
+		t.logger.LogError(err, err.Error())
+	}
+
+	return err
 }

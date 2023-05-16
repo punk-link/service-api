@@ -116,5 +116,19 @@ func (t *TagService) GetOrAdd(tagNames []string) []artistModels.Tag {
 	return tags
 }
 
+func (t *TagService) GetNames(releaseId int) []string {
+	tags, err := t.tagRepository.GetByReleaseId(nil, releaseId)
+	if err != nil || len(tags) == 0 {
+		return make([]string, 0)
+	}
+
+	results := make([]string, len(tags))
+	for i, tag := range tags {
+		results[i] = tag.Name
+	}
+
+	return results
+}
+
 const TAG_CACHE_DURATION = time.Hour * 24
 const TAG_CACHE_SLUG = "Tags"

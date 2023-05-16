@@ -10,19 +10,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Release, error) {
+func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl, tags []string, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Release, error) {
 	imageDetails, err := commonConverters.ToMessageFromJson(err, release.ImageDetails)
 	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
 	presentationConfigMessage, err := ToPresentationConfigMessage(err, presentationConfig)
 	slimArtists, err := ToSlimArtistMessages(err, artists)
 	tracks, err := toTrackMessages(err, release.Tracks)
-	tags := []string{"indie", "post-punk"}
 	if err != nil {
 		return &presentationContracts.Release{}, err
 	}
 
 	// TODO: add release Stats
-	// TODO: add tags
 	return &presentationContracts.Release{
 		Id:                 int32(release.Id),
 		Description:        release.Description,

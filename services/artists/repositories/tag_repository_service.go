@@ -55,6 +55,23 @@ func (t *TagRepositoryService) Get(err error, normalizedNames []string) []artist
 	return tags
 }
 
+func (t *TagRepositoryService) GetByReleaseId(err error, releaseId int) ([]artistData.Tag, error) {
+	if err != nil {
+		return make([]artistData.Tag, 0), nil
+	}
+
+	subQuery := t.db.Select("tag_id").
+		Where("release_id = ?", releaseId).
+		Table("release_tag_relation")
+
+	var tags []artistData.Tag
+	err = t.db.Where("id IN (?)", subQuery).
+		Find(&tags).
+		Error
+
+	return tags, t.handleError(err)
+}
+
 func (t *TagRepositoryService) Search(err error, query string) []artistData.Tag {
 	if err != nil {
 		return make([]artistData.Tag, 0)

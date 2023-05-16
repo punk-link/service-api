@@ -19,6 +19,7 @@ type GrpcReleaseService struct {
 	platformUrlRepository     platformRepositories.PlatformUrlRepository
 	presentationConfigService PresentationConfigServer
 	releaseRepository         repositories.ReleaseRepository
+	tagService                TagServer
 }
 
 func NewGrpcReleaseService(injector *do.Injector) (GrpcReleaseServer, error) {
@@ -27,6 +28,7 @@ func NewGrpcReleaseService(injector *do.Injector) (GrpcReleaseServer, error) {
 	platformUrlRepository := do.MustInvoke[platformRepositories.PlatformUrlRepository](injector)
 	presentationConfigService := do.MustInvoke[PresentationConfigServer](injector)
 	releaseRepository := do.MustInvoke[repositories.ReleaseRepository](injector)
+	tagService := do.MustInvoke[TagServer](injector)
 
 	return &GrpcReleaseService{
 		artistRepository:          artistRepository,
@@ -34,6 +36,7 @@ func NewGrpcReleaseService(injector *do.Injector) (GrpcReleaseServer, error) {
 		platformUrlRepository:     platformUrlRepository,
 		presentationConfigService: presentationConfigService,
 		releaseRepository:         releaseRepository,
+		tagService:                tagService,
 	}, nil
 }
 
@@ -45,8 +48,9 @@ func (t *GrpcReleaseService) GetOne(request *presentationContracts.ReleaseReques
 	presentationConfig, err := t.getPresentationConfig(err, releaseArtistIds)
 	slimDbArtists, err := t.artistRepository.GetSlim(err, releaseArtistIds)
 	platformUrls, err := t.platformUrlRepository.GetByReleaseId(err, id)
+	tags, err := t.getTags(err, id)
 
-	return converters.ToReleaseMessage(err, dbRelease, slimDbArtists, platformUrls, presentationConfig)
+	return converters.ToReleaseMessage(err, dbRelease, slimDbArtists, platformUrls, tags, presentationConfig)
 }
 
 func (t *GrpcReleaseService) unmarshalArtistIds(err error, idJson string) ([]int, error) {
@@ -71,4 +75,12 @@ func (t *GrpcReleaseService) getPresentationConfig(err error, artistIds []int) (
 
 	primaryArtistId := artistIds[0]
 	return t.presentationConfigService.Get(primaryArtistId), nil
+}
+
+func (t *GrpcReleaseService) getTags(err error, releaseId int) ([]string, error) {
+	if err != nil {
+		return make([]string, 0), err
+	}
+
+	return t.tagService.GetNames(releaseId), nil
 }
