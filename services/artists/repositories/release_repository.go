@@ -10,6 +10,7 @@ type ReleaseRepository interface {
 	CreateInBatches(err error, releases *[]artistData.Release) error
 	Get(err error, artistId int) ([]artistData.Release, error)
 	GetCount(err error) (int64, error)
+	GetCountByArtistByType(err error, artistId int) (int, int, int, error)
 	GetOne(err error, id int) (artistData.Release, error)
 	GetSlimByArtistId(err error, artistId int) ([]artistData.SlimRelease, error)
 	GetTags(err error, releaseIds []int) (map[int][]artistData.Tag, error)

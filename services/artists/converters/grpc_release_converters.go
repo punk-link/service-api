@@ -10,17 +10,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl, tags []string, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Release, error) {
+func ToReleaseMessage(err error, release artistData.Release, artists []artistData.SlimArtist, platformUrls []platformData.PlatformReleaseUrl, tags []string, releaseStats artistModels.ArtistReleaseStats, presentationConfig artistModels.PresentationConfig) (*presentationContracts.Release, error) {
 	imageDetails, err := commonConverters.ToMessageFromJson(err, release.ImageDetails)
 	platformUrlMessages, err := toPlatformUrlMessages(err, platformUrls)
 	presentationConfigMessage, err := ToPresentationConfigMessage(err, presentationConfig)
+	releaseStatsMessage, err := ToReleaseStatsMessage(err, releaseStats)
 	slimArtists, err := ToSlimArtistMessages(err, artists)
 	tracks, err := toTrackMessages(err, release.Tracks)
 	if err != nil {
 		return &presentationContracts.Release{}, err
 	}
 
-	// TODO: add release Stats
 	return &presentationContracts.Release{
 		Id:                 int32(release.Id),
 		Description:        release.Description,
@@ -31,14 +31,10 @@ func ToReleaseMessage(err error, release artistData.Release, artists []artistDat
 		PresentationConfig: presentationConfigMessage,
 		ReleaseArtists:     slimArtists,
 		ReleaseDate:        timestamppb.New(release.ReleaseDate),
-		ReleaseStats: &presentationContracts.ReleaseStats{
-			AlbumNumber:       int32(1),
-			CompilationNumber: int32(3),
-			SingleNumber:      int32(1),
-		},
-		Tags:   tags,
-		Tracks: tracks,
-		Type:   release.Type,
+		ReleaseStats:       releaseStatsMessage,
+		Tags:               tags,
+		Tracks:             tracks,
+		Type:               release.Type,
 	}, nil
 }
 

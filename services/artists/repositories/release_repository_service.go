@@ -98,6 +98,23 @@ func (t *ReleaseRepositoryService) GetCount(err error) (int64, error) {
 	return count, t.handleError(err)
 }
 
+func (t *ReleaseRepositoryService) GetCountByArtistByType(err error, artistId int) (int, int, int, error) {
+	if err != nil {
+		return 0, 0, 0, nil
+	}
+
+	type Result struct {
+		Type  string
+		Count int
+	}
+
+	// TODO: check logic
+	var results []Result
+	err = t.db.Model(&artistData.Release{}).Select("type, count(*) as count").Where("release_artist_ids = '[?]'", artistId).Group("type").Find(&results).Error
+
+	return 0, 0, 0, err
+}
+
 func (t *ReleaseRepositoryService) GetOne(err error, id int) (artistData.Release, error) {
 	if err != nil {
 		return artistData.Release{}, err
