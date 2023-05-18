@@ -117,16 +117,18 @@ func (t *TagService) GetOrAdd(tagNames []string) []artistModels.Tag {
 }
 
 func (t *TagService) GetNames(releaseId int) []string {
-	tags, err := t.tagRepository.GetByReleaseId(nil, releaseId)
-	if err != nil || len(tags) == 0 {
-		return make([]string, 0)
-	}
+	// TODO: add a proper db handling
+	// tags, err := t.tagRepository.GetByReleaseId(nil, releaseId)
+	// if err != nil || len(tags) == 0 {
+	// 	return make([]string, 0)
+	// }
 
-	results := make([]string, len(tags))
-	for i, tag := range tags {
-		results[i] = tag.Name
-	}
+	// results := make([]string, len(tags))
+	// for i, tag := range tags {
+	// 	results[i] = tag.Name
+	// }
 
+	results := make([]string, 0)
 	return results
 }
 

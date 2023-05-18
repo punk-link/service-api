@@ -2,6 +2,7 @@ package repositories
 
 import (
 	labelData "main/data/labels"
+	"main/helpers"
 	"time"
 
 	"github.com/punk-link/logger"
@@ -68,7 +69,7 @@ func (t *ManagerRepositoryService) Update(err error, dbManager *labelData.Manage
 }
 
 func (t *ManagerRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

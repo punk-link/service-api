@@ -68,7 +68,7 @@ func (t *PlatformUrlRepositoryService) UpdateInBatches(err error, urls []platfor
 }
 
 func (t *PlatformUrlRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

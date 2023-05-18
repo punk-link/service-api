@@ -94,7 +94,7 @@ func (t *TagRepositoryService) Search(err error, query string) []artistData.Tag 
 }
 
 func (t *TagRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 
