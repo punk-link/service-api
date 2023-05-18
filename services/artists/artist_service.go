@@ -116,7 +116,7 @@ func (t *ArtistService) addMissingArtists(spotifyIds []string, timeStamp time.Ti
 	for i, artist := range missingArtists {
 		dbArtist, localError := converters.ToDbArtist(&artist, 0, timeStamp)
 		if localError != nil {
-			err = helpers.CombineErrors(err, localError)
+			err = errors.Join(err, localError)
 			continue
 		}
 
@@ -232,7 +232,7 @@ func (t *ArtistService) getInternal(err error, ids []int) ([]artistModels.Artist
 		artist, conversionErr := converters.ToArtist(dbArtist, make([]artistModels.Release, 0))
 		if err != nil {
 			t.logger.LogError(err, err.Error())
-			err = helpers.CombineErrors(err, helpers.AccumulateErrors(dbArtistErr, conversionErr))
+			err = errors.Join(err, helpers.AccumulateErrors(dbArtistErr, conversionErr))
 			continue
 		}
 

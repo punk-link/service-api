@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	platformData "main/data/platforms"
 	"main/helpers"
 
@@ -61,14 +62,14 @@ func (t *PlatformUrlRepositoryService) UpdateInBatches(err error, urls []platfor
 			Updates(url).
 			Error
 
-		err = helpers.CombineErrors(err, innerErr)
+		err = errors.Join(err, innerErr)
 	}
 
 	return t.handleError(err)
 }
 
 func (t *PlatformUrlRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

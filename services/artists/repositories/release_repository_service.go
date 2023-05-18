@@ -2,6 +2,7 @@ package repositories
 
 import (
 	artistData "main/data/artists"
+	"main/helpers"
 	"main/services/artists/extractors"
 	"time"
 
@@ -231,7 +232,7 @@ func (t *ReleaseRepositoryService) MarksAsUpdated(err error, ids []int, timestam
 }
 
 func (t *ReleaseRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

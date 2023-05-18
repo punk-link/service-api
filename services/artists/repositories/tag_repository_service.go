@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"fmt"
 	artistData "main/data/artists"
 	"main/helpers"
@@ -33,7 +34,7 @@ func (t *TagRepositoryService) Create(err error, tags *[]artistData.Tag) error {
 	for _, tag := range *tags {
 		insertionErr := t.db.Exec("insert into tags (name, normalized_name, name_tokens) values (?, ?, to_tsvector(?))", tag.Name, tag.NormalizedName, tag.Name).Error
 		if insertionErr != nil {
-			err = helpers.CombineErrors(err, insertionErr)
+			err = errors.Join(err, insertionErr)
 		}
 	}
 
@@ -94,7 +95,7 @@ func (t *TagRepositoryService) Search(err error, query string) []artistData.Tag 
 }
 
 func (t *TagRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

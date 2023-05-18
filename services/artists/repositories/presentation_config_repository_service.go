@@ -2,6 +2,7 @@ package repositories
 
 import (
 	artistData "main/data/artists"
+	"main/helpers"
 
 	"github.com/punk-link/logger"
 	"github.com/samber/do"
@@ -37,7 +38,7 @@ func (t *PresentationConfigRepositoryService) Get(err error, artistId int) (arti
 }
 
 func (t *PresentationConfigRepositoryService) handleError(err error) error {
-	if err != nil {
+	if helpers.ShouldHandleDbError(err) {
 		t.logger.LogError(err, err.Error())
 	}
 

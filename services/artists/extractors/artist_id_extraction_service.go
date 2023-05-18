@@ -2,6 +2,7 @@ package extractors
 
 import (
 	"encoding/json"
+	"errors"
 	artistData "main/data/artists"
 	"main/helpers"
 
@@ -42,7 +43,7 @@ func (t *ArtistIdExtractingService) ExtractFromOne(release artistData.Release) [
 	releaseArtistErr := json.Unmarshal([]byte(release.FeaturingArtistIds), &releaseArtistIds)
 	artistIds = append(artistIds, releaseArtistIds...)
 
-	err := helpers.CombineErrors(featuringArtistErr, releaseArtistErr)
+	err := errors.Join(featuringArtistErr, releaseArtistErr)
 	if err != nil {
 		t.logger.LogError(err, err.Error())
 	}
