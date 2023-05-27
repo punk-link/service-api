@@ -37,18 +37,28 @@ func NewGrpcArtistService(injector *do.Injector) (GrpcArtistServer, error) {
 func (t *GrpcArtistService) GetOne(request *presentationContracts.ArtistRequest) (*presentationContracts.Artist, error) {
 	id := int(request.Id)
 
+	slimReleasesChan := make(chan []*presentationContracts.SlimRelease, 1)
+	go func() {
+		dbSlimReleases, err := t.releaseRepository.GetSlimByArtistId(nil, id)
+		slimReleases, err := converters.ToSlimReleaseMessages(err, dbSlimReleases)
+		if err == nil {
+			slimReleasesChan <- slimReleases
+		}
+
+		close(slimReleasesChan)
+	}()
+
 	dbArtist, err := t.artistRepository.GetOneSlim(nil, id)
-	dbSlimReleases, err := t.releaseRepository.GetSlimByArtistId(err, id)
 	presentationConfig, err := t.getPresentationConfig(err, id)
 	releaseStats, err := t.getReleaseStats(err, id)
 	socialNetworks, err := t.getSocialNetworks(err, id)
+
 	artist, err := converters.ToArtistMessage(err, dbArtist, releaseStats, socialNetworks, presentationConfig)
-	slimReleases, err := converters.ToSlimReleaseMessages(err, dbSlimReleases)
 	if err != nil {
 		return &presentationContracts.Artist{}, err
 	}
 
-	artist.Releases = slimReleases
+	artist.Releases = <-slimReleasesChan
 	return artist, nil
 }
 
