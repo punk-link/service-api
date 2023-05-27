@@ -48,11 +48,6 @@ func (t *ArtistController) Get(ctx *gin.Context) {
 		return
 	}
 
-	if err != nil {
-		templates.NotFound(ctx, err.Error())
-		return
-	}
-
 	result, err := t.artistService.Get(labelId)
 	templates.OkOrBadRequest(ctx, result, err)
 }

@@ -43,11 +43,7 @@ func (t *ArtistRepositoryService) CreateInBatches(err error, artists *[]artistDa
 }
 
 func (t *ArtistRepositoryService) Get(err error, ids []int) ([]artistData.Artist, error) {
-	if err != nil {
-		return make([]artistData.Artist, 0), err
-	}
-
-	if len(ids) == 0 {
+	if err != nil || len(ids) == 0 {
 		return make([]artistData.Artist, 0), err
 	}
 

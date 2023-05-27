@@ -81,6 +81,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 
 	do.Provide(injector, artistRepositories.NewPresentationConfigRepository)
 	do.Provide(injector, artistRepositories.NewTagRepository)
+	do.Provide(injector, artistRepositories.NewSocialNetworkRepository)
 	do.Provide(injector, artistRepositories.NewArtistRepository)
 	do.Provide(injector, artistRepositories.NewReleaseRepository)
 
@@ -101,6 +102,7 @@ func BuildDependencies(logger loggerService.Logger, consul consulClient.ConsulCl
 	do.Provide(injector, controllers.NewStatusController)
 
 	do.Provide(injector, apiControllers.NewArtistController)
+	do.Provide(injector, apiControllers.NewArtistSocialNetworksController)
 	do.Provide(injector, apiControllers.NewLabelController)
 	do.Provide(injector, apiControllers.NewManagerController)
 	do.Provide(injector, apiControllers.NewStreamingPlatformController)

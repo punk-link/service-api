@@ -52,6 +52,14 @@ func setupRouts(app *gin.Engine, injector *do.Injector) {
 		}
 	})
 
+	registerRoutes(injector, func(controller *apiControllers.ArtistSocialNetworksController) {
+		subroutes := v1.Group("/artists")
+		{
+			subroutes.POST("/:artist-id/social-networks/", controller.AddOrModify)
+			subroutes.GET("/:artist-id/social-networks/", controller.Get)
+		}
+	})
+
 	registerRoutes(injector, func(controller *apiControllers.StreamingPlatformController) {
 		v1.GET("/platforms/sync/collect", controller.ProcessUrlSyncResults)
 		v1.GET("/platforms/sync/start", controller.RequestUrlSync)
