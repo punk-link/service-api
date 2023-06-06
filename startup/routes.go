@@ -40,11 +40,15 @@ func setupRouts(app *gin.Engine, injector *do.Injector) {
 	})
 
 	registerRoutes(injector, func(controller *apiControllers.ArtistController) {
-		v1.POST("/artists/:spotify-id", controller.Add)
+
 		v1.GET("/artists/search", controller.Search)
 		subroutes := v1.Group("/artists")
 		{
 			subroutes.GET("/:artist-id", controller.GetOne)
+			registerRoutes(injector, func(controller *apiControllers.ArtistController) {
+				subroutes.POST("/artists/:spotify-id", controller.Add)
+			})
+
 			registerRoutes(injector, func(controller *apiControllers.ReleaseController) {
 				subroutes.GET("/:artist-id/releases/", controller.Get)
 				subroutes.GET("/:artist-id/releases/:id/", controller.GetOne)

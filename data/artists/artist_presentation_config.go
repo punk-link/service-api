@@ -2,6 +2,7 @@ package artists
 
 import "time"
 
+// TODO: add artist references
 type ArtistPresentationConfig struct {
 	Id      int       `gorm:"primaryKey,autoIncrement"`
 	Created time.Time `gorm:"not null"`
