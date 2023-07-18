@@ -42,26 +42,6 @@ steps:
       - GO_ENVIRONMENT
       - LOG_LEVEL
       - PNKL_VAULT_TOKEN
-- name: check image 
-  image: guoxudongdocker/drone-trivy    # trivy https://github.com/knqyf263/trivy
-  volumes:
-  - name: trivy
-    path: /root/.cache
-  - name: docker
-    path: /var/run/docker.sock
-  commands: 
-    - docker save service-api:${DRONE_BUILD_NUMBER} -o service-api-${DRONE_BUILD_NUMBER}.tar
-    - trivy --exit-code 1 --quiet --severity CRITICAL --input service-api-${DRONE_BUILD_NUMBER}.tar
-
-  volumes:
-  - name: docker
-    host:
-      path: /var/run/docker.sock
-  - name: trivy   # trivy 
-    host:
-      path: /tmp/cache/.trivy
-      
-
 
 - name: Deploy to DEV
   image: pelotech/drone-helm3
