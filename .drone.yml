@@ -53,13 +53,13 @@ steps:
     - docker save registry.punk.link/service-api:${DRONE_BUILD_NUMBER} -o registry.punk.link/service-api-${DRONE_BUILD_NUMBER}.tar
     - trivy --exit-code 1 --quiet --severity CRITICAL --input registry.punk.link/service-api-${DRONE_BUILD_NUMBER}.tar
 
- volumes:
- - name: docker
-   host:
-     path: /var/run/docker.sock
- - name: trivy   # trivy 
-   host:
-     path: /tmp/cache/.trivy
+  volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+  - name: trivy   # trivy 
+    host:
+      path: /tmp/cache/.trivy
       
 
 
